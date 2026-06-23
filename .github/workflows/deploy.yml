@@ -29,23 +29,24 @@ jobs:
 
       - name: Build All
         run: |
+          exec > all_build_output.log 2>&1
           set -x
           # Build Admin
           cd "Admin Portal"
-          npm install > ../admin_install.log 2>&1
-          npm run build > ../admin_build.log 2>&1
+          npm install
+          npm run build
           cd ..
           
           # Build Student
           cd "Student portal"
-          npm install > ../student_install.log 2>&1
-          npm run build > ../student_build.log 2>&1
+          npm install
+          npm run build
           cd ..
           
           # Build Teacher
           cd "Teacher Portal"
-          npm install > ../teacher_install.log 2>&1
-          npm run build > ../teacher_build.log 2>&1
+          npm install
+          npm run build
           cd ..
           
           # Assemble Public
