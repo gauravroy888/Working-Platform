@@ -25,26 +25,27 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Build All
         run: |
+          set -x
           # Build Admin
           cd "Admin Portal"
-          npm install
-          npm run build
+          npm install > ../admin_install.log 2>&1
+          npm run build > ../admin_build.log 2>&1
           cd ..
           
           # Build Student
           cd "Student portal"
-          npm install
-          npm run build
+          npm install > ../student_install.log 2>&1
+          npm run build > ../student_build.log 2>&1
           cd ..
           
           # Build Teacher
           cd "Teacher Portal"
-          npm install
-          npm run build
+          npm install > ../teacher_install.log 2>&1
+          npm run build > ../teacher_build.log 2>&1
           cd ..
           
           # Assemble Public
@@ -54,6 +55,13 @@ jobs:
           cp -r "Admin Portal"/dist/* public/admin/
           cp -r "Student portal"/dist/* public/student/
           cp -r "Teacher Portal"/dist/* public/teacher/
+
+      - name: Upload Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: ./*.log
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
