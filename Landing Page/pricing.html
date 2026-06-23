@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognitive Island | Pricing</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .pricing-hero {
+            background-image: url('assets/images/hero_bg%20V2.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 120px 5% 80px;
+            position: relative;
+        }
+
+        .pricing-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(3, 7, 18, 0.7);
+            z-index: 0;
+        }
+
+        .pricing-header {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            margin-bottom: 60px;
+            max-width: 800px;
+        }
+
+        .pricing-header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+        }
+
+        .pricing-header p {
+            font-size: 1rem;
+            color: var(--text-muted);
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .pricing-card {
+            background: rgba(10, 10, 20, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 40px rgba(0, 242, 254, 0.15);
+        }
+
+        .pricing-card.featured {
+            border: 1px solid var(--primary-color);
+            background: rgba(0, 242, 254, 0.05);
+            transform: scale(1.05);
+        }
+
+        .pricing-card.featured:hover {
+            transform: scale(1.05) translateY(-10px);
+            box-shadow: var(--glow-primary);
+        }
+
+        .pricing-icon {
+            font-size: 2.4rem;
+            margin-bottom: 15px;
+        }
+
+        .pricing-tier {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .pricing-price {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pricing-price span {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-left: 8px;
+        }
+
+        .pricing-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 25px 0;
+            text-align: left;
+        }
+
+        .pricing-features li {
+            margin-bottom: 12px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pricing-features li::before {
+            content: '✓';
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        @media (max-width: 900px) {
+            .pricing-card.featured {
+                transform: scale(1);
+            }
+            .pricing-card.featured:hover {
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dot-background"></div>
+
+    <nav class="glass">
+        <div class="logo">
+            <span>🧠</span>
+            <a href="index.html" class="text-gradient">Cognitive Island</a>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="index.html#path">Paths</a></li>
+            <li><a href="pricing.html" class="active">Pricing</a></li>
+            <li><a href="b2b.html">For Schools</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="login.html" class="btn btn-secondary">Login</a>
+            <a href="signup.html" class="btn btn-primary">Sign Up</a>
+        </div>
+    </nav>
+
+    <section class="pricing-hero">
+        <div class="pricing-header">
+            <h1>Simple, <span class="text-gradient-cyan">Transparent Pricing</span></h1>
+            <p>Choose the perfect plan to unlock your brain's full potential. Cancel anytime.</p>
+        </div>
+
+        <div class="pricing-grid">
+            <!-- Basic Plan -->
+            <div class="pricing-card">
+                <div class="pricing-icon">🌱</div>
+                <h3 class="pricing-tier text-gradient">Explorer</h3>
+                <div class="pricing-price">$0<span>/mo</span></div>
+                <ul class="pricing-features">
+                    <li>Access to 3 basic modules</li>
+                    <li>Daily brain training exercises</li>
+                    <li>Basic progress tracking</li>
+                    <li>Community forum access</li>
+                </ul>
+                <button class="btn btn-secondary" style="width: 100%;">Get Started Free</button>
+            </div>
+
+            <!-- Pro Plan -->
+            <div class="pricing-card featured">
+                <div class="pricing-icon">🚀</div>
+                <h3 class="pricing-tier text-gradient-cyan">Voyager Pro</h3>
+                <div class="pricing-price">$12<span>/mo</span></div>
+                <ul class="pricing-features">
+                    <li>Unlimited access to all modules</li>
+                    <li>Advanced AI-driven analytics</li>
+                    <li>Personalized learning paths</li>
+                    <li>Early access to new features</li>
+                    <li>Priority support</li>
+                </ul>
+                <button class="btn btn-primary" style="width: 100%;">Start 7-Day Free Trial</button>
+            </div>
+
+            <!-- Schools Plan -->
+            <div class="pricing-card">
+                <div class="pricing-icon">🏛️</div>
+                <h3 class="pricing-tier" style="color: var(--accent-purple);">Institutions</h3>
+                <div class="pricing-price" style="font-size: 2.2rem;">Custom</div>
+                <ul class="pricing-features">
+                    <li>Everything in Voyager Pro</li>
+                    <li>Admin & Teacher portals</li>
+                    <li>Custom curriculum alignment</li>
+                    <li>Dedicated success manager</li>
+                    <li>Bulk student onboarding</li>
+                </ul>
+                <a href="b2b.html" class="btn btn-secondary" style="width: 100%; display: inline-block; text-align: center; padding: 12px 24px; box-sizing: border-box;">Contact Sales</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 Cognitive Island. All rights reserved.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
