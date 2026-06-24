@@ -69,5 +69,52 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 3000);
             }, 1500);
         });
+        });
+    }
+
+    // Pricing Calculator Logic
+    const studentCount = document.getElementById('studentCount');
+    const teacherCount = document.getElementById('teacherCount');
+    const studentVal = document.getElementById('studentVal');
+    const teacherVal = document.getElementById('teacherVal');
+    const calcFeatures = document.querySelectorAll('.calc-feature');
+    const totalPriceEl = document.getElementById('totalPrice');
+
+    function calculatePrice() {
+        if (!studentCount || !teacherCount || !totalPriceEl) return;
+        
+        let students = parseInt(studentCount.value);
+        let teachers = parseInt(teacherCount.value);
+        
+        studentVal.innerText = students;
+        teacherVal.innerText = teachers;
+        
+        // Base Setup Fee
+        let total = 500;
+        
+        // Per student / teacher cost
+        total += students * 12; // $12 per student per year
+        total += teachers * 50; // $50 per teacher per year
+        
+        // Add-ons
+        calcFeatures.forEach(feature => {
+            if (feature.checked) {
+                total += parseInt(feature.value);
+            }
+        });
+        
+        // Animate counter effect (simple update for now)
+        totalPriceEl.innerText = total.toLocaleString();
+    }
+
+    if (studentCount && teacherCount) {
+        studentCount.addEventListener('input', calculatePrice);
+        teacherCount.addEventListener('input', calculatePrice);
+        calcFeatures.forEach(feature => {
+            feature.addEventListener('change', calculatePrice);
+        });
+        
+        // Initial calculation
+        calculatePrice();
     }
 });
