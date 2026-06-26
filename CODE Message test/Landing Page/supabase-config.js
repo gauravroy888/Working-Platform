@@ -20,8 +20,20 @@ supabase.auth.onAuthStateChange((event, session) => {
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         const basePath = isLocal ? '' : '/Comm-Test';
         
+        // Determine user role based on email
+        let targetPortal = '/student/'; // Default fallback
+        const userEmail = user.email?.toLowerCase() || '';
+        
+        if (userEmail === 'immersionlabsindia@gmail.com') {
+            targetPortal = '/admin/';
+        } else if (userEmail === 'gauravroy476@gmail.com') {
+            targetPortal = '/teacher/';
+        } else if (userEmail === 'thorroy888@gmail.com' || userEmail === 'sauravroy469@gmail.com') {
+            targetPortal = '/student/';
+        }
+
         if (window.location.pathname.includes('login.html') || window.location.pathname === '/' || window.location.pathname.endsWith('B2B-landing-page-main/')) {
-            window.location.href = window.location.origin + basePath + '/teacher/';
+            window.location.href = window.location.origin + basePath + targetPortal;
         }
     }
 });
