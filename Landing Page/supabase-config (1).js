@@ -24,11 +24,11 @@ supabase.auth.onAuthStateChange((event, session) => {
         let targetPortal = '/student/'; // Default fallback
         const userEmail = user.email?.toLowerCase() || '';
         
-        if (userEmail === 'immersionlabsindia@gmail.com' || userEmail === 'rathorehps@gmail.com') {
+        if (userEmail === 'immersionlabsindia@gmail.com') {
             targetPortal = '/admin/';
-        } else if (userEmail === 'gauravroy476@gmail.com' || userEmail === 'hps.sunghrathore@gmail.com') {
+        } else if (userEmail === 'gauravroy476@gmail.com') {
             targetPortal = '/teacher/';
-        } else if (userEmail === 'thorroy888@gmail.com' || userEmail === 'sauravroy469@gmail.com' || userEmail === 'apsrathore47@gmail.com') {
+        } else if (userEmail === 'thorroy888@gmail.com' || userEmail === 'sauravroy469@gmail.com') {
             targetPortal = '/student/';
         }
 
