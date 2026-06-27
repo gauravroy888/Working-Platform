@@ -192,8 +192,19 @@
             const tabs = document.querySelectorAll('.login-tab');
             const forms = document.querySelectorAll('.login-form-container');
             
-            // Set default selected portal
-            localStorage.setItem('selectedPortal', 'student');
+            // Get saved portal or default to student
+            let savedPortal = localStorage.getItem('selectedPortal') || 'student';
+            localStorage.setItem('selectedPortal', savedPortal);
+
+            // Sync UI to saved portal on load
+            tabs.forEach(t => t.classList.remove('active'));
+            forms.forEach(f => f.classList.remove('active'));
+            
+            const activeTabElement = document.querySelector(`.login-tab[data-tab="${savedPortal}"]`);
+            if (activeTabElement) activeTabElement.classList.add('active');
+            
+            const activeFormElement = document.getElementById('form-' + savedPortal);
+            if (activeFormElement) activeFormElement.classList.add('active');
 
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {

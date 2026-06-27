@@ -33,19 +33,26 @@ supabase.auth.onAuthStateChange((event, session) => {
         }
 
         const selectedPortal = localStorage.getItem('selectedPortal') || 'student';
+        const isLoggingIn = localStorage.getItem('isLoggingIn');
 
         if (window.location.pathname.includes('login.html') || window.location.pathname === '/' || window.location.pathname.endsWith('B2B-landing-page-main/')) {
-            if (actualRole !== selectedPortal) {
+            // Only enforce portal mismatch if they just clicked the login button
+            if (isLoggingIn === 'true' && actualRole !== selectedPortal) {
+                localStorage.removeItem('isLoggingIn');
                 alert("Not registered to this portal. You selected " + selectedPortal + " but your email belongs to the " + actualRole + " portal.");
                 supabase.auth.signOut();
                 return;
             }
+            localStorage.removeItem('isLoggingIn');
             window.location.href = window.location.origin + basePath + '/' + actualRole + '/';
         }
     }
 });
 
 export const signInWithGoogle = async () => {
+    // Set flag so the callback knows this is a manual login attempt
+    localStorage.setItem('isLoggingIn', 'true');
+
     // Construct the exact redirect URL to ensure Supabase accepts it
     const redirectUrl = window.location.origin + window.location.pathname;
     
@@ -57,6 +64,7 @@ export const signInWithGoogle = async () => {
     });
     
     if (error) {
+        localStorage.removeItem('isLoggingIn');
         console.error("Error signing in with Google:", error.message);
         alert("Login failed: " + error.message);
     }
