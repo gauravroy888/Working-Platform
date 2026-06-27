@@ -21,19 +21,26 @@ supabase.auth.onAuthStateChange((event, session) => {
         const basePath = isLocal ? '' : '/Comm-Test';
         
         // Determine user role based on email
-        let targetPortal = '/student/'; // Default fallback
+        let actualRole = 'student'; // Default fallback
         const userEmail = user.email?.toLowerCase() || '';
         
         if (userEmail === 'immersionlabsindia@gmail.com' || userEmail === 'rathorehps@gmail.com') {
-            targetPortal = '/admin/';
+            actualRole = 'admin';
         } else if (userEmail === 'gauravroy476@gmail.com' || userEmail === 'hps.sunghrathore@gmail.com') {
-            targetPortal = '/teacher/';
+            actualRole = 'teacher';
         } else if (userEmail === 'thorroy888@gmail.com' || userEmail === 'sauravroy469@gmail.com' || userEmail === 'apsrathore47@gmail.com') {
-            targetPortal = '/student/';
+            actualRole = 'student';
         }
 
+        const selectedPortal = localStorage.getItem('selectedPortal') || 'student';
+
         if (window.location.pathname.includes('login.html') || window.location.pathname === '/' || window.location.pathname.endsWith('B2B-landing-page-main/')) {
-            window.location.href = window.location.origin + basePath + targetPortal;
+            if (actualRole !== selectedPortal) {
+                alert("Not registered to this portal. You selected " + selectedPortal + " but your email belongs to the " + actualRole + " portal.");
+                supabase.auth.signOut();
+                return;
+            }
+            window.location.href = window.location.origin + basePath + '/' + actualRole + '/';
         }
     }
 });
