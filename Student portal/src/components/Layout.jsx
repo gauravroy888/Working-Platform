@@ -5,7 +5,7 @@ import Sidebar from './Sidebar';
 import { useTheme } from '../ThemeContext';
 
 export default function Layout({ children }) {
-  const { backgroundImage } = useTheme();
+  const { backgroundImage, profileName } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
@@ -31,8 +31,8 @@ export default function Layout({ children }) {
               <Menu size={24} />
             </button>
             <div className="header-brand">
-              <h2>Student Portal</h2>
-              <p>Welcome back, Alex!</p>
+              <h2>STUDENT PORTAL</h2>
+              <p>Welcome back, {profileName.split(' ')[0]}!</p>
             </div>
           </div>
           <div className="header-actions">

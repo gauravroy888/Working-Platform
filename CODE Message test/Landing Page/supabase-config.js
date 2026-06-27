@@ -7,7 +7,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Listen for auth state changes (e.g. after OAuth redirect)
 supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN' && session) {
+    if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
         const user = session.user;
         const edtechUser = {
             uid: user.id,
@@ -39,11 +39,13 @@ supabase.auth.onAuthStateChange((event, session) => {
 });
 
 export const signInWithGoogle = async () => {
+    // Construct the exact redirect URL to ensure Supabase accepts it
+    const redirectUrl = window.location.origin + window.location.pathname;
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-            // Stay on the same page for the redirect to allow the listener to catch it
-            redirectTo: window.location.href 
+            redirectTo: redirectUrl
         }
     });
     

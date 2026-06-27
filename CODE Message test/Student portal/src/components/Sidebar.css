@@ -27,6 +27,7 @@
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  object-fit: cover;
 }
 
 .status-dot {
@@ -129,23 +130,4 @@
 
 .notification-btn {
   margin-top: 20px;
-}
-
-/* Responsive Styles */
-@media (max-width: 768px) {
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: -300px;
-    height: 100vh;
-    margin: 0;
-    border-radius: 0 20px 20px 0;
-    z-index: 100;
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: rgba(13, 19, 41, 0.95);
-  }
-  
-  .sidebar.open {
-    left: 0;
-  }
 }

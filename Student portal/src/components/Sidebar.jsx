@@ -8,23 +8,23 @@ const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/' },
   { id: 'courses', label: 'Courses', icon: BookOpen, path: '/courses' },
   { id: 'mentors', label: 'Mentors', icon: Users, path: '/mentors' },
-  { id: 'chats', label: 'Chats', icon: MessageSquare, path: '/chats' },
+  { id: 'chats', label: 'Inbox', icon: MessageSquare, path: '/chats' },
   { id: 'progress', label: 'Progress', icon: BarChart2, path: '/progress' },
   { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' }
 ];
 
 export default function Sidebar({ isOpen, closeMenu }) {
-  const { profileImage } = useTheme();
+  const { profileImage, profileName, profileDesignation } = useTheme();
 
   return (
     <aside className={`sidebar glass-panel ${isOpen ? 'open' : ''}`}>
       <div className="profile-section">
         <div className="avatar-wrapper">
-          <img src={profileImage} alt="Alex K." className="avatar" />
+          <img src={profileImage} alt={profileName} className="avatar" />
           <span className="status-dot"></span>
         </div>
-        <h3 className="profile-name">Alex K.</h3>
-        <p className="profile-role">Student</p>
+        <h3 className="profile-name">{profileName}</h3>
+        <p className="profile-role">{profileDesignation}</p>
       </div>
       
       <nav className="nav-menu">
