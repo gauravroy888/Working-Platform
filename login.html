@@ -222,7 +222,31 @@
                     localStorage.setItem('selectedPortal', targetTab);
                 });
             });
-            
+            // Handle Manual Form Submissions for Demo Mode
+            const allForms = document.querySelectorAll('form');
+            allForms.forEach(form => {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    
+                    const role = localStorage.getItem('selectedPortal') || 'student';
+                    const demoUser = {
+                        uid: 'demo-' + Date.now(),
+                        email: 'demo@edtech.edu',
+                        name: 'Demo ' + role.charAt(0).toUpperCase() + role.slice(1),
+                        role: role
+                    };
+                    
+                    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '';
+                    const basePath = isLocal ? '' : '/Comm-Test';
+                    
+                    let targetPortal = '/' + role + '/';
+                    
+                    // Add URL parameter so React apps bypass DB check and auto-login
+                    const redirectUrl = basePath + targetPortal + '?user=' + encodeURIComponent(JSON.stringify(demoUser));
+                    window.location.href = redirectUrl;
+                });
+            });
+
             // Interactive Dot Background Mouse Tracking
             document.addEventListener('mousemove', (e) => {
                 document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
