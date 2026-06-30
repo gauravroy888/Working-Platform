@@ -1,13 +1,55 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Lock, LogOut, Upload } from 'lucide-react';
 import Card from '../components/Card';
 import { useTheme } from '../ThemeContext';
+import { supabase } from '../supabase';
 import './Settings.css';
 
 export default function Settings() {
-  const { backgroundImage, setBackgroundImage, profileImage, setProfileImage } = useTheme();
+  const { backgroundImage, setBackgroundImage, profileImage, setProfileImage, profileName, setProfileName } = useTheme();
   const fileInputRef = useRef(null);
   const avatarInputRef = useRef(null);
+
+  const [formData, setFormData] = useState({ name: '', email: '', grade: 'Grade 6', bio: '' });
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    try {
+      const uStr = localStorage.getItem('edtech_user');
+      if (uStr) {
+        const u = JSON.parse(uStr);
+        setFormData(prev => ({ ...prev, name: u.name || '', email: u.email || '' }));
+      }
+    } catch (e) {}
+  }, []);
+
+  const handleChange = (e) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      // update local
+      const uStr = localStorage.getItem('edtech_user');
+      if (uStr) {
+        const u = JSON.parse(uStr);
+        u.name = formData.name;
+        localStorage.setItem('edtech_user', JSON.stringify(u));
+      }
+      setProfileName && setProfileName(formData.name);
+      
+      // update supabase
+      if (formData.email) {
+        await supabase.from('profiles').update({ name: formData.name }).eq('email', formData.email);
+      }
+      alert('Profile updated successfully!');
+    } catch (e) {
+      alert('Error updating profile: ' + e.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -81,15 +123,15 @@ export default function Settings() {
               <div className="profile-form-col">
                 <div className="form-group">
                   <label>Full Name</label>
-                  <input type="text" className="form-input" defaultValue="Alex K." />
+                  <input type="text" name="name" className="form-input" value={formData.name} onChange={handleChange} />
                 </div>
                 <div className="form-group">
                   <label>Email</label>
-                  <input type="email" className="form-input" defaultValue="alex.k@email.com" />
+                  <input type="email" name="email" className="form-input" value={formData.email} readOnly style={{ opacity: 0.7, cursor: 'not-allowed' }} />
                 </div>
                 <div className="form-group">
                   <label>Grade</label>
-                  <select className="form-input">
+                  <select name="grade" className="form-input" value={formData.grade} onChange={handleChange}>
                     <option>Grade 6</option>
                     <option>Grade 7</option>
                     <option>Grade 8</option>
@@ -100,10 +142,12 @@ export default function Settings() {
             
             <div className="form-group mt-20">
               <label>Bio</label>
-              <textarea className="form-input textarea" rows={4} defaultValue="Passionate learner exploring the wonders of science and the universe."></textarea>
+              <textarea name="bio" className="form-input textarea" rows={4} value={formData.bio} onChange={handleChange}></textarea>
             </div>
             
-            <button className="btn btn-primary mt-20">Save Changes</button>
+            <button className="btn btn-primary mt-20" onClick={handleSaveProfile} disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </button>
           </div>
           
           {/* Preferences & Account Section */}

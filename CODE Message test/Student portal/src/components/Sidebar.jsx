@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, BookOpen, Users, MessageSquare, BarChart2, Settings, Bell } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
+import { useUnreadMessages } from '../hooks/useUnreadMessages';
 import './Sidebar.css';
 
 const navItems = [
@@ -15,6 +16,7 @@ const navItems = [
 
 export default function Sidebar({ isOpen, closeMenu }) {
   const { profileImage, profileName, profileDesignation } = useTheme();
+  const unreadCount = useUnreadMessages();
 
   return (
     <aside className={`sidebar glass-panel ${isOpen ? 'open' : ''}`}>
@@ -37,7 +39,18 @@ export default function Sidebar({ isOpen, closeMenu }) {
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
               onClick={closeMenu}
             >
-              <Icon size={20} className="nav-icon" />
+              {item.id === 'chats' ? (
+                <div className="icon-wrapper">
+                  <Icon size={20} className="nav-icon" />
+                  {unreadCount > 0 && (
+                    <span className="badge" style={{ background: 'var(--accent-cyan)', color: '#000' }}>
+                      {unreadCount}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <Icon size={20} className="nav-icon" />
+              )}
               <span>{item.label}</span>
             </NavLink>
           );

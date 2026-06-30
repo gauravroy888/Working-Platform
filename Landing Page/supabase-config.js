@@ -41,6 +41,18 @@ supabase.auth.onAuthStateChange((event, session) => {
         const selectedPortal = localStorage.getItem('selectedPortal') || 'student';
         const isLoggingIn = localStorage.getItem('isLoggingIn');
 
+        // Auto-sync user profile for the chat system
+        // Fire-and-forget since it shouldn't block redirect
+        supabase.from('profiles').upsert({
+            auth_id: user.id,
+            email: userEmail,
+            name: edtechUser.name,
+            role: actualRole,
+            avatar_url: user.user_metadata?.avatar_url || ''
+        }, { onConflict: 'email' }).then(({ error }) => {
+            if (error) console.error("Error syncing profile:", error);
+        });
+
         if (window.location.pathname.includes('login.html') || window.location.pathname === '/' || window.location.pathname.endsWith('B2B-landing-page-main/')) {
             // If they just visited the page (not returning from OAuth), do NOT auto-redirect them
             if (isLoggingIn !== 'true') {

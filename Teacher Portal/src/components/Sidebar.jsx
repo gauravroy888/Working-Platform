@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, Calendar, CheckSquare, Inbox, Users, BarChart2, Video, Settings, Bell } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
+import { useUnreadMessages } from '../hooks/useUnreadMessages';
 import './Sidebar.css';
 
 const navItems = [
@@ -17,6 +18,7 @@ const navItems = [
 
 export default function Sidebar() {
   const { profileImage, profileName, profileDesignation } = useTheme();
+  const unreadCount = useUnreadMessages();
 
   return (
     <aside className="sidebar glass-panel">
@@ -41,7 +43,11 @@ export default function Sidebar() {
               {item.id === 'inbox' ? (
                 <div className="icon-wrapper">
                   <Icon size={20} className="nav-icon" />
-                  <span className="badge" style={{ background: 'var(--accent-cyan)', color: '#000' }}>3</span>
+                  {unreadCount > 0 && (
+                    <span className="badge" style={{ background: 'var(--accent-cyan)', color: '#000' }}>
+                      {unreadCount}
+                    </span>
+                  )}
                 </div>
               ) : (
                 <Icon size={20} className="nav-icon" />
@@ -56,7 +62,6 @@ export default function Sidebar() {
         <NavLink to="/notifications" className={({ isActive }) => `nav-link notification-btn ${isActive ? 'active' : ''}`}>
           <div className="icon-wrapper">
             <Bell size={20} className="nav-icon" />
-            <span className="badge">5</span>
           </div>
           <span>Notifications</span>
         </NavLink>

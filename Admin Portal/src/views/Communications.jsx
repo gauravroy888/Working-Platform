@@ -1,87 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Megaphone, Send, User } from 'lucide-react';
+import { Users, Shield, Megaphone, MessageSquare } from 'lucide-react';
 import { supabase } from '../supabase';
+import ChatInterface from '../components/ChatInterface';
 
 export default function Communications() {
-  const [activeTab, setActiveTab] = useState('chat'); // 'chat' or 'announcements'
+  const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'announcements'
   const [currentUser, setCurrentUser] = useState(null);
+  const [unreadCounts, setUnreadCounts] = useState({ chat: 0 });
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const userParam = params.get('user');
-    if (userParam) {
-      localStorage.setItem('edtech_user', userParam);
-      setCurrentUser(JSON.parse(userParam));
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else {
-      const userStr = localStorage.getItem('edtech_user');
-      if (userStr) setCurrentUser(JSON.parse(userStr));
+    const userStr = localStorage.getItem('edtech_user');
+    if (userStr) {
+      try { setCurrentUser(JSON.parse(userStr)); } catch (e) {}
     }
   }, []);
   
-  // Chat state
-  const [conversations, setConversations] = useState([]);
-  const [activeChat, setActiveChat] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [messageInput, setMessageInput] = useState('');
-
-  // Fetch Conversations
-  useEffect(() => {
-    if (!currentUser) return;
-    
-    const fetchConversations = async () => {
-      const { data } = await supabase.from('conversations').select('*').order('updatedAt', { ascending: false });
-      if (data) setConversations(data);
-    };
-    
-    fetchConversations();
-    
-    const subscription = supabase.channel('conversations_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, fetchConversations)
-      .subscribe();
-      
-    return () => { supabase.removeChannel(subscription); };
-  }, [currentUser]);
-
-  // Fetch Messages for Active Chat
-  useEffect(() => {
-    if (!activeChat) return;
-    
-    const fetchMessages = async () => {
-      const { data } = await supabase.from('messages').select('*').eq('conversationId', activeChat.id).order('createdAt', { ascending: true });
-      if (data) setMessages(data);
-    };
-    
-    fetchMessages();
-    
-    const subscription = supabase.channel('messages_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `conversationId=eq.${activeChat.id}` }, fetchMessages)
-      .subscribe();
-      
-    return () => { supabase.removeChannel(subscription); };
-  }, [activeChat]);
-
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!messageInput.trim() || !activeChat || !currentUser) return;
-    try {
-      const { error } = await supabase.from('messages').insert({
-        conversationId: activeChat.id,
-        text: messageInput,
-        senderId: currentUser.uid,
-        senderName: currentUser.name || "Admin",
-      });
-      if (error) throw error;
-      
-      // Update lastMessage in conversation
-      await supabase.from('conversations').update({ lastMessage: messageInput, updatedAt: new Date() }).eq('id', activeChat.id);
-      
-      setMessageInput('');
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
-  };
-
   // Announcement state
   const [announcements, setAnnouncements] = useState([]);
   const [announceTitle, setAnnounceTitle] = useState('');
@@ -90,8 +23,9 @@ export default function Communications() {
   // Fetch Announcements
   useEffect(() => {
     const fetchAnnouncements = async () => {
-      const { data } = await supabase.from('announcements').select('*').order('createdAt', { ascending: false });
+      const { data, error } = await supabase.from('announcements').select('*').order('createdAt', { ascending: false });
       if (data) setAnnouncements(data);
+      if (error) console.warn('Announcements fetch error:', error.message);
     };
     
     fetchAnnouncements();
@@ -126,17 +60,18 @@ export default function Communications() {
       alert("Announcement posted successfully!");
     } catch (error) {
       console.error("Error posting announcement:", error);
-      alert("Failed to post announcement: " + error.message + "\n\nCheck your Supabase Database Rules if this says 'insufficient permissions'.");
+      alert("Failed to post announcement: " + error.message);
     }
   };
 
   return (
     <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 100px)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px', flexWrap: 'wrap', gap: '20px' }}>
         <div>
           <h1 className="text-gradient">Communications Hub</h1>
           <p>Chat with teachers/students and broadcast global announcements.</p>
         </div>
+        
         <div style={{ display: 'flex', gap: '10px', background: 'rgba(0,0,0,0.3)', padding: '5px', borderRadius: '12px' }}>
           <button 
             className={`btn ${activeTab === 'chat' ? 'btn-primary' : 'btn-ghost'}`} 
@@ -144,6 +79,11 @@ export default function Communications() {
             onClick={() => setActiveTab('chat')}
           >
             <MessageSquare size={16} /> Chat
+            {unreadCounts.chat > 0 && (
+              <span style={{ background: '#25D366', color: '#000', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', marginLeft: '5px' }}>
+                {unreadCounts.chat}
+              </span>
+            )}
           </button>
           <button 
             className={`btn ${activeTab === 'announcements' ? 'btn-primary' : 'btn-ghost'}`} 
@@ -155,99 +95,12 @@ export default function Communications() {
         </div>
       </div>
 
-      <div className="glass-panel" style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        {activeTab === 'chat' ? (
-          <>
-            {/* Chat Sidebar */}
-            <div style={{ width: '300px', borderRight: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ padding: '20px', borderBottom: '1px solid var(--panel-border)' }}>
-                <h3 style={{ margin: 0 }}>Conversations</h3>
-              </div>
-              <div style={{ overflowY: 'auto', flex: 1 }}>
-                {conversations.length > 0 ? conversations.map(c => (
-                  <div 
-                    key={c.id} 
-                    onClick={() => setActiveChat(c)}
-                    style={{ 
-                      padding: '15px 20px', 
-                      borderBottom: '1px solid rgba(255,255,255,0.05)', 
-                      cursor: 'pointer',
-                      background: activeChat?.id === c.id ? 'rgba(0, 229, 255, 0.1)' : 'transparent'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                      <span style={{ color: '#fff', fontWeight: 500 }}>{c.name || "Unknown"}</span>
-                    </div>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {c.lastMessage || "No messages yet"}
-                    </div>
-                  </div>
-                )) : (
-                  <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                    No conversations found.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Chat Window */}
-            {activeChat ? (
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <div style={{ padding: '20px', borderBottom: '1px solid var(--panel-border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <User size={24} color="var(--accent-cyan)" />
-                  <h3 style={{ margin: 0 }}>{activeChat.name}</h3>
-                </div>
-                <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  {messages.map((msg) => {
-                    const isMe = currentUser && msg.senderId === currentUser.uid;
-                    return (
-                      <div key={msg.id} style={{ 
-                        alignSelf: isMe ? 'flex-end' : 'flex-start', 
-                        maxWidth: '70%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: isMe ? 'flex-end' : 'flex-start'
-                      }}>
-                        <div style={{ 
-                          background: isMe ? 'linear-gradient(90deg, var(--accent-cyan), var(--accent-blue))' : 'rgba(255,255,255,0.1)',
-                          color: '#fff', 
-                          padding: '12px 16px', 
-                          borderRadius: isMe ? '16px 16px 0 16px' : '16px 16px 16px 0' 
-                        }}>
-                          {msg.text}
-                        </div>
-                        <span style={{ color: 'var(--text-secondary)', fontSize: '11px', marginTop: '4px' }}>
-                          {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Sending...'}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-                <form onSubmit={handleSendMessage} style={{ padding: '20px', borderTop: '1px solid var(--panel-border)', display: 'flex', gap: '10px' }}>
-                  <input 
-                    type="text" 
-                    value={messageInput}
-                    onChange={e => setMessageInput(e.target.value)}
-                    placeholder="Type your message..." 
-                    style={{ flex: 1, padding: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--panel-border)', color: '#fff', borderRadius: '8px', outline: 'none' }} 
-                  />
-                  <button type="submit" className="btn btn-primary" style={{ padding: '12px 20px', borderRadius: '8px' }}>
-                    <Send size={18} />
-                  </button>
-                </form>
-              </div>
-            ) : (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-                Select a conversation to start chatting.
-              </div>
-            )}
-          </>
-        ) : (
-          /* Announcements Section */
-          <div style={{ flex: 1, display: 'flex', padding: '20px', gap: '30px' }}>
+      <div className="glass-panel" style={{ flex: 1, display: 'flex', overflow: 'hidden', padding: 0 }}>
+        {activeTab === 'announcements' ? (
+          <div style={{ flex: 1, display: 'flex', padding: '20px', gap: '30px', overflowY: 'auto' }}>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
               <h3 style={{ marginBottom: '20px' }}>Recent Announcements</h3>
-              <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                 {announcements.length > 0 ? announcements.map(ann => (
                   <div key={ann.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--panel-border)', padding: '20px', borderRadius: '12px', borderLeft: '4px solid var(--accent-purple)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -282,6 +135,13 @@ export default function Communications() {
               </div>
             </div>
           </div>
+        ) : (
+          <ChatInterface 
+            currentUser={currentUser} 
+            activeTab={activeTab} 
+            isManager={true} 
+            onUnreadCountChange={setUnreadCounts}
+          />
         )}
       </div>
     </div>

@@ -6,51 +6,80 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Listen for auth state changes (e.g. after OAuth redirect)
-supabase.auth.onAuthStateChange((event, session) => {
+supabase.auth.onAuthStateChange(async (event, session) => {
     if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
         const user = session.user;
-        const edtechUser = {
-            uid: user.id,
-            email: user.email,
-            name: user.user_metadata?.full_name || user.email?.split('@')[0] || "User"
-        };
-        localStorage.setItem('edtech_user', JSON.stringify(edtechUser));
-        
-        // Handle redirect based on whether we are running locally or on GitHub Pages
-        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const basePath = isLocal ? '' : '/Comm-Test';
-        
-        // Determine user role based on email
-        let targetPortal = '/student/'; // Default fallback
         const userEmail = user.email?.toLowerCase() || '';
-        
-        if (userEmail === 'immersionlabsindia@gmail.com') {
-            targetPortal = '/admin/';
-        } else if (userEmail === 'gauravroy476@gmail.com') {
-            targetPortal = '/teacher/';
-        } else if (userEmail === 'thorroy888@gmail.com' || userEmail === 'sauravroy469@gmail.com') {
-            targetPortal = '/student/';
+
+        // Query the users table to get the REAL role from the database
+        let role = 'student'; // Default
+        try {
+            const { data: userData } = await supabase
+                .from('users')
+                .select('role, full_name')
+                .eq('email', userEmail)
+                .single();
+            if (userData) {
+                role = userData.role;
+            }
+        } catch (err) {
+            // User not found in users table — default to student
         }
 
-        if (window.location.pathname.includes('login.html') || window.location.pathname === '/' || window.location.pathname.endsWith('B2B-landing-page-main/')) {
+        // Auto-sync profile on first login (upsert so no duplicates)
+        try {
+            await supabase.from('profiles').upsert({
+                email: userEmail,
+                name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+                role: role,
+                auth_id: user.id,
+                avatar_url: user.user_metadata?.avatar_url || null
+            }, { onConflict: 'email', ignoreDuplicates: false });
+        } catch (err) {
+            // Profile sync failed silently — chat will still work
+        }
+
+        const edtechUser = {
+            uid: user.id,
+            email: userEmail,
+            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+            role: role
+        };
+        localStorage.setItem('edtech_user', JSON.stringify(edtechUser));
+
+        // Determine target portal based on DB role
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const basePath = isLocal ? '' : '/Comm-Test';
+
+        let targetPortal = '/student/';
+        if (role === 'admin') targetPortal = '/admin/';
+        else if (role === 'teacher') targetPortal = '/teacher/';
+
+        const isOnLoginPage = window.location.pathname.includes('login.html') ||
+            window.location.pathname === '/' ||
+            window.location.pathname.endsWith('/Comm-Test/') ||
+            window.location.pathname.endsWith('Landing Page/');
+
+        if (isOnLoginPage) {
             window.location.href = window.location.origin + basePath + targetPortal;
         }
     }
 });
 
 export const signInWithGoogle = async () => {
-    // Construct the exact redirect URL to ensure Supabase accepts it
-    const redirectUrl = window.location.origin + window.location.pathname;
-    
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const basePath = isLocal ? '' : '/Comm-Test';
+    const redirectUrl = window.location.origin + basePath + '/Landing Page/login.html';
+
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
             redirectTo: redirectUrl
         }
     });
-    
+
     if (error) {
-        console.error("Error signing in with Google:", error.message);
-        alert("Login failed: " + error.message);
+        console.error('Error signing in with Google:', error.message);
+        alert('Login failed: ' + error.message);
     }
 };

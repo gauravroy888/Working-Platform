@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, Calendar, Users, BookOpen, BarChart2, Settings, Bell, CalendarDays, MessageSquare } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
+import { useUnreadMessages } from '../hooks/useUnreadMessages';
 import './Sidebar.css';
 
 const navItems = [
@@ -18,6 +19,7 @@ const navItems = [
 export default function Sidebar() {
   // Using ThemeContext assuming we updated it, or we can hardcode for now
   // For Admin Portal, let's hardcode the profile for simplicity or provide default Admin details
+  const unreadCount = useUnreadMessages();
   return (
     <aside className="sidebar glass-panel">
       <div className="profile-section">
@@ -38,7 +40,18 @@ export default function Sidebar() {
               to={item.path}
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >
-              <Icon size={20} className="nav-icon" />
+              {item.id === 'communications' ? (
+                <div className="icon-wrapper">
+                  <Icon size={20} className="nav-icon" />
+                  {unreadCount > 0 && (
+                    <span className="badge" style={{ background: 'var(--accent-cyan)', color: '#000' }}>
+                      {unreadCount}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <Icon size={20} className="nav-icon" />
+              )}
               <span>{item.label}</span>
             </NavLink>
           );

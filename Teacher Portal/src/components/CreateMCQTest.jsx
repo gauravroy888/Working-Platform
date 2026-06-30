@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { supabase } from '../supabase';
 import Card from './Card';
 import { PlusCircle, Trash2, Save, X } from 'lucide-react';
 
@@ -62,10 +63,44 @@ export default function CreateMCQTest({ onCancel }) {
     }));
   };
 
-  const handleSave = () => {
-    console.log("Saving MCQ Test:", { testInfo, questions });
-    // In a real app, this would be an API call.
-    onCancel();
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!testInfo.title.trim()) {
+      alert('Please enter a test title before saving.');
+      return;
+    }
+    if (questions.length === 0) {
+      alert('Please add at least one question before saving.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const currentUser = JSON.parse(localStorage.getItem('edtech_user') || '{}');
+      const { error } = await supabase.from('tests').insert({
+        title: testInfo.title,
+        subject: testInfo.subject,
+        duration: testInfo.duration,
+        type: 'mcq',
+        questions: questions,
+        created_by: currentUser.email || 'unknown',
+        created_at: new Date().toISOString()
+      });
+
+      if (error) throw error;
+      alert('Test saved successfully!');
+      onCancel();
+    } catch (err) {
+      // If the tests table doesn't exist yet, show a helpful message
+      if (err.code === '42P01') {
+        alert('Tests table not set up yet. Please contact your administrator.');
+      } else {
+        alert('Failed to save test: ' + err.message);
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const inputStyle = {

@@ -5,38 +5,43 @@ import defaultAvatar from './assets/avatar.png';
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  // Try to load from localStorage, otherwise default to the milky way image
+  // Use 'admin_portal_bg' key to avoid conflict with Teacher portal
   const [backgroundImage, setBackgroundImage] = useState(() => {
-    return localStorage.getItem('teacher_portal_bg') || defaultBg;
+    return localStorage.getItem('admin_portal_bg') || defaultBg;
   });
 
   const [profileImage, setProfileImage] = useState(() => {
-    return localStorage.getItem('portal_avatar') || defaultAvatar;
+    return localStorage.getItem('admin_portal_avatar') || defaultAvatar;
   });
 
+  // Load admin name from the logged-in user stored in localStorage
   const [profileName, setProfileName] = useState(() => {
-    return localStorage.getItem('portal_name') || 'Prof. Anderson';
+    try {
+      const u = JSON.parse(localStorage.getItem('edtech_user') || '{}');
+      return u.name || localStorage.getItem('admin_portal_name') || 'Admin';
+    } catch {
+      return localStorage.getItem('admin_portal_name') || 'Admin';
+    }
   });
 
   const [profileDesignation, setProfileDesignation] = useState(() => {
-    return localStorage.getItem('portal_designation') || 'Senior Educator';
+    return localStorage.getItem('admin_portal_designation') || 'Administrator';
   });
 
-  // Update localStorage when it changes
   useEffect(() => {
-    localStorage.setItem('teacher_portal_bg', backgroundImage);
+    localStorage.setItem('admin_portal_bg', backgroundImage);
   }, [backgroundImage]);
 
   useEffect(() => {
-    localStorage.setItem('portal_avatar', profileImage);
+    localStorage.setItem('admin_portal_avatar', profileImage);
   }, [profileImage]);
 
   useEffect(() => {
-    localStorage.setItem('portal_name', profileName);
+    localStorage.setItem('admin_portal_name', profileName);
   }, [profileName]);
 
   useEffect(() => {
-    localStorage.setItem('portal_designation', profileDesignation);
+    localStorage.setItem('admin_portal_designation', profileDesignation);
   }, [profileDesignation]);
 
   return (

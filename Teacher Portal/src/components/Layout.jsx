@@ -5,6 +5,12 @@ import { useTheme } from '../ThemeContext';
 
 export default function Layout({ children }) {
   const { backgroundImage } = useTheme();
+  const userName = React.useMemo(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem('edtech_user') || '{}');
+      return u.name || 'Teacher';
+    } catch { return 'Teacher'; }
+  }, []);
 
   return (
     <div className="app-container">
@@ -17,7 +23,7 @@ export default function Layout({ children }) {
         <header className="top-header">
           <div className="header-brand">
             <h2>TEACHER PORTAL</h2>
-            <p>Welcome back, Prof. Anderson!</p>
+            <p>Welcome back, {userName}!</p>
           </div>
           <div className="header-actions">
             {/* Any global actions could go here */}

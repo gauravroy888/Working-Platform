@@ -151,14 +151,14 @@ export default function Dashboard() {
                 <img src={mentorsData[2].avatar} alt="Me" className="msg-avatar" />
                 <div className="msg-content">
                   <div className="msg-header"><span>Me</span> <span className="msg-time">10:56 AM</span></div>
-                  <div className="msg-bubble">Hello, this contics and awent your student?</div>
+                  <div className="msg-bubble">Hello, are there any updates on the assignment?</div>
                 </div>
               </div>
               <div className="message-item">
                 <img src={mentorsData[4].avatar} alt="Sara" className="msg-avatar" />
                 <div className="msg-content">
                   <div className="msg-header"><span>Sara</span> <span className="msg-time">12:28 AM</span></div>
-                  <div className="msg-bubble">Sara, message for mertra sonrvwhed?</div>
+                  <div className="msg-bubble">I've shared the notes in the chat.</div>
                 </div>
               </div>
             </div>

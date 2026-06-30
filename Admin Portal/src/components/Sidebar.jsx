@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, Calendar, Users, BookOpen, BarChart2, Settings, Bell, CalendarDays, MessageSquare } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
+import { useUnreadMessages } from '../hooks/useUnreadMessages';
 import './Sidebar.css';
 
 const navItems = [
@@ -16,17 +17,17 @@ const navItems = [
 ];
 
 export default function Sidebar() {
-  // Using ThemeContext assuming we updated it, or we can hardcode for now
-  // For Admin Portal, let's hardcode the profile for simplicity or provide default Admin details
+  const { profileImage, profileName, profileDesignation } = useTheme();
+  const unreadCount = useUnreadMessages();
   return (
     <aside className="sidebar glass-panel">
       <div className="profile-section">
         <div className="avatar-wrapper">
-          <img src="https://i.pravatar.cc/150?img=11" alt="Admin Profile" className="avatar" />
+          <img src={profileImage} alt={profileName} className="avatar" />
           <span className="status-dot" style={{ backgroundColor: '#10B981' }}></span>
         </div>
-        <h3 className="profile-name">Admin Portal</h3>
-        <p className="profile-role">Super Administrator</p>
+        <h3 className="profile-name">{profileName}</h3>
+        <p className="profile-role">{profileDesignation}</p>
       </div>
       
       <nav className="nav-menu">
@@ -38,7 +39,18 @@ export default function Sidebar() {
               to={item.path}
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >
-              <Icon size={20} className="nav-icon" />
+              {item.id === 'communications' ? (
+                <div className="icon-wrapper">
+                  <Icon size={20} className="nav-icon" />
+                  {unreadCount > 0 && (
+                    <span className="badge" style={{ background: 'var(--accent-cyan)', color: '#000' }}>
+                      {unreadCount}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <Icon size={20} className="nav-icon" />
+              )}
               <span>{item.label}</span>
             </NavLink>
           );
@@ -49,7 +61,6 @@ export default function Sidebar() {
         <NavLink to="/notifications" className={({ isActive }) => `nav-link notification-btn ${isActive ? 'active' : ''}`}>
           <div className="icon-wrapper">
             <Bell size={20} className="nav-icon" />
-            <span className="badge">2</span>
           </div>
           <span>Notifications</span>
         </NavLink>
