@@ -42,9 +42,8 @@ supabase.auth.onAuthStateChange((event, session) => {
         const isLoggingIn = localStorage.getItem('isLoggingIn');
 
         if (window.location.pathname.includes('login.html') || window.location.pathname === '/' || window.location.pathname.endsWith('B2B-landing-page-main/')) {
-            
             // If they just visited the page (not returning from OAuth), do NOT auto-redirect them
-            if (event === 'INITIAL_SESSION' && isLoggingIn !== 'true') {
+            if (isLoggingIn !== 'true') {
                 return;
             }
 
