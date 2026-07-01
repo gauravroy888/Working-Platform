@@ -14,13 +14,14 @@ supabase.auth.onAuthStateChange(async (event, session) => {
         // Query the users table to get the REAL role from the database
         let role = 'student'; // Default
         try {
-            const { data: userData } = await supabase
-                .from('users')
-                .select('role, full_name')
+            // Check profiles table for user role
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
                 .eq('email', userEmail)
                 .single();
-            if (userData) {
-                role = userData.role;
+            if (profile) {
+                role = profile.role;
             }
         } catch (err) {
             // User not found in users table — default to student
