@@ -154,12 +154,16 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
         filtered = filtered.filter(p => p.role === 'teacher' || p.role === 'admin');
       } else if (activeTab === 'teachers') {
         filtered = filtered.filter(p => p.role === 'teacher');
+      } else if (activeTab === 'groups') {
+        filtered = groups.map(g => ({ ...g, isGroup: true }));
       } else if (activeTab === 'class_view' || activeTab === 'classes') {
         // Teacher portal: show both students and groups
-        let classStudents = filtered.filter(p => p.role === 'student');
+        let classStudents = [];
         
         // Mock specific students for Class 6th if they aren't already in the DB
         if (selectedClass === 'Class 6th') {
+          classStudents = filtered.filter(p => p.role === 'student');
+          
           const class6thStudents = [
             { id: 'mock-1', name: 'Thor Roy', email: 'thorroy888@gmail.com', role: 'student', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=thor' },
             { id: 'mock-2', name: 'Saurav Roy', email: 'sauravroy469@gmail.com', role: 'student', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=saurav' },

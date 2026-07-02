@@ -87,6 +87,18 @@ export default function Inbox() {
               <BookOpen size={16} /> Classes
             </button>
             <button 
+              onClick={() => setActiveTab('groups')}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '8px 20px', borderRadius: '25px', border: 'none',
+                background: activeTab === 'groups' ? 'var(--accent-purple)' : 'transparent',
+                color: activeTab === 'groups' ? '#fff' : 'var(--text-secondary)',
+                cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s'
+              }}
+            >
+              <Users size={16} /> Groups
+            </button>
+            <button 
               onClick={() => setActiveTab('staff')}
               style={{
                 display: 'flex', alignItems: 'center', gap: '8px',
