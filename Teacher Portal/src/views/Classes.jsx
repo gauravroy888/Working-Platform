@@ -111,6 +111,7 @@ export default function Classes() {
       }, 1500);
     } catch (err) {
       console.error("Error creating group:", err);
+      alert("Error creating group: " + (err.message || "Please check your connection and try again."));
     } finally {
       setIsCreating(false);
     }
