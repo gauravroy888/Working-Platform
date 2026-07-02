@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../components/Card';
 import { Users, BookOpen, X, Check, Search, Palette, UserPlus } from 'lucide-react';
 import { supabase } from '../supabase';
@@ -7,6 +7,9 @@ export default function Classes() {
   const [activeModal, setActiveModal] = useState(null); // 'roster' | 'manageGroups' | null
   const [selectedClass, setSelectedClass] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [rosterTab, setRosterTab] = useState('students');
+  const [classGroups, setClassGroups] = useState([]);
   
   // Group creation state
   const [groupName, setGroupName] = useState('');
@@ -41,6 +44,11 @@ export default function Classes() {
     s.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const fetchGroups = async (className) => {
+    const { data } = await supabase.from('conversations').select('*').eq('type', 'group').eq('class_name', className);
+    if (data) setClassGroups(data);
+  };
+
   const openModal = (modalType, cls) => {
     setSelectedClass(cls);
     setActiveModal(modalType);
@@ -48,6 +56,11 @@ export default function Classes() {
     setGroupName('');
     setSearchQuery('');
     setShowSuccess(false);
+    setRosterTab('students');
+    
+    if (modalType === 'roster') {
+      fetchGroups(cls.name);
+    }
   };
 
   const closeModal = () => {
@@ -152,11 +165,23 @@ export default function Classes() {
               </button>
             </div>
             <div style={{ padding: '15px 25px', borderBottom: '1px solid var(--panel-border)' }}>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                <button 
+                  onClick={() => setRosterTab('students')}
+                  style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', background: rosterTab === 'students' ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.05)', color: rosterTab === 'students' ? '#000' : '#fff', cursor: 'pointer', fontWeight: 'bold' }}>
+                  Students
+                </button>
+                <button 
+                  onClick={() => setRosterTab('groups')}
+                  style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', background: rosterTab === 'groups' ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.05)', color: rosterTab === 'groups' ? '#000' : '#fff', cursor: 'pointer', fontWeight: 'bold' }}>
+                  Groups
+                </button>
+              </div>
               <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', padding: '10px 15px', border: '1px solid var(--panel-border)' }}>
                 <Search size={18} color="var(--text-secondary)" style={{ marginRight: '10px' }} />
                 <input 
                   type="text" 
-                  placeholder="Search students by name or email..." 
+                  placeholder={rosterTab === 'students' ? "Search students by name or email..." : "Search groups by name..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{ background: 'transparent', border: 'none', color: '#fff', flex: 1, outline: 'none' }}
@@ -164,18 +189,37 @@ export default function Classes() {
               </div>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '10px 25px 25px 25px' }}>
-              {filteredStudents.length > 0 ? filteredStudents.map(student => (
-                <div key={student.id} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s', borderRadius: '8px' }}>
-                  <img src={student.avatar} alt={student.name} style={{ width: '45px', height: '45px', borderRadius: '50%', background: '#fff' }} />
-                  <div>
-                    <h4 style={{ margin: 0, color: '#fff', fontSize: '15px' }}>{student.name}</h4>
-                    <p style={{ margin: '2px 0 0 0', color: 'var(--text-secondary)', fontSize: '13px' }}>{student.email}</p>
+              {rosterTab === 'students' ? (
+                filteredStudents.length > 0 ? filteredStudents.map(student => (
+                  <div key={student.id} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s', borderRadius: '8px' }}>
+                    <img src={student.avatar} alt={student.name} style={{ width: '45px', height: '45px', borderRadius: '50%', background: '#fff' }} />
+                    <div>
+                      <h4 style={{ margin: 0, color: '#fff', fontSize: '15px' }}>{student.name}</h4>
+                      <p style={{ margin: '2px 0 0 0', color: 'var(--text-secondary)', fontSize: '13px' }}>{student.email}</p>
+                    </div>
                   </div>
-                </div>
-              )) : (
-                <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-secondary)' }}>
-                  No students found matching your search.
-                </div>
+                )) : (
+                  <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-secondary)' }}>
+                    No students found matching your search.
+                  </div>
+                )
+              ) : (
+                classGroups.filter(g => (g.group_name || g.name || '').toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? 
+                  classGroups.filter(g => (g.group_name || g.name || '').toLowerCase().includes(searchQuery.toLowerCase())).map(group => (
+                  <div key={group.id} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s', borderRadius: '8px' }}>
+                    <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: group.group_color || group.color || 'var(--accent-purple)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Users size={20} color="#000" />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, color: '#fff', fontSize: '15px' }}>{group.group_name || group.name}</h4>
+                      <p style={{ margin: '2px 0 0 0', color: 'var(--text-secondary)', fontSize: '13px' }}>{group.participants?.length || 0} Members</p>
+                    </div>
+                  </div>
+                )) : (
+                  <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-secondary)' }}>
+                    No groups found for this class.
+                  </div>
+                )
               )}
             </div>
           </div>
