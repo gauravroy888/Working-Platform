@@ -9,6 +9,7 @@ import Classes from './views/Classes';
 import Analytics from './views/Analytics';
 import Settings from './views/Settings';
 import Communications from './views/Communications';
+import Notifications from './views/Notifications';
 import './App.css';
 import { supabase } from './supabase';
 
@@ -66,6 +67,7 @@ function App() {
         <Route path="communications" element={<Communications />} />
         <Route path="analytics" element={<Analytics />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="notifications" element={<Notifications />} />
       </Route>
     </Routes>
   );

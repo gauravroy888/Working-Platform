@@ -120,55 +120,6 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Right Column */}
-      <div className="dash-col dash-right">
-        <Card title="COMMUNICATION HUB" className="comm-hub">
-          <div className="quick-contacts">
-            {mentorsData.slice(0,2).map(mentor => (
-              <div key={mentor.id} className="contact-item">
-                <div className="mentor-avatar">
-                  <img src={mentor.avatar} alt={mentor.name} />
-                  <span className={`status-dot ${mentor.active ? 'online' : 'away'}`}></span>
-                </div>
-                <div className="mentor-info">
-                  <h5>{mentor.name}</h5>
-                  <span className={`status-text ${mentor.active ? 'online' : 'away'}`}>{mentor.status}</span>
-                </div>
-                <div className="mentor-actions">
-                  <button className="action-btn"><Mail size={16} /></button>
-                  <button className="action-btn"><MessageCircle size={16} /></button>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <div className="chat-widget">
-            <div className="chat-tabs">
-              <span className="chat-tab active">Recent Chats</span>
-            </div>
-            <div className="chat-messages">
-              <div className="message-item">
-                <img src={mentorsData[2].avatar} alt="Me" className="msg-avatar" />
-                <div className="msg-content">
-                  <div className="msg-header"><span>Me</span> <span className="msg-time">10:56 AM</span></div>
-                  <div className="msg-bubble">Hello, are there any updates on the assignment?</div>
-                </div>
-              </div>
-              <div className="message-item">
-                <img src={mentorsData[4].avatar} alt="Sara" className="msg-avatar" />
-                <div className="msg-content">
-                  <div className="msg-header"><span>Sara</span> <span className="msg-time">12:28 AM</span></div>
-                  <div className="msg-bubble">I've shared the notes in the chat.</div>
-                </div>
-              </div>
-            </div>
-            <div className="chat-input-area">
-              <input type="text" placeholder="Type a message..." className="chat-input" />
-              <button className="send-btn"><MessageCircle size={18} /></button>
-            </div>
-          </div>
-        </Card>
-      </div>
     </div>
   );
 }

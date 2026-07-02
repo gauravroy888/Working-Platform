@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { Home, BookOpen, Users, MessageSquare, BarChart2, Settings, Bell } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
 import { useUnreadMessages } from '../hooks/useUnreadMessages';
+import { useUnreadNotifications } from '../hooks/useUnreadNotifications';
 import './Sidebar.css';
 
 const navItems = [
@@ -17,6 +18,7 @@ const navItems = [
 export default function Sidebar({ isOpen, closeMenu }) {
   const { profileImage, profileName, profileDesignation } = useTheme();
   const unreadCount = useUnreadMessages();
+  const unreadNotifs = useUnreadNotifications();
 
   return (
     <aside className={`sidebar glass-panel ${isOpen ? 'open' : ''}`}>
@@ -43,7 +45,7 @@ export default function Sidebar({ isOpen, closeMenu }) {
                 <div className="icon-wrapper">
                   <Icon size={20} className="nav-icon" />
                   {unreadCount > 0 && (
-                    <span className="badge" style={{ background: 'var(--accent-cyan)', color: '#000' }}>
+                    <span className="badge" style={{ background: '#FF6B6B', color: '#fff', position: 'absolute', top: '-5px', right: '-10px', fontSize: '10px', padding: '2px 6px', borderRadius: '10px' }}>
                       {unreadCount}
                     </span>
                   )}
@@ -65,6 +67,11 @@ export default function Sidebar({ isOpen, closeMenu }) {
         >
           <div className="icon-wrapper">
             <Bell size={20} className="nav-icon" />
+            {unreadNotifs > 0 && (
+              <span className="badge" style={{ background: '#FF6B6B', color: '#fff', position: 'absolute', top: '-5px', right: '-10px', fontSize: '10px', padding: '2px 6px', borderRadius: '10px' }}>
+                {unreadNotifs}
+              </span>
+            )}
           </div>
           <span>Notifications</span>
         </NavLink>

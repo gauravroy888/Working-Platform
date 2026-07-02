@@ -64,12 +64,12 @@ export default function Inbox() {
                 padding: '8px 20px', borderRadius: '25px', border: 'none',
                 background: activeTab === 'students' ? 'var(--accent-cyan)' : 'transparent',
                 color: activeTab === 'students' ? '#000' : 'var(--text-secondary)',
-                cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s'
+                cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s', position: 'relative'
               }}
             >
               <Users size={16} /> Students
               {unreadCounts.students > 0 && (
-                <span style={{ background: '#25D366', color: '#000', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', marginLeft: '5px' }}>
+                <span style={{ background: '#FF6B6B', color: '#fff', position: 'absolute', top: '-5px', right: '-5px', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {unreadCounts.students}
                 </span>
               )}
@@ -93,10 +93,15 @@ export default function Inbox() {
                 padding: '8px 20px', borderRadius: '25px', border: 'none',
                 background: activeTab === 'groups' ? 'var(--accent-purple)' : 'transparent',
                 color: activeTab === 'groups' ? '#fff' : 'var(--text-secondary)',
-                cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s'
+                cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s', position: 'relative'
               }}
             >
               <Users size={16} /> Groups
+              {unreadCounts.groups > 0 && (
+                <span style={{ background: '#FF6B6B', color: '#fff', position: 'absolute', top: '-5px', right: '-5px', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {unreadCounts.groups}
+                </span>
+              )}
             </button>
             <button 
               onClick={() => setActiveTab('staff')}
@@ -105,12 +110,12 @@ export default function Inbox() {
                 padding: '8px 20px', borderRadius: '25px', border: 'none',
                 background: activeTab === 'staff' ? 'var(--accent-purple)' : 'transparent',
                 color: activeTab === 'staff' ? '#fff' : 'var(--text-secondary)',
-                cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s'
+                cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s', position: 'relative'
               }}
             >
               <Shield size={16} /> Staff
               {unreadCounts.staff > 0 && (
-                <span style={{ background: '#25D366', color: '#000', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', marginLeft: '5px' }}>
+                <span style={{ background: '#FF6B6B', color: '#fff', position: 'absolute', top: '-5px', right: '-5px', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {unreadCounts.staff}
                 </span>
               )}
@@ -122,7 +127,7 @@ export default function Inbox() {
                 padding: '8px 20px', borderRadius: '25px', border: 'none',
                 background: activeTab === 'announcements' ? 'var(--accent-blue)' : 'transparent',
                 color: activeTab === 'announcements' ? '#fff' : 'var(--text-secondary)',
-                cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s'
+                cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s', position: 'relative'
               }}
             >
               <Megaphone size={16} /> Updates
@@ -130,7 +135,7 @@ export default function Inbox() {
                 const time = new Date(a.createdAt).getTime();
                 return time > lastViewedAnnouncements && (Date.now() - time < 24 * 60 * 60 * 1000);
               }).length > 0 && (
-                <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', marginLeft: '5px' }}>
+                <span style={{ background: '#FF6B6B', color: '#fff', position: 'absolute', top: '-5px', right: '-5px', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {announcements.filter(a => {
                     const time = new Date(a.createdAt).getTime();
                     return time > lastViewedAnnouncements && (Date.now() - time < 24 * 60 * 60 * 1000);
