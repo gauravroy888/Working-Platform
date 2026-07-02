@@ -17,6 +17,7 @@ export default function Classes() {
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [isCreating, setIsCreating] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [editingGroup, setEditingGroup] = useState(null);
 
   const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#D4A5A5', '#9B59B6', '#F39C12'];
 
@@ -52,8 +53,14 @@ export default function Classes() {
 
   const openModal = (modalType, cls) => {
     setSelectedClass(cls);
+    setEditingGroup(null);
+    if (modalType === 'manage_groups') {
+      setGroupName('');
+      setSelectedStudents([]);
+      setGroupColor(colors[0]);
+      setIsCreating(false);
+    }
     setActiveModal(modalType);
-    setSelectedStudents([]);
     setGroupName('');
     setSearchQuery('');
     setShowSuccess(false);
@@ -99,10 +106,18 @@ export default function Classes() {
         lastMessage: 'Group created'
       };
       
-      const { error } = await supabase.from('conversations').insert([newGroup]);
-      if (error) {
-        console.error("Supabase insert error:", error);
-        throw error;
+      if (editingGroup) {
+        const { error } = await supabase.from('conversations').update(newGroup).eq('id', editingGroup.id);
+        if (error) {
+          console.error("Supabase update error:", error);
+          throw error;
+        }
+      } else {
+        const { error } = await supabase.from('conversations').insert([newGroup]);
+        if (error) {
+          console.error("Supabase insert error:", error);
+          throw error;
+        }
       }
       
       setShowSuccess(true);
@@ -110,10 +125,33 @@ export default function Classes() {
         closeModal();
       }, 1500);
     } catch (err) {
-      console.error("Error creating group:", err);
-      alert("Error creating group: " + (err.message || "Please check your connection and try again."));
+      console.error("Error saving group:", err);
+      alert("Error saving group: " + (err.message || "Please check your connection and try again."));
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleEditGroup = (group) => {
+    const hasColor = group.name && group.name.includes('|');
+    const bgColor = hasColor ? group.name.split('|')[0] : colors[0];
+    const displayName = hasColor ? group.name.split('|')[1] : group.name;
+    
+    setEditingGroup(group);
+    setGroupName(displayName);
+    setGroupColor(bgColor);
+    setSelectedStudents(group.participants.filter(email => email !== 'teacher@edtech.edu'));
+    setActiveModal('manage_groups');
+  };
+
+  const handleDeleteGroup = async (groupId) => {
+    if (window.confirm("Are you sure you want to delete this group?")) {
+      const { error } = await supabase.from('conversations').delete().eq('id', groupId);
+      if (error) {
+        alert("Error deleting group: " + error.message);
+      } else {
+        fetchGroups(selectedClass.name);
+      }
     }
   };
 
@@ -219,9 +257,21 @@ export default function Classes() {
                     <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: bgColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Users size={20} color="#000" />
                     </div>
-                    <div>
+                    <div style={{ flex: 1 }}>
                       <h4 style={{ margin: 0, color: '#fff', fontSize: '15px' }}>{displayName}</h4>
                       <p style={{ margin: '2px 0 0 0', color: 'var(--text-secondary)', fontSize: '13px' }}>{group.participants?.length || 0} Members</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button 
+                        onClick={() => handleEditGroup(group)}
+                        style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', padding: '8px 15px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
+                        Edit
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteGroup(group.id)}
+                        style={{ background: 'rgba(255,107,107,0.2)', border: 'none', color: '#FF6B6B', padding: '8px 15px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
+                        Delete
+                      </button>
                     </div>
                   </div>
                   );
@@ -242,7 +292,7 @@ export default function Classes() {
           <div className="animate-scale-in" style={{ background: '#1a1f2b', borderRadius: '16px', width: '100%', maxWidth: '800px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', border: '1px solid var(--panel-border)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
             <div style={{ padding: '20px 25px', borderBottom: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h2 style={{ margin: 0, color: '#fff' }}>Create Learning Group</h2>
+                <h2 style={{ margin: 0, color: '#fff' }}>{editingGroup ? 'Edit Learning Group' : 'Create Learning Group'}</h2>
                 <p style={{ margin: '5px 0 0 0', color: 'var(--text-secondary)', fontSize: '14px' }}>Assign students from {selectedClass.name} to a new group.</p>
               </div>
               <button onClick={closeModal} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -297,7 +347,7 @@ export default function Classes() {
                 
                 {showSuccess ? (
                   <button style={{ background: '#25D366', color: '#000', border: 'none', padding: '15px', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                    <Check size={18} /> Group Created!
+                    <Check size={18} /> {editingGroup ? 'Group Updated!' : 'Group Created!'}
                   </button>
                 ) : (
                   <button 
@@ -311,7 +361,7 @@ export default function Classes() {
                     }}
                   >
                     <UserPlus size={18} />
-                    {isCreating ? 'Creating...' : 'Create Group'}
+                    {isCreating ? 'Saving...' : (editingGroup ? 'Update Group' : 'Create Group')}
                   </button>
                 )}
               </div>

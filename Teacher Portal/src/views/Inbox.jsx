@@ -5,8 +5,8 @@ import { supabase } from '../supabase';
 import ChatInterface from '../components/ChatInterface';
 
 export default function Inbox() {
-  const [activeTab, setActiveTab] = useState('students'); // 'students' | 'classes' | 'staff' | 'announcements'
-  const [selectedClass, setSelectedClass] = useState(null);
+  const [activeTab, setActiveTab] = useState('students'); // 'students' | 'classes' | 'staff' | 'announcements' | 'groups'
+  const [selectedClass, setSelectedClass] = useState('All Classes');
   const classesList = ['Class 1st', 'Class 2nd', 'Class 3rd', 'Class 4th', 'Class 5th', 'Class 6th'];
   const [currentUser, setCurrentUser] = useState(null);
   const [announcements, setAnnouncements] = useState([]);

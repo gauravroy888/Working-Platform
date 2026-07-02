@@ -334,20 +334,24 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
           {filteredProfiles.length > 0 ? filteredProfiles.map(contact => {
             const key = contact.isGroup ? contact.id : contact.email;
             const unread = unreadCounts[key] || 0;
+            const contactNameStr = contact.name || contact.group_name || 'Group';
+            const hasColor = contact.isGroup && contactNameStr.includes('|');
+            const bgColor = hasColor ? contactNameStr.split('|')[0] : 'var(--accent-purple)';
+            const displayName = hasColor ? contactNameStr.split('|')[1] : contactNameStr;
             return (
               <div key={contact.id} className={`chat-contact-item ${activeContact?.id === contact.id ? 'active' : ''}`} onClick={() => setActiveContact(contact)}>
                 <div className="chat-contact-avatar">
                   {contact.isGroup ? (
-                    <div className="avatar-placeholder" style={{ background: 'var(--accent-purple)' }}><Users size={20} /></div>
+                    <div className="avatar-placeholder" style={{ background: bgColor }}><Users size={20} /></div>
                   ) : contact.avatar_url ? (
-                    <img src={contact.avatar_url} alt={contact.name} />
+                    <img src={contact.avatar_url} alt={displayName} />
                   ) : (
-                    <div className="avatar-placeholder">{contact.name.charAt(0).toUpperCase()}</div>
+                    <div className="avatar-placeholder">{displayName.charAt(0).toUpperCase()}</div>
                   )}
                 </div>
                 <div className="chat-contact-info">
                   <div className="chat-contact-name-row">
-                    <span className="chat-contact-name">{contact.name}</span>
+                    <span className="chat-contact-name">{displayName}</span>
                     {unread > 0 && <span className="unread-badge">{unread}</span>}
                     {contact.isGroup && <span className="chat-contact-role">Group</span>}
                     {!contact.isGroup && <span className="chat-contact-role">{contact.role}</span>}
