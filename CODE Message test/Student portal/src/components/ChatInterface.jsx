@@ -41,7 +41,7 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
     const { data } = await supabase.from('conversations')
       .select('*')
       .eq('type', 'group')
-      .contains('participants', `["${currentUser.email}"]`);
+      .contains('participants', [currentUser.email]);
     if (data) setGroups(data);
   };
 
@@ -68,7 +68,7 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
     if (!currentUser) return;
     
     const { data: myConvs } = await supabase.from('conversations')
-      .select('id, type')
+      .select('id')
       .or(`participant1_email.eq.${currentUser.email},participant2_email.eq.${currentUser.email},participants.cs.["${currentUser.email}"]`);
       
     if (!myConvs || myConvs.length === 0) return;
@@ -83,8 +83,9 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
     if (unreadMsgs) {
       const counts = {};
       unreadMsgs.forEach(msg => {
-        const conv = myConvs.find(c => c.id === msg.conversationId);
-        const key = (conv && conv.type === 'group') ? msg.conversationId : msg.senderEmail;
+        // Find if this is a group msg
+        const grp = groups.find(g => g.id === msg.conversationId);
+        const key = grp ? grp.id : msg.senderEmail;
         counts[key] = (counts[key] || 0) + 1;
       });
       setUnreadCounts(counts);
@@ -109,7 +110,6 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
       let staffCount = 0;
       let teachersCount = 0;
       let groupsCount = 0;
-      let directCount = 0;
       
       profiles.forEach(p => {
         const count = unreadCounts[p.email] || 0;
@@ -117,7 +117,6 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
           if (p.role === 'student') studentsCount += count;
           if (p.role === 'teacher' || p.role === 'admin') staffCount += count;
           if (p.role === 'teacher') teachersCount += count;
-          directCount += count;
         }
       });
       
@@ -133,7 +132,7 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
         staff: staffCount,
         teachers: teachersCount,
         groups: groupsCount,
-        direct: directCount, 
+        direct: total, 
         chat: total 
       });
     }
@@ -155,8 +154,8 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
         filtered = filtered.filter(p => p.role === 'teacher' || p.role === 'admin');
       } else if (activeTab === 'teachers') {
         filtered = filtered.filter(p => p.role === 'teacher');
-      } else if (activeTab === 'class_view' || activeTab === 'classes' || activeTab === 'class') {
-        // Show both students and groups for the class
+      } else if (activeTab === 'class_view' || activeTab === 'classes') {
+        // Teacher portal: show both students and groups
         const classStudents = filtered.filter(p => p.role === 'student');
         const classGroups = groups
           .filter(g => !selectedClass || g.class_name === selectedClass)
@@ -170,18 +169,7 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
     }
     
     setFilteredProfiles(filtered);
-    
-    // Auto-select first contact
-    if (filtered.length > 0) {
-      setActiveContact(current => {
-        if (!current) return filtered[0];
-        const exists = filtered.find(p => p.isGroup ? p.id === current.id : p.email === current.email);
-        return exists ? current : filtered[0];
-      });
-    } else {
-      setActiveContact(null);
-    }
-  }, [profiles, groups, activeTab, searchQuery, currentUser, selectedClass]);
+  }, [profiles, groups, activeTab, searchQuery, currentUser]);
 
   // 2. Fetch or Create Conversation
   useEffect(() => {
@@ -256,12 +244,6 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
         .update({ is_read: true })
         .eq('conversationId', currentConversation.id)
         .neq('senderEmail', currentUser.email)
-        .eq('is_read', false);
-        
-      await supabase.from('notifications')
-        .update({ is_read: true })
-        .eq('user_email', currentUser.email)
-        .eq('type', 'message')
         .eq('is_read', false);
         
       setUnreadCounts(prev => ({ ...prev, [activeContact.isGroup ? activeContact.id : activeContact.email]: 0 }));
@@ -393,15 +375,15 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
               <button className="chat-back-btn" onClick={() => setActiveContact(null)}><ArrowLeft size={20} /></button>
               <div className="chat-header-avatar">
                 {activeContact.isGroup ? (
-                   <div className="avatar-placeholder" style={{ background: (activeContact.name || activeContact.group_name || '').includes('|') ? (activeContact.name || activeContact.group_name).split('|')[0] : 'var(--accent-purple)' }}><Users size={20} /></div>
+                   <div className="avatar-placeholder" style={{ background: 'var(--accent-purple)' }}><Users size={20} /></div>
                 ) : activeContact.avatar_url ? (
                   <img src={activeContact.avatar_url} alt={activeContact.name} />
                 ) : (
-                  <div className="avatar-placeholder">{(activeContact.name || '?').charAt(0).toUpperCase()}</div>
+                  <div className="avatar-placeholder">{activeContact.name.charAt(0).toUpperCase()}</div>
                 )}
               </div>
               <div className="chat-header-info">
-                <h4>{activeContact.isGroup && (activeContact.name || activeContact.group_name || '').includes('|') ? (activeContact.name || activeContact.group_name).split('|')[1] : (activeContact.name || activeContact.group_name || 'User')}</h4>
+                <h4>{activeContact.name}</h4>
                 <span>{activeContact.isGroup ? `Group Chat (${activeContact.participants?.length || 0} members)` : activeContact.email}</span>
               </div>
               <div className="chat-header-actions"><MoreVertical size={20} /></div>
@@ -416,19 +398,8 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
                   return (
                     <div key={msg.id || idx} className={`chat-bubble-wrapper ${isMe ? 'is-me' : 'is-them'}`}>
                       {activeContact.isGroup && !isMe && (
-                        <div style={{ marginRight: '8px', display: 'flex', alignItems: 'flex-end' }}>
-                          {(() => {
-                            const sender = profiles.find(p => p.email === msg.senderEmail);
-                            if (sender && sender.avatar_url) {
-                              return <img src={sender.avatar_url} title={msg.senderName} alt={msg.senderName} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />;
-                            } else {
-                              return (
-                                <div title={msg.senderName} style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--accent-purple)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' }}>
-                                  {(msg.senderName || '?').charAt(0).toUpperCase()}
-                                </div>
-                              );
-                            }
-                          })()}
+                        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', marginLeft: '4px' }}>
+                          {msg.senderName}
                         </div>
                       )}
                       <div className="chat-bubble">

@@ -56,12 +56,12 @@ export default function Chats() {
                   padding: '8px 20px', borderRadius: '25px', border: 'none',
                   background: activeTab === 'direct' ? 'var(--accent-cyan)' : 'transparent',
                   color: activeTab === 'direct' ? '#000' : 'var(--text-secondary)',
-                  cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s', position: 'relative'
+                  cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s'
                 }}
               >
                 <MessageSquare size={16} /> Direct
                 {unreadCounts.direct > 0 && (
-                  <span style={{ background: '#FF6B6B', color: '#fff', position: 'absolute', top: '-5px', right: '-5px', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ background: '#25D366', color: '#000', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', marginLeft: '5px' }}>
                     {unreadCounts.direct}
                   </span>
                 )}
@@ -73,15 +73,10 @@ export default function Chats() {
                   padding: '8px 20px', borderRadius: '25px', border: 'none',
                   background: activeTab === 'group' ? 'var(--accent-purple)' : 'transparent',
                   color: activeTab === 'group' ? '#fff' : 'var(--text-secondary)',
-                  cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s', position: 'relative'
+                  cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s'
                 }}
               >
                 <Users size={16} /> Group
-                {unreadCounts.groups > 0 && (
-                  <span style={{ background: '#FF6B6B', color: '#fff', position: 'absolute', top: '-5px', right: '-5px', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {unreadCounts.groups}
-                  </span>
-                )}
               </button>
               <button 
                 onClick={() => setActiveTab('class')}
@@ -102,12 +97,12 @@ export default function Chats() {
                   padding: '8px 20px', borderRadius: '25px', border: 'none',
                   background: activeTab === 'teachers' ? '#FF6B6B' : 'transparent',
                   color: activeTab === 'teachers' ? '#fff' : 'var(--text-secondary)',
-                  cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s', position: 'relative'
+                  cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s'
                 }}
               >
                 <Users size={16} /> Teachers
                 {unreadCounts.teachers > 0 && (
-                  <span style={{ background: '#FF6B6B', color: '#fff', position: 'absolute', top: '-5px', right: '-5px', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--panel-bg)' }}>
+                  <span style={{ background: '#25D366', color: '#000', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', marginLeft: '5px' }}>
                     {unreadCounts.teachers}
                   </span>
                 )}
@@ -151,7 +146,6 @@ export default function Chats() {
           <ChatInterface 
             currentUser={currentUser} 
             activeTab={activeTab} 
-            selectedClass={currentUser?.class_name}
             isManager={false} 
             onUnreadCountChange={setUnreadCounts}
           />

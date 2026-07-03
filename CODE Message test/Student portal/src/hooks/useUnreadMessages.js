@@ -36,7 +36,7 @@ export function useUnreadMessages() {
         const { data: convData, error: convError } = await supabase
           .from('conversations')
           .select('id')
-          .or(`participant1_email.eq.${currentUserEmail},participant2_email.eq.${currentUserEmail},participants.cs.["${currentUserEmail}"]`);
+          .or(`participant1_email.eq.${currentUserEmail},participant2_email.eq.${currentUserEmail}`);
 
         if (convError || !convData || convData.length === 0) {
           setTotalUnread(0);
