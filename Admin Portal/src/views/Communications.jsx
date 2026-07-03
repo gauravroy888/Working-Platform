@@ -80,12 +80,12 @@ export default function Communications() {
         <div style={{ display: 'flex', gap: '10px', background: 'rgba(0,0,0,0.3)', padding: '5px', borderRadius: '12px' }}>
           <button 
             className={`btn ${activeTab === 'chat' ? 'btn-primary' : 'btn-ghost'}`} 
-            style={{ border: 'none' }}
+            style={{ border: 'none', position: 'relative' }}
             onClick={() => setActiveTab('chat')}
           >
             <MessageSquare size={16} /> Chat
             {unreadCounts.chat > 0 && (
-              <span style={{ background: '#25D366', color: '#000', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', marginLeft: '5px' }}>
+              <span style={{ background: '#FF6B6B', color: '#fff', position: 'absolute', top: '-5px', right: '-5px', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {unreadCounts.chat}
               </span>
             )}

@@ -1,29 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../components/Card';
-import { Video, Mic, MonitorUp, Users, FileText, CheckCircle, LogIn, Link as LinkIcon, ExternalLink, Loader2 } from 'lucide-react';
+import { Video, Calendar as CalendarIcon, Clock, Link as LinkIcon, Edit2, Play, CheckCircle, ExternalLink, Trash2, X, Plus, FileText, Loader2 } from 'lucide-react';
+import { supabase } from '../supabase';
+import { useGoogleLogin } from '@react-oauth/google';
 import CreateMCQTest from '../components/CreateMCQTest';
 import CreateQATest from '../components/CreateQATest';
-import { useGoogleLogin } from '@react-oauth/google';
 
 export default function LiveClass() {
-  const [activeTab, setActiveTab] = useState('live'); // 'live' | 'tests'
-  const [testCreationMode, setTestCreationMode] = useState(null); // null | 'mcq' | 'qa'
+  const [activeTab, setActiveTab] = useState('active'); // 'active' | 'upcoming' | 'tests'
   
-  // Google Meet State
-  const [accessToken, setAccessToken] = useState(null);
-  const [meetLink, setMeetLink] = useState(null);
+  // Auth state
+  const [accessToken, setAccessToken] = useState(localStorage.getItem('calendar_token') || null);
+  
+  const [activeLiveClass, setActiveLiveClass] = useState(null);
+  const [upcomingClasses, setUpcomingClasses] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+  
+  const [testCreationMode, setTestCreationMode] = useState(null); // 'mcq' | 'qa' | null
+  
+  // Form State
+  const [classTitle, setClassTitle] = useState('General Session');
+  const [selectedClass, setSelectedClass] = useState('Class 1st');
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [startTime, setStartTime] = useState('10:00');
+  const [duration, setDuration] = useState('60'); // minutes
+
+  const mockClasses = ['Class 1st', 'Class 2nd', 'Class 3rd', 'Class 4th', 'Class 5th', 'Class 6th'];
+
+  const [testsList, setTestsList] = useState([]);
+  const [isLoadingTests, setIsLoadingTests] = useState(false);
+
+  useEffect(() => {
+    fetchActiveClasses();
+    fetchUpcomingClasses();
+    fetchTests();
+  }, []);
+
+  const fetchActiveClasses = async () => {
+    const { data, error } = await supabase.from('live_classes').select('*').eq('status', 'active');
+    if (data && data.length > 0) setActiveLiveClass(data[0]);
+    else setActiveLiveClass(null);
+  };
+
+  const fetchUpcomingClasses = async () => {
+    const { data, error } = await supabase.from('live_classes').select('*').eq('status', 'scheduled').order('start_time', { ascending: true });
+    if (data) setUpcomingClasses(data);
+  };
+
+  const fetchTests = async () => {
+    setIsLoadingTests(true);
+    const { data, error } = await supabase.from('tests').select('*').order('created_at', { ascending: false });
+    if (data && !error) setTestsList(data);
+    setIsLoadingTests(false);
+  };
 
   const login = useGoogleLogin({
     onSuccess: (codeResponse) => {
       setAccessToken(codeResponse.access_token);
-      setErrorMsg(null);
+      localStorage.setItem('calendar_token', codeResponse.access_token);
     },
-    onError: (error) => {
-      console.error('Login Failed:', error);
-      setErrorMsg("Failed to sign in with Google.");
-    },
+    onError: (error) => setErrorMsg('Login Failed: ' + error.message),
     scope: 'https://www.googleapis.com/auth/calendar.events',
   });
 
@@ -32,31 +69,25 @@ export default function LiveClass() {
     setIsGenerating(true);
     setErrorMsg(null);
 
-    // Create an event starting now, ending in 1 hour
-    const start = new Date();
-    const end = new Date();
-    end.setHours(end.getHours() + 1);
-
-    const event = {
-      summary: 'Live Class: Physics 9-B',
-      description: 'Automatically generated Google Meet for Live Class.',
-      start: {
-        dateTime: start.toISOString(),
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      },
-      end: {
-        dateTime: end.toISOString(),
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      },
-      conferenceData: {
-        createRequest: {
-          requestId: Math.random().toString(36).substring(7),
-          conferenceSolutionKey: { type: 'hangoutsMeet' },
-        },
-      },
-    };
-
     try {
+      // Parse dates
+      const startDateTime = new Date(`${startDate}T${startTime}`);
+      const endDateTime = new Date(startDateTime.getTime() + parseInt(duration) * 60000);
+
+      const event = {
+        summary: `Online Class: ${classTitle}`,
+        description: `Online Class for ${selectedClass}.`,
+        start: {
+          dateTime: startDateTime.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+        end: { dateTime: endDateTime.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+        conferenceData: {
+          createRequest: {
+            requestId: Math.random().toString(36).substring(7),
+            conferenceSolutionKey: { type: 'hangoutsMeet' },
+          },
+        },
+      };
+
       const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1', {
         method: 'POST',
         headers: {
@@ -67,200 +98,327 @@ export default function LiveClass() {
       });
 
       const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error.message || "Failed to create event");
+
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Failed to generate Meet link');
       }
 
-      if (data.hangoutLink) {
-        setMeetLink(data.hangoutLink);
-      } else {
-        throw new Error("No Meet link returned. Ensure Calendar API is enabled for this project.");
-      }
+      // Save to Supabase
+      const currentUser = JSON.parse(localStorage.getItem('edtech_user') || '{}');
+      const { data: dbData, error: dbError } = await supabase.from('live_classes').insert([{
+        title: classTitle,
+        class_name: selectedClass,
+        meet_link: data.hangoutLink,
+        status: 'scheduled',
+        start_time: startDateTime.toISOString(),
+        end_time: endDateTime.toISOString(),
+        created_by: currentUser.email || 'unknown'
+      }]).select();
+
+      if (dbError) throw dbError;
+      
+      // Notify all students
+      await supabase.from('notifications').insert({
+        user_email: 'all',
+        type: 'meeting',
+        title: 'New Online Class Scheduled',
+        message: `A new online class "${classTitle}" has been scheduled for ${selectedClass} on ${startDateTime.toLocaleDateString()}.`,
+        is_read: false
+      });
+
+      alert('Class scheduled successfully!');
+      
+      // Reset form
+      fetchUpcomingClasses();
+      setAccessToken(null); // Return to default view
     } catch (err) {
-      console.error(err);
-      setErrorMsg(err.message || "An error occurred while generating the link.");
+      setErrorMsg(err.message);
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    if (tab === 'live') {
-      setTestCreationMode(null);
+  const endLiveClass = async (id) => {
+    await supabase.from('live_classes').update({ status: 'ended' }).eq('id', id);
+    setActiveLiveClass(null);
+  };
+
+  const startScheduledClass = async (id) => {
+    await supabase.from('live_classes').update({ status: 'active' }).eq('id', id);
+    fetchActiveClasses();
+    fetchUpcomingClasses();
+  };
+
+  const deleteScheduledClass = async (id) => {
+    if(window.confirm("Delete this scheduled class?")) {
+       await supabase.from('live_classes').delete().eq('id', id);
+       fetchUpcomingClasses();
     }
+  };
+
+  const inputStyle = {
+    width: '100%', padding: '10px', borderRadius: '8px', 
+    background: 'rgba(255,255,255,0.05)', border: '1px solid var(--panel-border)', 
+    color: 'white', boxSizing: 'border-box', colorScheme: 'dark'
   };
 
   return (
     <div className="view-container animate-fade-in" style={{ paddingBottom: '50px' }}>
       <div className="view-header flex-between">
         <div>
-          <h1>Live Class & Tests</h1>
-          <p>Host live sessions and monitor active tests.</p>
+          <h1>Online Classes & Tests</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>Manage your scheduled sessions, active streams, and student tests.</p>
         </div>
         
         {/* Tab Switcher */}
         <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '30px', padding: '5px' }}>
           <button 
-            onClick={() => handleTabChange('live')}
+            onClick={() => setActiveTab('active')}
             style={{
               padding: '8px 20px', borderRadius: '25px', border: 'none',
-              background: activeTab === 'live' ? 'var(--accent-blue)' : 'transparent',
-              color: activeTab === 'live' ? '#fff' : 'var(--text-secondary)',
-              cursor: 'pointer', fontWeight: '500', transition: 'all 0.3s'
+              background: activeTab === 'active' ? 'var(--accent-cyan)' : 'transparent',
+              color: activeTab === 'active' ? '#000' : 'var(--text-secondary)',
+              cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.3s'
             }}
           >
-            Live Classes
+            Active Session
           </button>
           <button 
-            onClick={() => handleTabChange('tests')}
+            onClick={() => setActiveTab('upcoming')}
+            style={{
+              padding: '8px 20px', borderRadius: '25px', border: 'none',
+              background: activeTab === 'upcoming' ? 'var(--accent-blue)' : 'transparent',
+              color: activeTab === 'upcoming' ? '#fff' : 'var(--text-secondary)',
+              cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.3s'
+            }}
+          >
+            Upcoming
+          </button>
+          <button 
+            onClick={() => setActiveTab('tests')}
             style={{
               padding: '8px 20px', borderRadius: '25px', border: 'none',
               background: activeTab === 'tests' ? 'var(--accent-purple)' : 'transparent',
               color: activeTab === 'tests' ? '#fff' : 'var(--text-secondary)',
-              cursor: 'pointer', fontWeight: '500', transition: 'all 0.3s'
+              cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.3s'
             }}
           >
-            Tests
+            Manage Tests
           </button>
         </div>
       </div>
 
-      {activeTab === 'live' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }} className="animate-fade-in">
-          <Card title="Active Session: Physics 9-B">
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', minHeight: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--panel-border)', padding: '30px', textAlign: 'center' }}>
-              
-              {/* Google Meet Flow */}
-              {!accessToken ? (
-                <>
-                  <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(10, 132, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                    <Video size={40} color="var(--accent-blue)" />
+      {activeTab === 'active' ? (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }} className="animate-fade-in">
+          {activeLiveClass ? (
+            <Card title="Currently Active Class" style={{ background: 'rgba(0, 240, 255, 0.05)', border: '1px solid rgba(0, 240, 255, 0.2)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'var(--accent-cyan)', boxShadow: '0 0 15px var(--accent-cyan)', animation: 'pulse 2s infinite' }}></div>
+                    <h2 style={{ margin: 0, color: 'var(--accent-cyan)' }}>{activeLiveClass.title}</h2>
                   </div>
-                  <h2 style={{ margin: '0 0 10px 0' }}>Start a Live Class</h2>
-                  <p style={{ color: 'var(--text-secondary)', marginBottom: '30px', maxWidth: '400px' }}>
-                    Sign in with your Google Workspace account to instantly generate a Google Meet link for your students.
-                  </p>
-                  <button onClick={() => login()} className="btn btn-primary" style={{ padding: '12px 25px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <LogIn size={20} /> Sign in with Google
-                  </button>
-                </>
-              ) : !meetLink ? (
-                <>
-                   <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(52, 199, 89, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                    <CheckCircle size={40} color="#34c759" />
-                  </div>
-                  <h2 style={{ margin: '0 0 10px 0' }}>Authenticated Successfully</h2>
-                  <p style={{ color: 'var(--text-secondary)', marginBottom: '30px' }}>
-                    You are signed in. Click below to generate the Meet link for this session.
-                  </p>
-                  
-                  {errorMsg && (
+                  <p style={{ margin: '0 0 5px 0', color: 'var(--text-secondary)' }}>Target: {activeLiveClass.class_name}</p>
+                </div>
+                <button onClick={() => endLiveClass(activeLiveClass.id)} className="btn btn-ghost" style={{ border: '1px solid #ff3b30', color: '#ff3b30' }}>
+                  End Class for All
+                </button>
+              </div>
+              <div style={{ marginTop: '30px', padding: '20px', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', textAlign: 'center' }}>
+                <a href={activeLiveClass.meet_link} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '15px 30px', fontSize: '16px', display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+                  <ExternalLink size={20} /> Join Google Meet Now
+                </a>
+              </div>
+            </Card>
+          ) : (
+             <Card>
+               <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                 <Video size={48} color="var(--text-secondary)" style={{ marginBottom: '15px', opacity: 0.5 }} />
+                 <h2 style={{ margin: '0 0 10px 0', color: 'var(--text-primary)' }}>No Active Session</h2>
+                 <p style={{ color: 'var(--text-secondary)', marginBottom: '30px' }}>Go to the Upcoming tab to start a scheduled class.</p>
+               </div>
+             </Card>
+          )}
+        </div>
+      ) : activeTab === 'upcoming' ? (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }} className="animate-fade-in">
+          <Card title="Schedule New Class">
+             {!accessToken ? (
+               <div style={{ padding: '30px 20px', textAlign: 'center' }}>
+                 <CalendarIcon size={48} color="var(--accent-blue)" style={{ marginBottom: '15px', opacity: 0.8 }} />
+                 <h2 style={{ margin: '0 0 10px 0' }}>Connect Google Calendar</h2>
+                 <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>Your teacher account is logged in, but we need permission to add events to your Google Calendar.</p>
+                 <button onClick={() => login()} className="btn btn-primary" style={{ padding: '12px 25px', display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'var(--accent-blue)', color: 'white', fontWeight: 'bold' }}>
+                    <LinkIcon size={20} /> Connect Google Calendar
+                 </button>
+               </div>
+             ) : (
+               <div style={{ padding: '20px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px' }}>
+                 <h3 style={{ margin: '0 0 20px 0', color: 'var(--accent-cyan)' }}>Class Details</h3>
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '14px', marginBottom: '5px', color: 'var(--text-secondary)' }}>Class Title</label>
+                      <input type="text" value={classTitle} onChange={(e) => setClassTitle(e.target.value)} style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '14px', marginBottom: '5px', color: 'var(--text-secondary)' }}>Target Audience</label>
+                      <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)} style={inputStyle}>
+                        {mockClasses.map(c => <option key={c} value={c} style={{background: '#1a1f2b'}}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '14px', marginBottom: '5px', color: 'var(--text-secondary)' }}>Date</label>
+                      <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={inputStyle} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '14px', marginBottom: '5px', color: 'var(--text-secondary)' }}>Time</label>
+                        <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} style={inputStyle} />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '14px', marginBottom: '5px', color: 'var(--text-secondary)' }}>Duration</label>
+                        <select value={duration} onChange={(e) => setDuration(e.target.value)} style={inputStyle}>
+                          <option value="30" style={{background: '#1a1f2b'}}>30 mins</option>
+                          <option value="45" style={{background: '#1a1f2b'}}>45 mins</option>
+                          <option value="60" style={{background: '#1a1f2b'}}>1 hour</option>
+                          <option value="90" style={{background: '#1a1f2b'}}>1.5 hours</option>
+                          <option value="120" style={{background: '#1a1f2b'}}>2 hours</option>
+                        </select>
+                      </div>
+                    </div>
+                 </div>
+
+                 {errorMsg && (
                     <div style={{ padding: '10px 15px', background: 'rgba(255, 59, 48, 0.1)', border: '1px solid #ff3b30', borderRadius: '8px', color: '#ff3b30', marginBottom: '20px', fontSize: '14px' }}>
                       {errorMsg}
                     </div>
-                  )}
+                 )}
 
-                  <button onClick={generateMeetLink} disabled={isGenerating} className="btn" style={{ padding: '12px 25px', display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--accent-cyan)', color: 'black', fontWeight: 'bold', opacity: isGenerating ? 0.7 : 1 }}>
-                    {isGenerating ? <Loader2 size={20} className="spinner" /> : <LinkIcon size={20} />} 
-                    {isGenerating ? 'Generating...' : 'Generate Google Meet Link'}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(255, 215, 0, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                    <Video size={50} color="var(--accent-gold)" />
-                  </div>
-                  <h2 style={{ margin: '0 0 10px 0', color: 'var(--accent-gold)' }}>Live Class is Ready!</h2>
-                  <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
-                    The Meet link has been generated and distributed to your students.
-                  </p>
-                  
-                  <div style={{ padding: '15px 20px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '15px', border: '1px dashed var(--panel-border)' }}>
-                    <code style={{ fontSize: '16px', color: 'var(--accent-cyan)' }}>{meetLink}</code>
-                  </div>
-
-                  <a href={meetLink} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ padding: '15px 30px', display: 'inline-flex', alignItems: 'center', gap: '10px', textDecoration: 'none', fontSize: '16px' }}>
-                    <ExternalLink size={20} /> Join Google Meet
-                  </a>
-                </>
-              )}
-            </div>
+                 <div style={{ display: 'flex', gap: '15px' }}>
+                   <button onClick={() => {
+                     setAccessToken(null);
+                     localStorage.removeItem('calendar_token');
+                   }} className="btn btn-ghost" style={{ flex: 1 }}>Disconnect Calendar</button>
+                   <button onClick={generateMeetLink} disabled={isGenerating || !classTitle.trim()} className="btn" style={{ flex: 2, padding: '12px 25px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', background: 'var(--accent-cyan)', color: 'black', fontWeight: 'bold', opacity: isGenerating || !classTitle.trim() ? 0.7 : 1 }}>
+                     {isGenerating ? <Loader2 size={20} className="spinner" /> : <CalendarIcon size={20} />} 
+                     {isGenerating ? 'Scheduling...' : 'Schedule Class & Generate Meet'}
+                   </button>
+                 </div>
+               </div>
+             )}
           </Card>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <Card title="Participants">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-                <Users size={18} color="var(--accent-cyan)" />
-                <span>24 / 28 Students Present</span>
-              </div>
-              <ul style={{ listStyle: 'none', padding: 0, maxHeight: '200px', overflowY: 'auto' }}>
-                {['John D.', 'Sarah M.', 'Michael B.', 'Emma W.', 'Alex K.'].map((student, i) => (
-                  <li key={i} style={{ padding: '8px 0', borderBottom: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>{student}</span>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34c759', alignSelf: 'center' }}></span>
-                  </li>
-                ))}
-              </ul>
+          <Card title="Upcoming Scheduled Classes">
+             {upcomingClasses.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>No upcoming classes scheduled.</div>
+             ) : (
+               <div style={{ display: 'grid', gap: '15px' }}>
+                 {upcomingClasses.map(cls => {
+                   const startObj = new Date(cls.start_time);
+                   const endObj = new Date(cls.end_time);
+                   const isToday = startObj.toDateString() === new Date().toDateString();
+                   
+                   return (
+                     <div key={cls.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--panel-border)' }}>
+                       <div>
+                         <h3 style={{ margin: '0 0 5px 0', color: 'var(--text-primary)' }}>{cls.title}</h3>
+                         <p style={{ margin: '0 0 8px 0', color: 'var(--accent-blue)', fontSize: '14px', fontWeight: 'bold' }}>Target: {cls.class_name}</p>
+                         <div style={{ display: 'flex', gap: '15px', color: 'var(--text-secondary)', fontSize: '13px' }}>
+                           <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                             <CalendarIcon size={14} /> 
+                             {isToday ? 'Today' : startObj.toLocaleDateString()}
+                           </span>
+                           <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                             <Clock size={14} /> 
+                             {startObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {endObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                           </span>
+                         </div>
+                       </div>
+                       <div style={{ display: 'flex', gap: '10px' }}>
+                          <button onClick={() => deleteScheduledClass(cls.id)} className="btn btn-ghost" style={{ padding: '10px', color: '#ff3b30' }}>
+                            <Trash2 size={18} />
+                          </button>
+                          <button onClick={() => startScheduledClass(cls.id)} className="btn btn-primary" style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--accent-cyan)', color: 'black' }}>
+                            <Play size={18} fill="black" /> Start Class Now
+                          </button>
+                       </div>
+                     </div>
+                   );
+                 })}
+               </div>
+             )}
+          </Card>
+        </div>
+      ) : activeTab === 'tests' ? (
+        testCreationMode === 'mcq' ? (
+          <CreateMCQTest onCancel={() => { setTestCreationMode(null); fetchTests(); }} />
+        ) : testCreationMode === 'qa' ? (
+          <CreateQATest onCancel={() => { setTestCreationMode(null); fetchTests(); }} />
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }} className="animate-fade-in">
+            <Card title="Create a Test">
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
+                  <button onClick={() => setTestCreationMode('mcq')} className="btn btn-ghost" style={{ justifyContent: 'flex-start', padding: '15px', border: '1px dashed var(--accent-cyan)' }}>
+                    <CheckCircle size={20} color="var(--accent-cyan)" />
+                    <div style={{ textAlign: 'left' }}>
+                      <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Multiple Choice (MCQ)</h4>
+                      <p style={{ margin: '5px 0 0', fontSize: '12px' }}>Auto-graded quiz</p>
+                    </div>
+                  </button>
+                  <button onClick={() => setTestCreationMode('qa')} className="btn btn-ghost" style={{ justifyContent: 'flex-start', padding: '15px', border: '1px dashed var(--accent-purple)' }}>
+                    <FileText size={20} color="var(--accent-purple)" />
+                    <div style={{ textAlign: 'left' }}>
+                      <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Question / Answer</h4>
+                      <p style={{ margin: '5px 0 0', fontSize: '12px' }}>Long form essay style</p>
+                    </div>
+                  </button>
+               </div>
             </Card>
 
-            <Card title="Active Tests">
-              <div style={{ padding: '15px', background: 'rgba(255, 215, 0, 0.05)', borderRadius: '8px', border: '1px solid rgba(255, 215, 0, 0.2)' }}>
-                <h4 style={{ margin: '0 0 5px 0', color: 'var(--accent-gold)' }}>Physics Midterm</h4>
-                <p style={{ margin: 0, fontSize: '13px' }}>15/28 submitted</p>
-                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', marginTop: '10px', borderRadius: '2px' }}>
-                  <div style={{ width: '53%', height: '100%', background: 'var(--accent-gold)', borderRadius: '2px' }}></div>
+            <Card title="Assigned Tests">
+              {isLoadingTests ? (
+                <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading tests...</div>
+              ) : testsList.length === 0 ? (
+                <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-secondary)' }}>No tests have been created yet. Click a button on the left to create one.</div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
+                  {testsList.map(test => (
+                    <div key={test.id} style={{ padding: '20px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px', border: '1px solid var(--panel-border)' }}>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                          <FileText size={20} color="var(--accent-purple)" />
+                          <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>{test.title}</h3>
+                       </div>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', color: 'var(--text-secondary)', fontSize: '13px' }}>
+                          <Clock size={14} /> <span>{test.duration ? `${test.duration} mins` : 'Unlimited time'}</span>
+                       </div>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', color: 'var(--text-secondary)', fontSize: '13px' }}>
+                          <CheckCircle size={14} /> <span>{test.questions?.length || 0} Questions ({test.type.toUpperCase()})</span>
+                       </div>
+                       
+                       {test.start_time && test.end_time && (
+                         <div style={{ marginBottom: '15px', padding: '10px', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-secondary)', borderLeft: '2px solid var(--accent-purple)' }}>
+                           <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
+                             <CalendarIcon size={12} color="var(--accent-purple)" />
+                             <span style={{ fontWeight: 'bold' }}>Opens:</span> {new Date(test.start_time).toLocaleString()}
+                           </div>
+                           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                             <Clock size={12} color="var(--accent-purple)" />
+                             <span style={{ fontWeight: 'bold' }}>Closes:</span> {new Date(test.end_time).toLocaleString()}
+                           </div>
+                         </div>
+                       )}
+
+                       <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                         Created: {new Date(test.created_at).toLocaleDateString()}
+                       </p>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
             </Card>
           </div>
-        </div>
-      ) : testCreationMode === 'mcq' ? (
-        <CreateMCQTest onCancel={() => setTestCreationMode(null)} />
-      ) : testCreationMode === 'qa' ? (
-        <CreateQATest onCancel={() => setTestCreationMode(null)} />
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }} className="animate-fade-in">
-          <Card title="Create a Test">
-             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
-                <button onClick={() => setTestCreationMode('mcq')} className="btn btn-ghost" style={{ justifyContent: 'flex-start', padding: '15px', border: '1px dashed var(--accent-cyan)' }}>
-                  <CheckCircle size={20} color="var(--accent-cyan)" />
-                  <div style={{ textAlign: 'left' }}>
-                    <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Multiple Choice (MCQ)</h4>
-                    <p style={{ margin: '5px 0 0', fontSize: '12px' }}>Auto-graded quiz</p>
-                  </div>
-                </button>
-                <button onClick={() => setTestCreationMode('qa')} className="btn btn-ghost" style={{ justifyContent: 'flex-start', padding: '15px', border: '1px dashed var(--accent-purple)' }}>
-                  <FileText size={20} color="var(--accent-purple)" />
-                  <div style={{ textAlign: 'left' }}>
-                    <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Question / Answer</h4>
-                    <p style={{ margin: '5px 0 0', fontSize: '12px' }}>Long form essay style</p>
-                  </div>
-                </button>
-             </div>
-          </Card>
-
-          <Card title="Manage Tests">
-             <ul style={{ listStyle: 'none', padding: 0 }}>
-                <li style={{ padding: '15px', borderBottom: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Physics Midterm (MCQ)</h4>
-                    <p style={{ margin: '5px 0 0', fontSize: '13px' }}>Assigned to: Class 9-B • Due: Today</p>
-                  </div>
-                  <span style={{ padding: '5px 10px', borderRadius: '15px', background: 'rgba(255, 215, 0, 0.1)', color: 'var(--accent-gold)', fontSize: '12px', fontWeight: 'bold' }}>Active</span>
-                </li>
-                <li style={{ padding: '15px', borderBottom: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Math Pop Quiz (Q/A)</h4>
-                    <p style={{ margin: '5px 0 0', fontSize: '13px' }}>Assigned to: Class 10-A • Due: Tomorrow</p>
-                  </div>
-                  <span style={{ padding: '5px 10px', borderRadius: '15px', background: 'rgba(0, 229, 255, 0.1)', color: 'var(--accent-cyan)', fontSize: '12px', fontWeight: 'bold' }}>Draft</span>
-                </li>
-             </ul>
-          </Card>
-        </div>
-      )}
+        )
+      ) : null}
     </div>
   );
 }

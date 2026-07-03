@@ -9,6 +9,7 @@ import Classes from './views/Classes';
 import Analytics from './views/Analytics';
 import Settings from './views/Settings';
 import Communications from './views/Communications';
+import Notifications from './views/Notifications';
 import './App.css';
 import { supabase } from './supabase';
 
@@ -22,7 +23,16 @@ function App() {
   });
 
   React.useEffect(() => {
-    const verifySession = async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+      const demoUser = urlParams.get('user');
+      if (demoUser) {
+        const u = JSON.parse(decodeURIComponent(demoUser));
+        localStorage.setItem('edtech_user', JSON.stringify(u));
+        setUser(u);
+        return;
+      }
+
+      const verifySession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         localStorage.removeItem('edtech_user');
@@ -50,7 +60,7 @@ function App() {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0a0f1d', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
         <h1 style={{ color: '#FF6B6B', marginBottom: '10px' }}>Access Denied</h1>
         <p style={{ color: '#8b9bb4', marginBottom: '30px' }}>You do not have permission to access the Admin Portal.</p>
-        <a href="https://gauravroy888.github.io/Working-Platform/" style={{ padding: '12px 24px', background: 'var(--accent-cyan, #00f0ff)', color: '#000', textDecoration: 'none', borderRadius: '8px', fontWeight: 'bold' }}>Return to Login</a>
+        <a href={window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '/login.html' : 'https://gauravroy888.github.io/Working-Platform/login.html'} style={{ padding: '12px 24px', background: 'var(--accent-cyan, #00f0ff)', color: '#000', textDecoration: 'none', borderRadius: '8px', fontWeight: 'bold' }}>Return to Login</a>
       </div>
     );
   }
@@ -66,9 +76,12 @@ function App() {
         <Route path="communications" element={<Communications />} />
         <Route path="analytics" element={<Analytics />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="notifications" element={<Notifications />} />
       </Route>
     </Routes>
   );
 }
 
 export default App;
+
+console.log('Cache buster v2');

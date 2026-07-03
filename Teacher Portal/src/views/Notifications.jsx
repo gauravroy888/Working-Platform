@@ -124,10 +124,10 @@ export default function Notifications() {
                 <div className="notif-icon-wrapper" style={{ backgroundColor: `${color}20`, color: color, width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '15px' }}>
                   <Icon size={20} />
                 </div>
-                <div className="notif-content" style={{ flex: 1 }}>
+                <div className="notif-content" style={{ flex: 1, minWidth: 0 }}>
                   <h4 className="notif-title" style={{ margin: '0 0 5px 0', color: '#fff', fontSize: '15px' }}>{notif.title}</h4>
-                  <p className="notif-message" style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '13px' }}>{notif.message}</p>
-                  <span className="notif-time" style={{ display: 'block', marginTop: '5px', color: 'var(--text-secondary)', fontSize: '11px' }}>
+                  <p className="notif-message" style={{ margin: 0, color: '#e2e8f0', fontSize: '14.5px', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{notif.message}</p>
+                  <span className="notif-time" style={{ display: 'block', marginTop: '6px', color: 'rgba(255, 255, 255, 0.4)', fontSize: '11px' }}>
                     {new Date(notif.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                   </span>
                 </div>
