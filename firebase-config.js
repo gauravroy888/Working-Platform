@@ -72,7 +72,7 @@ export const signInWithGoogle = async () => {
         const userParam = encodeURIComponent(JSON.stringify(userData));
         
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const basePath = isLocal ? '' : '/Comm-Test';
+        const basePath = isLocal ? '' : '/Working-Platform';
 
         if (role === 'admin') {
             window.location.href = isLocal ? 'http://localhost:5175/?user=' + userParam : basePath + '/admin/?user=' + userParam; 

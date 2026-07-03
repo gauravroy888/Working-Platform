@@ -50,7 +50,7 @@ supabase.auth.onAuthStateChange(async (event, session) => {
 
         // Determine target portal based on DB role
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const basePath = isLocal ? '' : '/Comm-Test';
+        const basePath = isLocal ? '' : '/Working-Platform';
 
         let targetPortal = '/student/';
         if (role === 'admin') targetPortal = '/admin/';
@@ -58,7 +58,7 @@ supabase.auth.onAuthStateChange(async (event, session) => {
 
         const isOnLoginPage = window.location.pathname.includes('login.html') ||
             window.location.pathname === '/' ||
-            window.location.pathname.endsWith('/Comm-Test/') ||
+            window.location.pathname.endsWith('/Working-Platform/') ||
             window.location.pathname.endsWith('Landing Page/');
 
         if (isOnLoginPage) {
@@ -69,7 +69,7 @@ supabase.auth.onAuthStateChange(async (event, session) => {
 
 export const signInWithGoogle = async () => {
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '';
-    const basePath = isLocal ? '' : '/Comm-Test';
+    const basePath = isLocal ? '' : '/Working-Platform';
     const redirectUrl = window.location.origin + basePath + '/login.html';
 
     const { data, error } = await supabase.auth.signInWithOAuth({
