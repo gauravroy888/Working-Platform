@@ -68,7 +68,7 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
     if (!currentUser) return;
     
     const { data: myConvs } = await supabase.from('conversations')
-      .select('id, type')
+      .select('id')
       .or(`participant1_email.eq.${currentUser.email},participant2_email.eq.${currentUser.email},participants.cs.["${currentUser.email}"]`);
       
     if (!myConvs || myConvs.length === 0) return;
@@ -83,8 +83,9 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
     if (unreadMsgs) {
       const counts = {};
       unreadMsgs.forEach(msg => {
-        const conv = myConvs.find(c => c.id === msg.conversationId);
-        const key = (conv && conv.type === 'group') ? msg.conversationId : msg.senderEmail;
+        // Find if this is a group msg
+        const grp = groups.find(g => g.id === msg.conversationId);
+        const key = grp ? grp.id : msg.senderEmail;
         counts[key] = (counts[key] || 0) + 1;
       });
       setUnreadCounts(counts);
@@ -245,12 +246,6 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
         .neq('senderEmail', currentUser.email)
         .eq('is_read', false);
         
-      await supabase.from('notifications')
-        .update({ is_read: true })
-        .eq('user_email', currentUser.email)
-        .eq('type', 'message')
-        .eq('is_read', false);
-        
       setUnreadCounts(prev => ({ ...prev, [activeContact.isGroup ? activeContact.id : activeContact.email]: 0 }));
     };
     markAsRead();
@@ -399,19 +394,8 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
                   return (
                     <div key={msg.id || idx} className={`chat-bubble-wrapper ${isMe ? 'is-me' : 'is-them'}`}>
                       {activeContact.isGroup && !isMe && (
-                        <div style={{ marginRight: '8px', display: 'flex', alignItems: 'flex-end' }}>
-                          {(() => {
-                            const sender = profiles.find(p => p.email === msg.senderEmail);
-                            if (sender && sender.avatar_url) {
-                              return <img src={sender.avatar_url} title={msg.senderName} alt={msg.senderName} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />;
-                            } else {
-                              return (
-                                <div title={msg.senderName} style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--accent-purple)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' }}>
-                                  {(msg.senderName || '?').charAt(0).toUpperCase()}
-                                </div>
-                              );
-                            }
-                          })()}
+                        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', marginLeft: '4px' }}>
+                          {msg.senderName}
                         </div>
                       )}
                       <div className="chat-bubble">

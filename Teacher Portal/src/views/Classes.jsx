@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../components/Card';
-import { Users, BookOpen, X, Check, Search, Palette, UserPlus, Trash2, Edit2 } from 'lucide-react';
+import { Users, BookOpen, X, Check, Search, Palette, UserPlus } from 'lucide-react';
 import { supabase } from '../supabase';
 
 export default function Classes() {
@@ -62,7 +62,7 @@ export default function Classes() {
   const openModal = (modalType, cls) => {
     setSelectedClass(cls);
     setEditingGroup(null);
-    if (modalType === 'manageGroups') {
+    if (modalType === 'manage_groups') {
       setGroupName('');
       setSelectedStudents([]);
       setGroupColor(colors[0]);
@@ -143,7 +143,7 @@ export default function Classes() {
     setGroupName(displayName);
     setGroupColor(bgColor);
     setSelectedStudents(group.participants.filter(email => email !== currentUser.email));
-    setActiveModal('manageGroups');
+    setActiveModal('manage_groups');
   };
 
   const handleDeleteGroup = async (groupId) => {
@@ -291,11 +291,11 @@ export default function Classes() {
       {/* Manage Groups Modal */}
       {activeModal === 'manageGroups' && selectedClass && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-          <div className="animate-scale-in" style={{ background: '#1a1f2b', borderRadius: '16px', width: '100%', maxWidth: '1100px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', border: '1px solid var(--panel-border)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+          <div className="animate-scale-in" style={{ background: '#1a1f2b', borderRadius: '16px', width: '100%', maxWidth: '800px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', border: '1px solid var(--panel-border)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
             <div style={{ padding: '20px 25px', borderBottom: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h2 style={{ margin: 0, color: '#fff' }}>Manage Learning Groups</h2>
-                <p style={{ margin: '5px 0 0 0', color: 'var(--text-secondary)', fontSize: '14px' }}>Create and manage groups for {selectedClass.name}.</p>
+                <h2 style={{ margin: 0, color: '#fff' }}>{editingGroup ? 'Edit Learning Group' : 'Create Learning Group'}</h2>
+                <p style={{ margin: '5px 0 0 0', color: 'var(--text-secondary)', fontSize: '14px' }}>Assign students from {selectedClass.name} to a new group.</p>
               </div>
               <button onClick={closeModal} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                 <X size={18} />
@@ -303,67 +303,9 @@ export default function Classes() {
             </div>
             
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-              
-              {/* Left Column: Existing Groups */}
-              <div style={{ width: '280px', borderRight: '1px solid var(--panel-border)', padding: '20px', display: 'flex', flexDirection: 'column', background: 'rgba(0,0,0,0.2)', overflowY: 'auto' }}>
-                <button 
-                  onClick={() => { setEditingGroup(null); setGroupName(''); setSelectedStudents([]); setGroupColor(colors[0]); }}
-                  style={{ width: '100%', background: !editingGroup ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)', color: !editingGroup ? '#000' : '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', marginBottom: '20px', transition: 'all 0.2s' }}
-                >
-                  <UserPlus size={16} /> New Group
-                </button>
-                
-                <h3 style={{ margin: '0 0 15px 0', color: 'var(--text-secondary)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px' }}>Existing Groups</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {classGroups.length > 0 ? classGroups.map(group => {
-                    const hasColor = group.name && group.name.includes('|');
-                    const bgColor = hasColor ? group.name.split('|')[0] : colors[0];
-                    const displayName = hasColor ? group.name.split('|')[1] : group.name;
-                    const isEditing = editingGroup?.id === group.id;
-                    
-                    return (
-                      <div 
-                        key={group.id} 
-                        onClick={() => handleEditGroup(group)}
-                        style={{ 
-                          background: isEditing ? `${bgColor}15` : 'rgba(255,255,255,0.03)', 
-                          border: `1px solid ${isEditing ? bgColor : 'transparent'}`, 
-                          padding: '15px', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s',
-                          display: 'flex', flexDirection: 'column', gap: '10px'
-                        }}
-                        className="hover-lift"
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: bgColor }}></div>
-                          <span style={{ color: isEditing ? '#fff' : 'var(--text-secondary)', fontWeight: isEditing ? 'bold' : 'normal', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{group.participants.length} Members</span>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleDeleteGroup(group.id); }}
-                            style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '4px', borderRadius: '4px' }}
-                            title="Delete Group"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  }) : (
-                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)', fontSize: '14px' }}>
-                      No groups created yet.
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Middle Column: Group Details */}
-              <div style={{ width: '320px', borderRight: '1px solid var(--panel-border)', padding: '25px', display: 'flex', flexDirection: 'column', gap: '25px', background: 'rgba(0,0,0,0.1)' }}>
+              {/* Left sidebar: Group Details */}
+              <div style={{ width: '300px', borderRight: '1px solid var(--panel-border)', padding: '25px', display: 'flex', flexDirection: 'column', gap: '25px', background: 'rgba(0,0,0,0.1)' }}>
                 <div>
-                  <h3 style={{ margin: '0 0 20px 0', color: '#fff', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Edit2 size={16} color="var(--accent-cyan)" />
-                    {editingGroup ? 'Edit Group' : 'Group Details'}
-                  </h3>
                   <label style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '14px' }}>Group Name</label>
                   <input 
                     type="text" 
@@ -420,14 +362,14 @@ export default function Classes() {
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.3s'
                     }}
                   >
-                    <Check size={18} />
-                    {isCreating ? 'Saving...' : (editingGroup ? 'Save Changes' : 'Create Group')}
+                    <UserPlus size={18} />
+                    {isCreating ? 'Saving...' : (editingGroup ? 'Update Group' : 'Create Group')}
                   </button>
                 )}
               </div>
               
-              {/* Right Column: Student Selection */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--panel-bg)' }}>
+              {/* Right side: Student Selection */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ padding: '20px', borderBottom: '1px solid var(--panel-border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', padding: '10px 15px', border: '1px solid var(--panel-border)' }}>
                     <Search size={18} color="var(--text-secondary)" style={{ marginRight: '10px' }} />
