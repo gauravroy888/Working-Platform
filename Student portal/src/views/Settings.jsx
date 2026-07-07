@@ -4,14 +4,16 @@ import Card from '../components/Card';
 import { useTheme } from '../ThemeContext';
 import { supabase } from '../supabase';
 import './Settings.css';
+import ProfilePhotoModal from '../components/ProfilePhotoModal';
 
 export default function Settings() {
   const { backgroundImage, setBackgroundImage, profileImage, setProfileImage, profileName, setProfileName } = useTheme();
   const fileInputRef = useRef(null);
-  const avatarInputRef = useRef(null);
 
   const [formData, setFormData] = useState({ name: '', email: '', grade: 'Grade 6', bio: '' });
   const [isSaving, setIsSaving] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+
 
   useEffect(() => {
     try {
@@ -67,22 +69,6 @@ export default function Settings() {
     }
   };
 
-  const handleAvatarUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result;
-        try {
-          setProfileImage(base64String);
-        } catch (e) {
-          alert('Image is too large to save to local storage. Please try a smaller image.');
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   return (
     <div className="view-container">
       <Card className="full-height-card">
@@ -103,40 +89,35 @@ export default function Settings() {
             <div className="profile-edit-layout">
               <div className="profile-photo-col">
                 <div className="avatar-preview">
-                  <img src={profileImage} alt="Alex K." />
+                  <img src={profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(formData.name || 'User')}&mouth=smile,default&eyes=happy,default`} alt="Avatar Preview" />
                 </div>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  ref={avatarInputRef} 
-                  style={{ display: 'none' }} 
-                  onChange={handleAvatarUpload} 
-                />
                 <button 
-                  className="btn btn-ghost text-cyan text-sm"
-                  onClick={() => avatarInputRef.current.click()}
+                  className="btn btn-primary text-sm mt-10"
+                  onClick={() => setShowPhotoModal(true)}
                 >
-                  Change Photo
+                  Edit Profile Photo
                 </button>
               </div>
               
               <div className="profile-form-col">
-                <div className="form-group">
-                  <label>Full Name</label>
-                  <input type="text" name="name" className="form-input" value={formData.name} onChange={handleChange} />
+                <div className="form-group-row">
+                  <div>
+                    <label>Full Name</label>
+                    <input type="text" className="form-input" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Alex K." />
+                  </div>
+                  <div>
+                    <label>Email Address</label>
+                    <input type="email" className="form-input" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="alex@edtechisland.com" />
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label>Email</label>
-                  <input type="email" name="email" className="form-input" value={formData.email} readOnly style={{ opacity: 0.7, cursor: 'not-allowed' }} />
+                
+                <div className="form-group-row">
+                  <div>
+                    <label>Role</label>
+                    <input type="text" className="form-input" value={formData.grade} readOnly style={{ opacity: 0.7 }} />
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label>Grade</label>
-                  <select name="grade" className="form-input" value={formData.grade} onChange={handleChange}>
-                    <option>Grade 6</option>
-                    <option>Grade 7</option>
-                    <option>Grade 8</option>
-                  </select>
-                </div>
+
               </div>
             </div>
             
@@ -236,6 +217,7 @@ export default function Settings() {
           </div>
         </div>
       </Card>
+      <ProfilePhotoModal isOpen={showPhotoModal} onClose={() => setShowPhotoModal(false)} />
     </div>
   );
 }

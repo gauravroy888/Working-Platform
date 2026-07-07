@@ -19,12 +19,18 @@ export default function Classes() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
   const [currentUser, setCurrentUser] = useState({ email: 'teacher@edtech.edu', name: 'Teacher' });
+  const [dbStudents, setDbStudents] = useState([]);
 
   useEffect(() => {
     const userStr = localStorage.getItem('edtech_user');
     if (userStr) {
       try { setCurrentUser(JSON.parse(userStr)); } catch (e) {}
     }
+    
+    // Fetch real students from DB
+    supabase.from('profiles').select('*').eq('role', 'student').then(({data}) => {
+      if (data) setDbStudents(data);
+    });
   }, []);
 
   const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#D4A5A5', '#9B59B6', '#F39C12'];
@@ -38,18 +44,7 @@ export default function Classes() {
     { id: '6th', name: 'Class 6th', subject: 'General Science', students: 30, performance: '82%' }
   ];
 
-  const class6thStudents = [
-    { id: '1', name: 'Thor Roy', email: 'thorroy888@gmail.com', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=thor' },
-    { id: '2', name: 'Saurav Roy', email: 'sauravroy469@gmail.com', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=saurav' },
-    { id: '3', name: 'APS Rathore', email: 'apsrathore47@gmail.com', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=aps' },
-    { id: '4', name: 'Aman Sharma', email: 'aman@edtech.edu', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aman' },
-    { id: '5', name: 'Priya Patel', email: 'priya@edtech.edu', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya' },
-    { id: '6', name: 'Rahul Singh', email: 'rahul@edtech.edu', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rahul' },
-    { id: '7', name: 'Neha Gupta', email: 'neha@edtech.edu', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Neha' },
-    { id: '8', name: 'Karan Malhotra', email: 'karan@edtech.edu', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Karan' }
-  ];
-
-  const filteredStudents = class6thStudents.filter(s => 
+  const filteredStudents = dbStudents.filter(s => 
     s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     s.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -237,7 +232,7 @@ export default function Classes() {
               {rosterTab === 'students' ? (
                 filteredStudents.length > 0 ? filteredStudents.map(student => (
                   <div key={student.id} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s', borderRadius: '8px' }}>
-                    <img src={student.avatar} alt={student.name} style={{ width: '45px', height: '45px', borderRadius: '50%', background: '#fff' }} />
+                    <img src={student.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User'} alt={student.name} style={{ width: '45px', height: '45px', borderRadius: '50%', background: '#fff' }} />
                     <div>
                       <h4 style={{ margin: 0, color: '#fff', fontSize: '15px' }}>{student.name}</h4>
                       <p style={{ margin: '2px 0 0 0', color: 'var(--text-secondary)', fontSize: '13px' }}>{student.email}</p>
@@ -401,7 +396,7 @@ export default function Classes() {
                     <span style={{ color: '#fff', fontWeight: 'bold' }}>{selectedStudents.length}</span>
                   </div>
                   <div style={{ height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${(selectedStudents.length / class6thStudents.length) * 100}%`, background: groupColor, transition: 'all 0.3s' }}></div>
+                    <div style={{ height: '100%', width: `${(selectedStudents.length / Math.max(1, dbStudents.length)) * 100}%`, background: groupColor, transition: 'all 0.3s' }}></div>
                   </div>
                 </div>
                 
@@ -460,7 +455,7 @@ export default function Classes() {
                         }}>
                           {isSelected && <Check size={14} color="#000" strokeWidth={3} />}
                         </div>
-                        <img src={student.avatar} alt={student.name} style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#fff' }} />
+                        <img src={student.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User'} alt={student.name} style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#fff' }} />
                         <div>
                           <h4 style={{ margin: 0, color: '#fff', fontSize: '15px' }}>{student.name}</h4>
                           <p style={{ margin: '2px 0 0 0', color: 'var(--text-secondary)', fontSize: '13px' }}>{student.email}</p>

@@ -4,6 +4,7 @@ import { Save, Image as ImageIcon, User, Upload } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
 import defaultAvatar from '../assets/avatar.png';
 import defaultBg from '../assets/milky-way-starry-sky2k.jpg';
+import ProfilePhotoModal from '../components/ProfilePhotoModal';
 
 export default function Settings() {
   const { 
@@ -13,15 +14,31 @@ export default function Settings() {
     backgroundImage, setBackgroundImage 
   } = useTheme();
 
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+
+
   // Local state for the form so we don't update context on every keystroke
   const [localName, setLocalName] = useState(profileName);
   const [localDesignation, setLocalDesignation] = useState(profileDesignation);
 
-  const handleSaveProfile = (e) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
     setProfileName(localName);
     setProfileDesignation(localDesignation);
-    // Could add a toast notification here
+    
+    try {
+      const userStr = localStorage.getItem('edtech_user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        // Only saving name back to DB
+        const { supabase } = await import('../supabase');
+        await supabase.from('profiles').update({ name: localName }).eq('email', user.email);
+        user.name = localName;
+        localStorage.setItem('edtech_user', JSON.stringify(user));
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleImageUpload = (e, setter) => {
@@ -45,7 +62,14 @@ export default function Settings() {
     borderRadius: '8px', 
     background: 'rgba(255,255,255,0.05)', 
     border: '1px solid var(--panel-border)', 
-    color: 'white'
+    color: 'white',
+    outline: 'none'
+  };
+
+  const selectStyle = {
+    ...inputStyle,
+    appearance: 'none',
+    cursor: 'pointer'
   };
 
   const uploadBtnStyle = {
@@ -102,20 +126,20 @@ export default function Settings() {
         <Card title="Appearance & Personalization">
           <div style={{ display: 'grid', gap: '25px' }}>
             
-            {/* Avatar Upload */}
+            {/* Profile Photo Settings */}
             <div>
-              <h4 style={{ margin: '0 0 10px 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <User size={18} color="var(--accent-cyan)" /> Profile Avatar
+              <h4 style={{ margin: '0 0 15px 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <User size={18} color="var(--accent-cyan)" /> Profile Photo
               </h4>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                <img src={profileImage} alt="Avatar Preview" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)' }} />
-                <div>
-                  <label style={uploadBtnStyle}>
-                    <Upload size={16} /> Upload New Avatar
-                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleImageUpload(e, setProfileImage)} />
-                  </label>
-                  <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>Recommended size: 256x256px (Max 5MB)</p>
-                  <button onClick={() => setProfileImage(defaultAvatar)} style={{ background: 'none', border: 'none', color: 'var(--accent-cyan)', fontSize: '12px', marginTop: '5px', cursor: 'pointer', padding: 0 }}>Reset to default</button>
+              <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                <img src={profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileName)}&mouth=smile,default&eyes=happy,default`} alt="Avatar Preview" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)', background: '#fff' }} />
+                
+                <div style={{ flex: 1 }}>
+                  <h5 style={{ margin: '0 0 5px 0', color: '#fff', fontSize: '15px' }}>Your Avatar</h5>
+                  <p style={{ margin: '0 0 10px 0', color: 'var(--text-secondary)', fontSize: '13px' }}>Customize your generated avatar or upload a custom photo.</p>
+                  <button onClick={() => setShowPhotoModal(true)} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '13px', height: 'fit-content' }}>
+                    Edit Profile Photo
+                  </button>
                 </div>
               </div>
             </div>
@@ -165,6 +189,7 @@ export default function Settings() {
         </Card>
 
       </div>
+      <ProfilePhotoModal isOpen={showPhotoModal} onClose={() => setShowPhotoModal(false)} />
     </div>
   );
 }

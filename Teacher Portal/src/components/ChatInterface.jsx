@@ -162,24 +162,6 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
         // Mock specific students for Class 6th if they aren't already in the DB
         if (selectedClass === 'Class 6th') {
           classStudents = filtered.filter(p => p.role === 'student');
-          
-          const class6thStudents = [
-            { id: 'mock-1', name: 'Thor Roy', email: 'thorroy888@gmail.com', role: 'student', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=thor' },
-            { id: 'mock-2', name: 'Saurav Roy', email: 'sauravroy469@gmail.com', role: 'student', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=saurav' },
-            { id: 'mock-3', name: 'APS Rathore', email: 'apsrathore47@gmail.com', role: 'student', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=aps' },
-            { id: 'mock-4', name: 'Aman Sharma', email: 'aman@edtech.edu', role: 'student', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aman' },
-            { id: 'mock-5', name: 'Priya Patel', email: 'priya@edtech.edu', role: 'student', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya' },
-            { id: 'mock-6', name: 'Rahul Singh', email: 'rahul@edtech.edu', role: 'student', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rahul' },
-            { id: 'mock-7', name: 'Neha Gupta', email: 'neha@edtech.edu', role: 'student', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Neha' },
-            { id: 'mock-8', name: 'Karan Malhotra', email: 'karan@edtech.edu', role: 'student', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Karan' }
-          ];
-          
-          // Merge mock students ensuring no duplicates by email
-          class6thStudents.forEach(ms => {
-            if (!classStudents.some(cs => cs.email === ms.email)) {
-              classStudents.push(ms);
-            }
-          });
         }
         
         const classGroups = groups

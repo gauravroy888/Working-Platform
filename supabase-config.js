@@ -11,30 +11,35 @@ supabase.auth.onAuthStateChange(async (event, session) => {
         const user = session.user;
         const userEmail = user.email?.toLowerCase() || '';
 
-        // Query the users table to get the REAL role from the database
+        // Query the users table to get the REAL role and existing profile from the database
         let role = 'student'; // Default
+        let existingProfile = null;
         try {
-            // Check profiles table for user role
+            // Check profiles table for user role, name, and avatar
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('role')
+                .select('*')
                 .eq('email', userEmail)
                 .single();
             if (profile) {
-                role = profile.role;
+                role = profile.role || 'student';
+                existingProfile = profile;
             }
         } catch (err) {
             // User not found in users table — default to student
         }
 
+        const profileName = existingProfile?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+        const profileAvatar = existingProfile?.avatar_url || user.user_metadata?.avatar_url || null;
+
         // Auto-sync profile on first login (upsert so no duplicates)
         try {
             await supabase.from('profiles').upsert({
                 email: userEmail,
-                name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+                name: profileName,
                 role: role,
                 auth_id: user.id,
-                avatar_url: user.user_metadata?.avatar_url || null
+                avatar_url: profileAvatar
             }, { onConflict: 'email', ignoreDuplicates: false });
         } catch (err) {
             // Profile sync failed silently — chat will still work
@@ -43,10 +48,19 @@ supabase.auth.onAuthStateChange(async (event, session) => {
         const edtechUser = {
             uid: user.id,
             email: userEmail,
-            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-            role: role
+            name: profileName,
+            role: role,
+            avatar_url: profileAvatar
         };
         localStorage.setItem('edtech_user', JSON.stringify(edtechUser));
+        
+        // Save to global portal variables so ThemeContext picks them up!
+        localStorage.setItem('portal_name', profileName);
+        if (profileAvatar) localStorage.setItem('portal_avatar', profileAvatar);
+        let designation = 'Student';
+        if (role === 'admin') designation = 'Administrator';
+        else if (role === 'teacher') designation = 'Teacher';
+        localStorage.setItem('portal_designation', designation);
 
         // Determine target portal based on DB role
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
