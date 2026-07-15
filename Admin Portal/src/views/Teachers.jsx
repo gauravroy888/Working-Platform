@@ -1,40 +1,116 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, MoreVertical, BookOpen, User, Activity, Edit3 } from 'lucide-react';
 import ProgressBar from '../components/ProgressBar';
 import Modal from '../components/Modal';
-
-const initialTeachersData = [
-  { id: 1, name: 'Sarah Jenkins', dept: 'Science', classes: ['Grade 10-A', 'Grade 11-B'], progress: 75, tests: 12, performance: 'Excellent' },
-  { id: 2, name: 'Michael Chen', dept: 'Mathematics', classes: ['Grade 9-A', 'Grade 10-A', 'Grade 12-C'], progress: 60, tests: 8, performance: 'Good' },
-  { id: 3, name: 'Emily Roberts', dept: 'English', classes: ['Grade 11-A', 'Grade 11-C'], progress: 90, tests: 15, performance: 'Outstanding' },
-  { id: 4, name: 'David Thompson', dept: 'History', classes: ['Grade 10-B', 'Grade 12-A'], progress: 45, tests: 5, performance: 'Average' },
-];
+import { supabase } from '../supabase';
 
 export default function Teachers() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [teachers, setTeachers] = useState(initialTeachersData);
+  const [teachers, setTeachers] = useState([]);
+  const [allClasses, setAllClasses] = useState([]);
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', dept: '', classes: '' });
+  const [newTeacherData, setNewTeacherData] = useState({ name: '', dept: '', age: '', email: '', login_id: '', password: '', avatar_url: '' });
+  const [teacherAvatarFile, setTeacherAvatarFile] = useState(null);
+  const [teacherSelectedClasses, setTeacherSelectedClasses] = useState([]);
+  const [teacherClassSubjects, setTeacherClassSubjects] = useState({}); // Maps classId -> string of subjects
 
   const [assignModalData, setAssignModalData] = useState(null);
   const [assignFormData, setAssignFormData] = useState({ dept: '', classes: '', timetable: '' });
 
-  const handleAddTeacher = (e) => {
+  useEffect(() => {
+    fetchTeachers();
+    fetchClasses();
+  }, []);
+
+  const fetchClasses = async () => {
+    const { data } = await supabase.from('classes').select('*');
+    if (data) setAllClasses(data);
+  };
+
+  const fetchTeachers = async () => {
+    const { data: profiles } = await supabase.from('profiles').select('*').eq('role', 'teacher');
+    if (!profiles) return;
+
+    const { data: links } = await supabase.from('class_teachers').select('*, classes(name)');
+    
+    const formatted = profiles.map(p => {
+      const assigned = links?.filter(l => l.teacher_id === p.id).map(l => {
+        return l.subjects ? `${l.classes?.name} (${l.subjects})` : l.classes?.name;
+      }) || [];
+      return {
+        id: p.id,
+        name: p.name,
+        dept: p.department || 'General',
+        classes: assigned,
+        progress: 0,
+        tests: 0,
+        performance: 'New',
+        avatar: p.avatar_url
+      };
+    });
+    setTeachers(formatted);
+  };
+
+  const handleAddTeacher = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.dept) return;
+    if (!newTeacherData.name || !newTeacherData.login_id || !newTeacherData.password) return;
 
-    setTeachers([...teachers, {
-      id: Date.now(),
-      name: formData.name,
-      dept: formData.dept,
-      classes: formData.classes ? formData.classes.split(',').map(c => c.trim()) : [],
-      progress: 0,
-      tests: 0,
-      performance: 'New'
-    }]);
+    const btn = e.target.querySelector('button[type="submit"]');
+    if (btn) { btn.innerText = 'Creating...'; btn.disabled = true; }
 
-    setFormData({ name: '', dept: '', classes: '' });
-    setIsModalOpen(false);
+    try {
+      let finalAvatarUrl = newTeacherData.avatar_url || null;
+
+      if (teacherAvatarFile) {
+        const fileExt = teacherAvatarFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage.from('avatars').upload(fileName, teacherAvatarFile);
+        if (!uploadError && uploadData) {
+          const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
+          finalAvatarUrl = publicUrl;
+        }
+      }
+
+      // Call the secure Edge Function — password is hashed by Supabase Auth
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('https://qmyrxvtbzlbnvzxypnus.supabase.co/functions/v1/create-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || ''}`,
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFteXJ4dnRiemxibnZ6eHlwbnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjA4OTcsImV4cCI6MjA5NTM5Njg5N30.ABvW_oBzXC2Ffxm5ToLh6t4WmdKPdtg9SyfeAE76iJo'
+        },
+        body: JSON.stringify({
+          name: newTeacherData.name,
+          login_id: newTeacherData.login_id,
+          password: newTeacherData.password,
+          role: 'teacher',
+          email: newTeacherData.email || null,
+          age: newTeacherData.age || null,
+          department: newTeacherData.dept || null,
+          avatar_url: finalAvatarUrl,
+          class_ids: teacherSelectedClasses,
+          class_subjects: teacherClassSubjects
+        })
+      });
+
+      const result = await res.json();
+      if (!res.ok || result.error) {
+        alert('Error adding teacher: ' + (result.error || 'Unknown error'));
+        return;
+      }
+
+      setNewTeacherData({ name: '', dept: '', age: '', email: '', login_id: '', password: '', avatar_url: '' });
+      setTeacherAvatarFile(null);
+      setTeacherSelectedClasses([]);
+      setTeacherClassSubjects({});
+      setIsModalOpen(false);
+      fetchTeachers();
+      alert('Teacher added successfully! They can now log in securely.');
+    } finally {
+      if (btn) { btn.innerText = 'Save Teacher'; btn.disabled = false; }
+    }
   };
 
   const openAssignModal = (teacher) => {
@@ -42,25 +118,12 @@ export default function Teachers() {
     setAssignFormData({
       dept: teacher.dept,
       classes: teacher.classes.join(', '),
-      timetable: '' // For mock purposes, just a free-text note or slot string
+      timetable: ''
     });
   };
 
-  const handleAssignTeacher = (e) => {
+  const handleAssignTeacher = async (e) => {
     e.preventDefault();
-    if (!assignModalData) return;
-
-    setTeachers(teachers.map(t => {
-      if (t.id === assignModalData.id) {
-        return {
-          ...t,
-          dept: assignFormData.dept,
-          classes: assignFormData.classes ? assignFormData.classes.split(',').map(c => c.trim()) : []
-        };
-      }
-      return t;
-    }));
-
     setAssignModalData(null);
   };
 
@@ -95,9 +158,13 @@ export default function Teachers() {
         {teachers.filter(t => t.name.toLowerCase().includes(searchTerm.toLowerCase())).map(teacher => (
           <div key={teacher.id} className="glass-panel" style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flex: 1 }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 'bold' }}>
-                {teacher.name.split(' ').map(n => n[0]).join('')}
-              </div>
+              {teacher.avatar ? (
+                <img src={teacher.avatar} alt={teacher.name} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', background: 'var(--accent-cyan)' }} />
+              ) : (
+                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 'bold' }}>
+                  {teacher.name.split(' ').map(n => n[0]).join('').substring(0,2)}
+                </div>
+              )}
               <div>
                 <h3 style={{ color: '#fff', margin: 0 }}>{teacher.name}</h3>
                 <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{teacher.dept}</span>
@@ -141,29 +208,124 @@ export default function Teachers() {
         ))}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add New Teacher">
-        <form onSubmit={handleAddTeacher}>
-          <div className="form-group">
-            <label>Full Name</label>
-            <input type="text" className="form-control" placeholder="e.g. John Doe" required
-              value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+      {/* Add New Teacher Modal */}
+      {isModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div className="glass-panel animate-scale-in" style={{ width: '90%', maxWidth: '600px', background: '#0B1120', border: '1px solid var(--panel-border)', borderRadius: '16px', overflow: 'hidden' }}>
+            <div style={{ padding: '20px 25px', borderBottom: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>Add New Teacher</h2>
+              <button onClick={() => setIsModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>✕</button>
+            </div>
+            <form onSubmit={handleAddTeacher}>
+              <div style={{ padding: '25px', maxHeight: '60vh', overflowY: 'auto' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                  <div className="form-group">
+                    <label style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '8px', display: 'block' }}>Full Name</label>
+                    <input type="text" required value={newTeacherData.name} onChange={e => setNewTeacherData({...newTeacherData, name: e.target.value})} 
+                      style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--panel-border)', color: 'white' }}/>
+                  </div>
+                  <div className="form-group">
+                    <label style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '8px', display: 'block' }}>Department / Subject</label>
+                    <input type="text" required value={newTeacherData.dept} onChange={e => setNewTeacherData({...newTeacherData, dept: e.target.value})} 
+                      style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--panel-border)', color: 'white' }}/>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                  <div className="form-group">
+                    <label style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '8px', display: 'block' }}>Login ID (e.g. Teacher ID)</label>
+                    <input type="text" required value={newTeacherData.login_id} onChange={e => setNewTeacherData({...newTeacherData, login_id: e.target.value})} 
+                      style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--panel-border)', color: 'white' }}/>
+                  </div>
+                  <div className="form-group">
+                    <label style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '8px', display: 'block' }}>Password</label>
+                    <input type="text" required value={newTeacherData.password} onChange={e => setNewTeacherData({...newTeacherData, password: e.target.value})} 
+                      style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--panel-border)', color: 'white' }}/>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                  <div className="form-group">
+                    <label style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '8px', display: 'block' }}>Gmail ID</label>
+                    <input type="email" required value={newTeacherData.email} onChange={e => setNewTeacherData({...newTeacherData, email: e.target.value})} 
+                      style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--panel-border)', color: 'white' }}/>
+                  </div>
+                  <div className="form-group">
+                    <label style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '8px', display: 'block' }}>Age</label>
+                    <input type="number" required value={newTeacherData.age} onChange={e => setNewTeacherData({...newTeacherData, age: e.target.value})} 
+                      style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--panel-border)', color: 'white' }}/>
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: '20px' }}>
+                  <label style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '8px', display: 'block' }}>Profile Picture</label>
+                  <input type="file" accept="image/*" onChange={e => setTeacherAvatarFile(e.target.files[0])} 
+                    style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--panel-border)', color: 'white' }}/>
+                  <div style={{ marginTop: '10px', color: 'var(--text-secondary)', fontSize: '12px', textAlign: 'center' }}>OR</div>
+                  <input type="url" placeholder="Image URL (if not uploading a file)" value={newTeacherData.avatar_url} onChange={e => setNewTeacherData({...newTeacherData, avatar_url: e.target.value})} 
+                    style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--panel-border)', color: 'white', marginTop: '10px' }}/>
+                </div>
+                
+                <div className="form-group">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <label style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Assign to Classes</label>
+                    <span style={{ fontSize: '12px', background: 'var(--accent-cyan)', color: '#000', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>{teacherSelectedClasses.length} Selected</span>
+                  </div>
+                  
+                  <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--panel-border)', borderRadius: '8px', maxHeight: '250px', overflowY: 'auto' }}>
+                    {allClasses.length === 0 ? (
+                      <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>No classes available.</div>
+                    ) : (
+                      allClasses.map(cls => (
+                        <div key={cls.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 15px', cursor: 'pointer' }}>
+                            <input 
+                              type="checkbox" 
+                              checked={teacherSelectedClasses.includes(cls.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setTeacherSelectedClasses([...teacherSelectedClasses, cls.id]);
+                                } else {
+                                  setTeacherSelectedClasses(teacherSelectedClasses.filter(id => id !== cls.id));
+                                  const newSubjects = { ...teacherClassSubjects };
+                                  delete newSubjects[cls.id];
+                                  setTeacherClassSubjects(newSubjects);
+                                }
+                              }}
+                              style={{ width: '18px', height: '18px', accentColor: 'var(--accent-cyan)' }}
+                            />
+                            <div style={{ color: '#fff', fontWeight: '500' }}>{cls.name}</div>
+                          </label>
+                          {teacherSelectedClasses.includes(cls.id) && (
+                            <div style={{ padding: '0 15px 15px 48px', animation: 'fadeIn 0.2s ease' }}>
+                              <select 
+                                value={teacherClassSubjects[cls.id] || ''}
+                                onChange={(e) => setTeacherClassSubjects({...teacherClassSubjects, [cls.id]: e.target.value})}
+                                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', background: 'rgba(0,0,0,0.5)', border: '1px solid var(--panel-border)', color: 'white', fontSize: '13px', outline: 'none' }}
+                              >
+                                <option value="">-- Select a Subject --</option>
+                                {cls.subject ? cls.subject.split(',').map(sub => sub.trim()).filter(Boolean).map((sub, idx) => (
+                                  <option key={idx} value={sub}>{sub}</option>
+                                )) : (
+                                  <option value="" disabled>No subjects available for this class</option>
+                                )}
+                              </select>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div style={{ padding: '20px 25px', borderTop: '1px solid var(--panel-border)', display: 'flex', justifyContent: 'flex-end', gap: '10px', background: 'rgba(0,0,0,0.2)' }}>
+                <button type="button" className="btn btn-ghost" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" style={{ padding: '10px 25px', background: 'var(--accent-cyan)', color: '#000' }}>Save Teacher</button>
+              </div>
+            </form>
           </div>
-          <div className="form-group">
-            <label>Department / Subject</label>
-            <input type="text" className="form-control" placeholder="e.g. Physics" required
-              value={formData.dept} onChange={e => setFormData({...formData, dept: e.target.value})} />
-          </div>
-          <div className="form-group">
-            <label>Assigned Classes (comma separated)</label>
-            <input type="text" className="form-control" placeholder="e.g. Grade 10-A, Grade 9-B" 
-              value={formData.classes} onChange={e => setFormData({...formData, classes: e.target.value})} />
-          </div>
-          <div className="modal-footer">
-            <button type="button" className="btn btn-ghost" onClick={() => setIsModalOpen(false)}>Cancel</button>
-            <button type="submit" className="btn btn-primary">Add Teacher</button>
-          </div>
-        </form>
-      </Modal>
+        </div>
+      )}
 
       <Modal isOpen={!!assignModalData} onClose={() => setAssignModalData(null)} title={`Assign Work: ${assignModalData?.name}`}>
         <form onSubmit={handleAssignTeacher}>

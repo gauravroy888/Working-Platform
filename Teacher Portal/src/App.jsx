@@ -10,6 +10,7 @@ import Analytics from './views/Analytics';
 import LiveClass from './views/LiveClass';
 import Settings from './views/Settings';
 import Notifications from './views/Notifications';
+import QuestionBank from './views/QuestionBank';
 import { ThemeProvider } from './ThemeContext';
 import { supabase } from './supabase';
 
@@ -82,6 +83,7 @@ export default function App() {
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/liveclass" element={<LiveClass />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/question-bank" element={<QuestionBank />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

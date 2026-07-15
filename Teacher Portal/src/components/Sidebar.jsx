@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Calendar, CheckSquare, Inbox, Users, BarChart2, Video, Settings, Bell } from 'lucide-react';
+import { Home, Calendar, CheckSquare, Inbox, Users, BarChart2, Video, Settings, Bell, Database } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
 import { useUnreadMessages } from '../hooks/useUnreadMessages';
 import { useUnreadNotifications } from '../hooks/useUnreadNotifications';
@@ -14,6 +14,7 @@ const navItems = [
   { id: 'classes', label: 'Assigned Classes', icon: Users, path: '/classes' },
   { id: 'analytics', label: 'Analytics', icon: BarChart2, path: '/analytics' },
   { id: 'liveclass', label: 'Online Class/Tests', icon: Video, path: '/liveclass' },
+  { id: 'question-bank', label: 'Question Bank', icon: Database, path: '/question-bank' },
   { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' }
 ];
 

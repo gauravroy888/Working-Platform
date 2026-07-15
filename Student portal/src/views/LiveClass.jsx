@@ -14,6 +14,8 @@ export default function LiveClass() {
   const [activeTest, setActiveTest] = useState(null);
   const [answers, setAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState(''); // 'saved', 'saving', ''
+  const autoSaveTimer = React.useRef(null);
 
   useEffect(() => {
     fetchActiveClasses();
@@ -57,8 +59,29 @@ export default function LiveClass() {
   };
 
   const startTest = (test) => {
+    // Restore any saved draft answers from localStorage
+    const draftKey = `test_draft_${test.id}`;
+    const savedDraft = localStorage.getItem(draftKey);
+    const restoredAnswers = savedDraft ? JSON.parse(savedDraft) : {};
     setActiveTest(test);
-    setAnswers({});
+    setAnswers(restoredAnswers);
+    if (savedDraft) setAutoSaveStatus('Draft restored!');
+  };
+
+  // Auto-save answers to localStorage every time answers change
+  const handleAnswerChange = (questionId, value) => {
+    const updated = { ...answers, [questionId]: value };
+    setAnswers(updated);
+    // Debounced auto-save
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    setAutoSaveStatus('Saving...');
+    autoSaveTimer.current = setTimeout(() => {
+      if (activeTest) {
+        localStorage.setItem(`test_draft_${activeTest.id}`, JSON.stringify(updated));
+        setAutoSaveStatus('Draft saved ✓');
+        setTimeout(() => setAutoSaveStatus(''), 2000);
+      }
+    }, 1000);
   };
 
   const submitTest = async () => {
@@ -87,10 +110,15 @@ export default function LiveClass() {
 
       if (error) throw error;
       
-      alert(`Test submitted successfully! Your score: ${score}/${activeTest.questions?.length || 0}`);
+      // Clear saved draft after successful submission
+      localStorage.removeItem(`test_draft_${activeTest.id}`);
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+
+      alert(`Test submitted! Your score: ${score}/${activeTest.questions?.length || 0}`);
       setActiveTest(null);
+      setAutoSaveStatus('');
     } catch (err) {
-      alert("Failed to submit test: " + err.message);
+      alert('Failed to submit test: ' + err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -154,7 +182,8 @@ export default function LiveClass() {
         <div className="animate-fade-in">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
             <h2>{activeTest.title}</h2>
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+              {autoSaveStatus && <span style={{ color: 'var(--accent-cyan)', fontSize: '13px', fontWeight: '500' }}>{autoSaveStatus}</span>}
               <button className="btn btn-ghost" onClick={() => setActiveTest(null)}><X size={16} /> Cancel</button>
               <button className="btn btn-primary" onClick={submitTest} disabled={isSubmitting}>
                 <Save size={16} /> {isSubmitting ? 'Submitting...' : 'Submit Test'}
@@ -174,7 +203,7 @@ export default function LiveClass() {
                          name={`q-${q.id}`} 
                          value={opt.id}
                          checked={answers[q.id] === opt.id}
-                         onChange={() => setAnswers({...answers, [q.id]: opt.id})}
+                         onChange={() => handleAnswerChange(q.id, opt.id)}
                          style={{ accentColor: 'var(--accent-cyan)', width: '18px', height: '18px' }}
                        />
                        <span>{opt.text}</span>
@@ -191,7 +220,7 @@ export default function LiveClass() {
                    style={{ ...inputStyle, minHeight: '150px', resize: 'vertical' }} 
                    placeholder="Type your answer here..."
                    value={answers[q.id] || ''}
-                   onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
+                   onChange={(e) => handleAnswerChange(q.id, e.target.value)}
                  ></textarea>
                </Card>
             ))

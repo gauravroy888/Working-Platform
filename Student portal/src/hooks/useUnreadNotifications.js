@@ -21,7 +21,7 @@ export function useUnreadNotifications() {
       const { count } = await supabase
         .from('notifications')
         .select('*', { count: 'exact', head: true })
-        .eq('user_email', currentUser.email)
+        .in('user_email', [currentUser.email, 'all'])
         .eq('is_read', false);
       
       if (count !== null) {
@@ -35,10 +35,11 @@ export function useUnreadNotifications() {
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
-        table: 'notifications',
-        filter: `user_email=eq.${currentUser.email}`
-      }, () => {
-        fetchUnreadCount();
+        table: 'notifications'
+      }, (payload) => {
+        if (payload.new && (payload.new.user_email === currentUser.email || payload.new.user_email === 'all')) {
+          fetchUnreadCount();
+        }
       })
       .subscribe();
 

@@ -35,14 +35,18 @@ export default function Classes() {
 
   const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#D4A5A5', '#9B59B6', '#F39C12'];
 
-  const classes = [
-    { id: '1st', name: 'Class 1st', subject: 'Basic Math', students: 30, performance: '80%' },
-    { id: '2nd', name: 'Class 2nd', subject: 'Basic English', students: 28, performance: '82%' },
-    { id: '3rd', name: 'Class 3rd', subject: 'Environmental Studies', students: 32, performance: '85%' },
-    { id: '4th', name: 'Class 4th', subject: 'Social Science', students: 35, performance: '81%' },
-    { id: '5th', name: 'Class 5th', subject: 'General Knowledge', students: 29, performance: '88%' },
-    { id: '6th', name: 'Class 6th', subject: 'General Science', students: 30, performance: '82%' }
-  ];
+  const [classes, setClasses] = useState([]);
+
+  useEffect(() => {
+    fetchClasses();
+  }, []);
+
+  const fetchClasses = async () => {
+    const { data, error } = await supabase.from('classes').select('*').order('created_at', { ascending: true });
+    if (data) {
+      setClasses(data);
+    }
+  };
 
   const filteredStudents = dbStudents.filter(s => 
     s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 

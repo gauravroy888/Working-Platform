@@ -152,6 +152,11 @@ p {
   z-index: -1;
 }
 
+/* Fix for dropdown menus on dark theme */
+select option {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
 /* Large Screen Optimization */
 @media (min-width: 1600px) {
   .app-container {

@@ -100,6 +100,12 @@ export default function LiveClass() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          // Token expired or is invalid
+          setAccessToken(null);
+          localStorage.removeItem('calendar_token');
+          throw new Error('Your Google Calendar connection expired (Google limits this to 1 hour for security). Please click Connect again.');
+        }
         throw new Error(data.error?.message || 'Failed to generate Meet link');
       }
 

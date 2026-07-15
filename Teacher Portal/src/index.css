@@ -151,3 +151,9 @@ p {
   background: linear-gradient(180deg, rgba(5, 8, 17, 0.2) 0%, var(--bg-dark) 100%);
   z-index: -1;
 }
+
+/* Fix for dropdown menus on dark theme */
+select option {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}

@@ -44,13 +44,27 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
 
   const handleSaveToGlobal = async (imageUrl) => {
     setIsSaving(true);
-    setProfileImage(imageUrl);
+    let finalUrl = imageUrl;
     try {
+      if (imageUrl.startsWith('data:image')) {
+        // Convert base64 to Blob and upload to Supabase Storage
+        const res = await fetch(imageUrl);
+        const blob = await res.blob();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+        
+        const { data, error } = await supabase.storage.from('avatars').upload(fileName, blob);
+        if (error) throw error;
+        
+        const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
+        finalUrl = publicUrl;
+      }
+
+      setProfileImage(finalUrl);
       const userStr = localStorage.getItem('edtech_user');
       if (userStr) {
         const user = JSON.parse(userStr);
-        await supabase.from('profiles').update({ avatar_url: imageUrl }).eq('email', user.email);
-        user.avatar_url = imageUrl;
+        await supabase.from('profiles').update({ avatar_url: finalUrl }).eq('email', user.email);
+        user.avatar_url = finalUrl;
         localStorage.setItem('edtech_user', JSON.stringify(user));
       }
       onClose();

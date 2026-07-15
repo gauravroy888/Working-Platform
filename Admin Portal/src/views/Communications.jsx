@@ -60,6 +60,15 @@ export default function Communications() {
       });
       if (error) throw error;
       
+      // Also broadcast a notification to all users
+      await supabase.from('notifications').insert({
+        user_email: 'all',
+        type: 'announcement',
+        title: 'New Announcement: ' + announceTitle,
+        message: announceText,
+        is_read: false
+      });
+      
       setAnnounceTitle('');
       setAnnounceText('');
       alert("Announcement posted successfully!");
