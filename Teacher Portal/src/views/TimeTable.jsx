@@ -4,17 +4,49 @@ import { supabase } from '../supabase';
 import { BookOpen, Video } from 'lucide-react';
 
 export default function TimeTable() {
-  const schedule = [
-    { time: '09:00 AM', monday: 'Math 10-A', tuesday: 'Physics 9-B', wednesday: 'Math 10-A', thursday: 'Physics 9-B', friday: 'Admin Duty' },
-    { time: '10:00 AM', monday: 'Math 10-A', tuesday: 'Physics 9-B', wednesday: 'Math 10-A', thursday: 'Physics 9-B', friday: 'Admin Duty' },
-    { time: '11:00 AM', monday: 'Break', tuesday: 'Break', wednesday: 'Break', thursday: 'Break', friday: 'Break' },
-    { time: '12:00 PM', monday: 'Physics 11-C', tuesday: 'Math 12-A', wednesday: 'Physics 11-C', thursday: 'Math 12-A', friday: 'Lab 11-C' },
-    { time: '01:00 PM', monday: 'Physics 11-C', tuesday: 'Math 12-A', wednesday: 'Physics 11-C', thursday: 'Math 12-A', friday: 'Lab 11-C' },
-  ];
+  const [schedule, setSchedule] = useState([]);
+  
+  const formatTime = (timeStr) => {
+    if (!timeStr) return '';
+    const [hour, min] = timeStr.split(':');
+    const h = parseInt(hour, 10);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const formattedHour = h % 12 || 12;
+    return `${formattedHour}:${min} ${ampm}`;
+  };
 
   const [updates, setUpdates] = useState([]);
 
   useEffect(() => {
+    const fetchTimetable = async () => {
+      try {
+        const userStr = localStorage.getItem('edtech_user');
+        if (!userStr) return;
+        const user = JSON.parse(userStr);
+        
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('timetable')
+          .eq('email', user.email)
+          .single();
+          
+        if (!error && data?.timetable && Array.isArray(data.timetable)) {
+          const uniqueTimes = [...new Set(data.timetable.map(s => s.startTime))].sort();
+          const newSchedule = uniqueTimes.map(time => {
+            const row = { time: formatTime(time) };
+            ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].forEach(day => {
+              const slot = data.timetable.find(s => s.startTime === time && s.day === day);
+              row[day.toLowerCase()] = slot ? slot.activity : '-';
+            });
+            return row;
+          });
+          setSchedule(newSchedule);
+        }
+      } catch (err) {
+        console.error('Error fetching timetable:', err);
+      }
+    };
+    
     const fetchUpdates = async () => {
       const { data } = await supabase
         .from('notifications')
@@ -27,6 +59,8 @@ export default function TimeTable() {
         setUpdates(data);
       }
     };
+    
+    fetchTimetable();
     fetchUpdates();
   }, []);
 
@@ -48,19 +82,29 @@ export default function TimeTable() {
                 <th style={{ padding: '15px' }}>Wednesday</th>
                 <th style={{ padding: '15px' }}>Thursday</th>
                 <th style={{ padding: '15px' }}>Friday</th>
+                <th style={{ padding: '15px' }}>Saturday</th>
               </tr>
             </thead>
             <tbody>
-              {schedule.map((row, index) => (
-                <tr key={index} style={{ borderBottom: '1px solid var(--panel-border)' }}>
-                  <td style={{ padding: '15px', color: 'var(--accent-cyan)', fontWeight: 'bold' }}>{row.time}</td>
-                  <td style={{ padding: '15px' }}>{row.monday}</td>
-                  <td style={{ padding: '15px' }}>{row.tuesday}</td>
-                  <td style={{ padding: '15px' }}>{row.wednesday}</td>
-                  <td style={{ padding: '15px' }}>{row.thursday}</td>
-                  <td style={{ padding: '15px' }}>{row.friday}</td>
+              {schedule.length === 0 ? (
+                <tr>
+                  <td colSpan="7" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    No schedule assigned yet.
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                schedule.map((row, index) => (
+                  <tr key={index} style={{ borderBottom: '1px solid var(--panel-border)' }}>
+                    <td style={{ padding: '15px', color: 'var(--accent-cyan)', fontWeight: 'bold' }}>{row.time}</td>
+                    <td style={{ padding: '15px' }}>{row.monday}</td>
+                    <td style={{ padding: '15px' }}>{row.tuesday}</td>
+                    <td style={{ padding: '15px' }}>{row.wednesday}</td>
+                    <td style={{ padding: '15px' }}>{row.thursday}</td>
+                    <td style={{ padding: '15px' }}>{row.friday}</td>
+                    <td style={{ padding: '15px' }}>{row.saturday}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

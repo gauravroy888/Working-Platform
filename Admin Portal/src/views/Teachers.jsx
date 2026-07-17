@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MoreVertical, BookOpen, User, Activity, Edit3 } from 'lucide-react';
+import { Search, MoreVertical, BookOpen, User, Activity, Edit3, Plus, Trash2, Clock } from 'lucide-react';
 import ProgressBar from '../components/ProgressBar';
 import Modal from '../components/Modal';
 import { supabase } from '../supabase';
@@ -16,7 +16,9 @@ export default function Teachers() {
   const [teacherClassSubjects, setTeacherClassSubjects] = useState({}); // Maps classId -> string of subjects
 
   const [assignModalData, setAssignModalData] = useState(null);
-  const [assignFormData, setAssignFormData] = useState({ dept: '', classes: '', timetable: '' });
+  const [assignSelectedClasses, setAssignSelectedClasses] = useState([]);
+  const [assignClassSubjects, setAssignClassSubjects] = useState({});
+  const [assignTimetable, setAssignTimetable] = useState([]);
 
   useEffect(() => {
     fetchTeachers();
@@ -43,6 +45,8 @@ export default function Teachers() {
         name: p.name,
         dept: p.department || 'General',
         classes: assigned,
+        raw_classes: links?.filter(l => l.teacher_id === p.id) || [],
+        timetable: p.timetable || [],
         progress: 0,
         tests: 0,
         performance: 'New',
@@ -115,16 +119,81 @@ export default function Teachers() {
 
   const openAssignModal = (teacher) => {
     setAssignModalData(teacher);
-    setAssignFormData({
-      dept: teacher.dept,
-      classes: teacher.classes.join(', '),
-      timetable: ''
+    const selected = [];
+    const subjects = {};
+    teacher.raw_classes.forEach(l => {
+      selected.push(l.class_id);
+      if (l.subjects) subjects[l.class_id] = l.subjects;
     });
+    setAssignSelectedClasses(selected);
+    setAssignClassSubjects(subjects);
+    
+    // Ensure timetable slots have unique IDs for React keys
+    const parsedTimetable = (Array.isArray(teacher.timetable) ? teacher.timetable : []).map(slot => ({
+      ...slot,
+      id: slot.id || Math.random().toString(36).substr(2, 9)
+    }));
+    setAssignTimetable(parsedTimetable);
+  };
+
+  const addTimetableSlot = () => {
+    setAssignTimetable([...assignTimetable, { id: Math.random().toString(36).substr(2, 9), day: 'Monday', startTime: '09:00', endTime: '10:00', activity: '' }]);
+  };
+  
+  const updateTimetableSlot = (id, field, value) => {
+    setAssignTimetable(assignTimetable.map(slot => slot.id === id ? { ...slot, [field]: value } : slot));
+  };
+
+  const removeTimetableSlot = (id) => {
+    setAssignTimetable(assignTimetable.filter(slot => slot.id !== id));
   };
 
   const handleAssignTeacher = async (e) => {
     e.preventDefault();
-    setAssignModalData(null);
+    if (!assignModalData) return;
+    
+    const btn = e.target.querySelector('button[type="submit"]');
+    if (btn) { btn.innerText = 'Saving...'; btn.disabled = true; }
+    
+    try {
+      // Determine the main department from the first subject assigned, or default
+      const deptList = Object.values(assignClassSubjects).filter(Boolean);
+      const newDept = deptList.length > 0 ? deptList[0] : 'General';
+
+      // 1. Update Profiles table (timetable JSON and dept)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ 
+          department: newDept,
+          timetable: assignTimetable 
+        })
+        .eq('id', assignModalData.id);
+        
+      if (profileError) throw profileError;
+
+      // 2. Clear old classes
+      await supabase.from('class_teachers').delete().eq('teacher_id', assignModalData.id);
+
+      // 3. Insert new classes
+      if (assignSelectedClasses.length > 0) {
+        const insertData = assignSelectedClasses.map(classId => ({
+          teacher_id: assignModalData.id,
+          class_id: classId,
+          subjects: assignClassSubjects[classId] || null
+        }));
+        
+        const { error: classesError } = await supabase.from('class_teachers').insert(insertData);
+        if (classesError) throw classesError;
+      }
+
+      setAssignModalData(null);
+      fetchTeachers();
+      alert('Assignments and Timetable saved successfully!');
+    } catch (err) {
+      alert('Error saving assignments: ' + err.message);
+    } finally {
+      if (btn) { btn.innerText = 'Save Assignments'; btn.disabled = false; }
+    }
   };
 
   return (
@@ -329,23 +398,122 @@ export default function Teachers() {
 
       <Modal isOpen={!!assignModalData} onClose={() => setAssignModalData(null)} title={`Assign Work: ${assignModalData?.name}`}>
         <form onSubmit={handleAssignTeacher}>
-          <div className="form-group">
-            <label>Department / Subject</label>
-            <input type="text" className="form-control" required
-              value={assignFormData.dept} onChange={e => setAssignFormData({...assignFormData, dept: e.target.value})} />
+          <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '10px' }}>
+            {/* Classes & Subjects */}
+            <div className="form-group" style={{ marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <label style={{ color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 'bold' }}>Assign to Classes & Subjects</label>
+                <span style={{ fontSize: '12px', background: 'var(--accent-cyan)', color: '#000', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>{assignSelectedClasses.length} Selected</span>
+              </div>
+              
+              <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--panel-border)', borderRadius: '8px', maxHeight: '200px', overflowY: 'auto' }}>
+                {allClasses.length === 0 ? (
+                  <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>No classes available.</div>
+                ) : (
+                  allClasses.map(cls => (
+                    <div key={cls.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 15px', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={assignSelectedClasses.includes(cls.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setAssignSelectedClasses([...assignSelectedClasses, cls.id]);
+                            } else {
+                              setAssignSelectedClasses(assignSelectedClasses.filter(id => id !== cls.id));
+                              const newSubjects = { ...assignClassSubjects };
+                              delete newSubjects[cls.id];
+                              setAssignClassSubjects(newSubjects);
+                            }
+                          }}
+                          style={{ width: '18px', height: '18px', accentColor: 'var(--accent-cyan)' }}
+                        />
+                        <div style={{ color: '#fff', fontWeight: '500' }}>{cls.name}</div>
+                      </label>
+                      {assignSelectedClasses.includes(cls.id) && (
+                        <div style={{ padding: '0 15px 15px 48px', animation: 'fadeIn 0.2s ease' }}>
+                          <select 
+                            value={assignClassSubjects[cls.id] || ''}
+                            onChange={(e) => setAssignClassSubjects({...assignClassSubjects, [cls.id]: e.target.value})}
+                            style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', background: 'rgba(0,0,0,0.5)', border: '1px solid var(--panel-border)', color: 'white', fontSize: '13px', outline: 'none' }}
+                          >
+                            <option value="">-- Select a Subject --</option>
+                            {cls.subject ? cls.subject.split(',').map(sub => sub.trim()).filter(Boolean).map((sub, idx) => (
+                              <option key={idx} value={sub}>{sub}</option>
+                            )) : (
+                              <option value="" disabled>No subjects available for this class</option>
+                            )}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Timetable Builder */}
+            <div className="form-group">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <label style={{ color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 'bold' }}>Interactive Timetable</label>
+                <button type="button" onClick={addTimetableSlot} className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: '13px', border: '1px dashed var(--accent-cyan)' }}>
+                  <Plus size={14} style={{ marginRight: '4px' }} /> Add Slot
+                </button>
+              </div>
+
+              {assignTimetable.length === 0 ? (
+                <div style={{ padding: '20px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px dashed var(--panel-border)', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                  <Clock size={24} style={{ margin: '0 auto 10px', opacity: 0.5 }} />
+                  <div>No slots added yet.</div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {assignTimetable.map((slot) => (
+                    <div key={slot.id} style={{ display: 'flex', gap: '10px', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '8px', border: '1px solid var(--panel-border)' }}>
+                      <select 
+                        value={slot.day} 
+                        onChange={(e) => updateTimetableSlot(slot.id, 'day', e.target.value)}
+                        style={{ flex: 1, padding: '8px', borderRadius: '6px', background: 'rgba(0,0,0,0.5)', border: '1px solid var(--panel-border)', color: 'white', fontSize: '13px' }}
+                      >
+                        <option value="Monday">Mon</option>
+                        <option value="Tuesday">Tue</option>
+                        <option value="Wednesday">Wed</option>
+                        <option value="Thursday">Thu</option>
+                        <option value="Friday">Fri</option>
+                        <option value="Saturday">Sat</option>
+                      </select>
+                      <input 
+                        type="time" 
+                        value={slot.startTime} 
+                        onChange={(e) => updateTimetableSlot(slot.id, 'startTime', e.target.value)}
+                        style={{ flex: 1, padding: '8px', borderRadius: '6px', background: 'rgba(0,0,0,0.5)', border: '1px solid var(--panel-border)', color: 'white', fontSize: '13px', colorScheme: 'dark' }}
+                      />
+                      <span style={{ color: 'var(--text-secondary)' }}>to</span>
+                      <input 
+                        type="time" 
+                        value={slot.endTime} 
+                        onChange={(e) => updateTimetableSlot(slot.id, 'endTime', e.target.value)}
+                        style={{ flex: 1, padding: '8px', borderRadius: '6px', background: 'rgba(0,0,0,0.5)', border: '1px solid var(--panel-border)', color: 'white', fontSize: '13px', colorScheme: 'dark' }}
+                      />
+                      <input 
+                        type="text" 
+                        placeholder="Activity"
+                        value={slot.activity} 
+                        onChange={(e) => updateTimetableSlot(slot.id, 'activity', e.target.value)}
+                        style={{ flex: 2, padding: '8px', borderRadius: '6px', background: 'rgba(0,0,0,0.5)', border: '1px solid var(--panel-border)', color: 'white', fontSize: '13px' }}
+                      />
+                      <button type="button" onClick={() => removeTimetableSlot(slot.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '5px' }}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '10px' }}>Note: This will notify the teacher of their new schedule.</small>
+            </div>
           </div>
-          <div className="form-group">
-            <label>Assigned Classes (comma separated)</label>
-            <input type="text" className="form-control" placeholder="e.g. Grade 10-A, Grade 9-B" 
-              value={assignFormData.classes} onChange={e => setAssignFormData({...assignFormData, classes: e.target.value})} />
-          </div>
-          <div className="form-group">
-            <label>Timetable Slot Updates</label>
-            <textarea className="form-control" rows="3" placeholder="Add specific times/days..."
-              value={assignFormData.timetable} onChange={e => setAssignFormData({...assignFormData, timetable: e.target.value})}></textarea>
-            <small style={{ color: 'var(--text-secondary)' }}>Note: This will notify the teacher of their new schedule.</small>
-          </div>
-          <div className="modal-footer">
+          
+          <div className="modal-footer" style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px solid var(--panel-border)' }}>
             <button type="button" className="btn btn-ghost" onClick={() => setAssignModalData(null)}>Cancel</button>
             <button type="submit" className="btn btn-primary">Save Assignments</button>
           </div>
