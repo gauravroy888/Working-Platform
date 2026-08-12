@@ -171,6 +171,26 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
     setFilteredProfiles(filtered);
   }, [profiles, groups, activeTab, searchQuery, currentUser]);
 
+  // Auto-select contact based on URL search query or default to Gaurav
+  useEffect(() => {
+    if (filteredProfiles.length > 0) {
+      const params = new URLSearchParams(window.location.search);
+      const targetEmail = params.get('email');
+      const targetName = params.get('name');
+
+      let target = null;
+      if (targetEmail) {
+        target = filteredProfiles.find(p => p.email?.toLowerCase() === targetEmail.toLowerCase());
+      }
+      if (!target && targetName) {
+        target = filteredProfiles.find(p => p.name?.toLowerCase().includes(targetName.toLowerCase()));
+      }
+      if (target) {
+        setActiveContact(target);
+      }
+    }
+  }, [filteredProfiles]);
+
   // 2. Fetch or Create Conversation
   useEffect(() => {
     if (!activeContact || !currentUser) return;
