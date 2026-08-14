@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Star, MessageCircle } from 'lucide-react';
+import { Search, Star, MessageCircle, X, Mail, BookOpen, Clock, MapPin, Award, CheckCircle2, Sparkles } from 'lucide-react';
 import Card from '../components/Card';
 import { supabase } from '../supabase';
 import { useNavigate } from 'react-router-dom';
@@ -10,6 +10,7 @@ export default function Mentors() {
   const [teachers, setTeachers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedTeacher, setSelectedTeacher] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,7 +43,11 @@ export default function Mentors() {
           rating: 5.0,
           status: 'Online',
           email: 'gauravroy476@gmail.com',
-          avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Gaurav&top=shortFlat&hairColor=2c1b18&skinColor=ffdbb4&clothing=blazerAndShirt&clothingColor=black&backgroundColor=b6e3f4'
+          avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Gaurav&top=shortFlat&hairColor=2c1b18&skinColor=ffdbb4&clothing=blazerAndShirt&clothingColor=black&backgroundColor=b6e3f4',
+          bio: 'Senior Physics educator specializing in 3D Ray Optics, Quantum Mechanics, and interactive curriculum design for secondary education.',
+          classes: 'Class 6th, Class 7th, Class 8th, Class 9th, Class 10th',
+          office_hours: 'Mon - Fri: 09:00 AM - 04:00 PM',
+          location: 'Science Lab 3 (3D VR Room)'
         }]);
       }
     } catch (err) {
@@ -63,14 +68,14 @@ export default function Mentors() {
   );
 
   return (
-    <div className="view-container" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="view-container animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
         <h2 style={{ fontSize: '1.8rem', fontWeight: '800', margin: '0 0 6px 0', color: 'white' }}>Teachers & Mentors</h2>
-        <p style={{ margin: 0, color: '#94a3b8', fontSize: '1rem' }}>Connect directly with your course instructors.</p>
+        <p style={{ margin: 0, color: '#94a3b8', fontSize: '1rem' }}>Connect directly with your course instructors and faculty.</p>
       </div>
 
       <Card className="full-height-card">
-        <div className="mentors-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div className="mentors-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
           <div className="tabs" style={{ display: 'flex', gap: '12px' }}>
             <button 
               className={`tab ${activeTab === 'all' ? 'active' : ''}`}
@@ -85,7 +90,7 @@ export default function Mentors() {
                 cursor: 'pointer'
               }}
             >
-              All Teachers
+              All Teachers ({filteredTeachers.length})
             </button>
           </div>
           
@@ -105,14 +110,14 @@ export default function Mentors() {
           {isLoading ? (
             <p style={{ color: '#94a3b8', padding: '20px' }}>Loading teachers...</p>
           ) : filteredTeachers.length === 0 ? (
-            <p style={{ color: '#94a3b8', padding: '20px' }}>No teachers found.</p>
+            <p style={{ color: '#94a3b8', padding: '20px' }}>No teachers found matching your search.</p>
           ) : (
             filteredTeachers.map(mentor => (
               <div key={mentor.id} className="mentor-row">
                 <div className="mentor-info-block">
                   <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0 }}>
                     <img 
-                      src={mentor.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Gaurav'} 
+                      src={mentor.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + mentor.name} 
                       alt={mentor.name} 
                       style={{
                         width: '100%',
@@ -153,7 +158,11 @@ export default function Mentors() {
                 </div>
                 
                 <div className="mentor-row-actions">
-                  <button className="btn btn-ghost" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '8px 16px', borderRadius: '10px', cursor: 'pointer', fontWeight: '600' }}>
+                  <button 
+                    onClick={() => setSelectedTeacher(mentor)}
+                    className="btn btn-ghost" 
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '8px 16px', borderRadius: '10px', cursor: 'pointer', fontWeight: '600', transition: 'all 0.2s' }}
+                  >
                     View Profile
                   </button>
                   <button 
@@ -180,6 +189,173 @@ export default function Mentors() {
           )}
         </div>
       </Card>
+
+      {/* Teacher Profile Modal */}
+      {selectedTeacher && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(4, 7, 18, 0.85)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: '560px',
+            background: 'rgba(13, 20, 36, 0.98)',
+            border: '1px solid rgba(0, 240, 255, 0.35)',
+            boxShadow: '0 25px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(0, 240, 255, 0.15)',
+            borderRadius: '24px',
+            padding: '32px',
+            position: 'relative'
+          }}>
+            
+            {/* Close button */}
+            <button
+              onClick={() => setSelectedTeacher(null)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: '#94a3b8',
+                borderRadius: '10px',
+                padding: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <X size={18} />
+            </button>
+
+            {/* Profile Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
+              <div style={{ position: 'relative', width: '72px', height: '72px', flexShrink: 0 }}>
+                <img
+                  src={selectedTeacher.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + selectedTeacher.name}
+                  alt={selectedTeacher.name}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '50%',
+                    border: '2px solid #00F0FF',
+                    boxShadow: '0 0 20px rgba(0, 240, 255, 0.3)',
+                    objectFit: 'cover'
+                  }}
+                />
+                <span style={{
+                  position: 'absolute',
+                  bottom: '2px',
+                  right: '2px',
+                  width: '14px',
+                  height: '14px',
+                  borderRadius: '50%',
+                  background: '#10B981',
+                  border: '2px solid #0D1424'
+                }}></span>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: '800', color: 'white' }}>{selectedTeacher.name}</h3>
+                  <span style={{ padding: '2px 8px', borderRadius: '6px', background: 'rgba(0,240,255,0.15)', color: '#00F0FF', fontSize: '0.75rem', fontWeight: '800' }}>
+                    VERIFIED FACULTY
+                  </span>
+                </div>
+                <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '0.92rem' }}>
+                  {selectedTeacher.degree || 'Head of Science & Physics'}
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
+                  <Star size={14} fill="#EAB308" color="#EAB308" />
+                  <span style={{ color: 'white', fontWeight: '700', fontSize: '0.88rem' }}>{selectedTeacher.rating || 5.0} / 5.0</span>
+                  <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>• 98 Student Reviews</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bio Card */}
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '18px', marginBottom: '20px' }}>
+              <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.92rem', lineHeight: '1.6' }}>
+                {selectedTeacher.bio || 'Senior Physics and Science educator dedicated to interactive 3D simulations, optics experiments, and concept mastery.'}
+              </p>
+            </div>
+
+            {/* Quick Details List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#cbd5e1', fontSize: '0.9rem' }}>
+                <Mail size={16} color="#00F0FF" />
+                <span>Email: <strong style={{ color: 'white' }}>{selectedTeacher.email || 'gauravroy476@gmail.com'}</strong></span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#cbd5e1', fontSize: '0.9rem' }}>
+                <BookOpen size={16} color="#00F0FF" />
+                <span>Assigned Classes: <strong style={{ color: 'white' }}>{selectedTeacher.classes || 'Class 6th, Class 7th, Class 8th'}</strong></span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#cbd5e1', fontSize: '0.9rem' }}>
+                <Clock size={16} color="#00F0FF" />
+                <span>Office Hours: <strong style={{ color: 'white' }}>{selectedTeacher.office_hours || 'Mon - Fri: 09:00 AM - 04:00 PM'}</strong></span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#cbd5e1', fontSize: '0.9rem' }}>
+                <MapPin size={16} color="#00F0FF" />
+                <span>Room / Lab: <strong style={{ color: 'white' }}>{selectedTeacher.location || 'Lab 3 (3D VR Room)'}</strong></span>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => setSelectedTeacher(null)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '12px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  color: 'white',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  fontSize: '0.95rem'
+                }}
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedTeacher(null);
+                  openDirectChat(selectedTeacher);
+                }}
+                style={{
+                  flex: 1.5,
+                  padding: '12px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                  color: '#000',
+                  fontWeight: '800',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.95rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 0 20px rgba(0, 240, 255, 0.4)'
+                }}
+              >
+                <MessageCircle size={18} /> Send Direct Message
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
