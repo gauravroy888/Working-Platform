@@ -1,25 +1,45 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Menu } from 'lucide-react';
 import './Layout.css';
 import Sidebar from './Sidebar';
 import { useTheme } from '../ThemeContext';
 
 export default function Layout({ children }) {
-  const { backgroundImage } = useTheme();
-  const userName = React.useMemo(() => {
-    try {
-      const u = JSON.parse(localStorage.getItem('edtech_user') || '{}');
-      return u.name || 'Teacher';
-    } catch { return 'Teacher'; }
-  }, []);
+  const { backgroundImage, profileName } = useTheme();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
 
   return (
     <div className="app-container">
       <div className="bg-overlay" style={{ backgroundImage: `url(${backgroundImage})` }}></div>
       <div className="bg-gradient"></div>
       
-      <Sidebar />
+      {/* Mobile overlay backdrop */}
+      {isMobileMenuOpen && (
+        <div className="mobile-backdrop" onClick={toggleMobileMenu}></div>
+      )}
+
+      <Sidebar isOpen={isMobileMenuOpen} closeMenu={() => setIsMobileMenuOpen(false)} />
       
       <main className="main-content">
+        <header className="top-header">
+          <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <button className="mobile-menu-btn icon-btn" onClick={toggleMobileMenu}>
+              <Menu size={24} />
+            </button>
+            <div className="header-brand">
+              <h2>TEACHER PORTAL</h2>
+              <p>Welcome back, {(profileName || 'Teacher').split(' ')[0]}!</p>
+            </div>
+          </div>
+          <div className="header-actions">
+            {/* Any global actions */}
+          </div>
+        </header>
+        
         <div className="page-content">
           {children}
         </div>
