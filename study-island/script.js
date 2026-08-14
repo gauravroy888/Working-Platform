@@ -26,7 +26,78 @@
       sceneKey: 'lightShadows',
       experienceUrl: 'Chapter_experience_L_S.html',
       quizReady: true,
-      contentReady: true
+      contentReady: true,
+      experiments_list: [
+        {
+          id: 'exp_1',
+          title: 'Shadow Lab',
+          author: 'by Platform',
+          badge: 'Latest!',
+          likes: '50k',
+          icon: '🌕',
+          gradient: 'linear-gradient(135deg, #00d2ff, #3a7bd5)',
+          url: 'Shadow_Lab.html'
+        },
+        {
+          id: 'exp_2',
+          title: 'Laser Bounce',
+          author: 'by Edtech Lab',
+          badge: 'Ready',
+          likes: '12k',
+          icon: '🧬',
+          gradient: 'linear-gradient(135deg, #b000ff, #5c00a3)',
+          url: 'Shadow_Lab.html'
+        },
+        {
+          id: 'exp_3',
+          title: 'Optics Simulator',
+          author: 'by Physics Team',
+          badge: 'Ready',
+          likes: '21k',
+          icon: '🎯',
+          gradient: 'linear-gradient(135deg, #ff0073, #a10048)',
+          url: 'Shadow_Lab.html'
+        },
+        {
+          id: 'exp_4',
+          title: 'Thermal Dynamics',
+          author: 'by Core',
+          badge: 'Ready',
+          likes: '34k',
+          icon: '🔥',
+          gradient: 'linear-gradient(135deg, #ff4e50, #f9d423)',
+          url: 'Shadow_Lab.html'
+        }
+      ],
+      stories_list: [
+        {
+          id: 'story_1',
+          title: 'Shadows and Light Explained',
+          tag: 'DOCUMENTARY',
+          duration: '5:21',
+          description: 'Dive deep into the magical interplay between light sources and opaque objects. A beautifully animated introduction to the science of optics.',
+          thumbnail_url: 'assets/Future verion lowres.jpg',
+          url: 'https://www.youtube.com/embed/2_XzXg16wgo'
+        },
+        {
+          id: 'story_2',
+          title: 'The Science of Shadows',
+          tag: 'EXPLORE',
+          duration: '3:36',
+          description: 'Learn how different light angles and intensities stretch and morph shadows, uncovering the geometry behind visual perception.',
+          thumbnail_url: 'assets/chapter background lowres.jpg',
+          url: 'https://www.youtube.com/embed/2_XzXg16wgo'
+        },
+        {
+          id: 'story_3',
+          title: 'Light & Optics in Real Life',
+          tag: 'LESSON',
+          duration: '3:58',
+          description: 'Discover optical phenomena in nature, camera lenses, and everyday technology.',
+          thumbnail_url: 'assets/Home screen background low res.jpg',
+          url: 'https://www.youtube.com/embed/2_XzXg16wgo'
+        }
+      ]
     },
     'space-solar': {
       id: 'space-solar',
@@ -36,7 +107,9 @@
       sceneKey: 'solarSystem',
       experienceUrl: '',
       quizReady: false,
-      contentReady: false
+      contentReady: false,
+      experiments_list: [],
+      stories_list: []
     }
   };
 
@@ -872,6 +945,8 @@
       canvasLoading.style.display = 'flex';
     }
 
+    renderDynamicChapterModalities(chapter);
+
     destroyChapterScene();
     activateTab('experience');
   }
@@ -1017,25 +1092,85 @@
     }, 160);
   }
 
-  function openExperiment(path) {
-    var chapter = getCurrentChapter();
+  function renderDynamicChapterModalities(chapter) {
+    if (!chapter) return;
 
-    if (!chapter.contentReady) {
-      showToast(chapter.title + ' interactive content is coming soon.');
-      return;
+    // 1. Render Experiments Carousel (#experiments-carousel)
+    var expCarousel = byId('experiments-carousel');
+    if (expCarousel && Array.isArray(chapter.experiments_list) && chapter.experiments_list.length > 0) {
+      var expHtml = chapter.experiments_list.map(function(exp, idx) {
+        var grad = exp.gradient || 'linear-gradient(135deg, ' + (exp.color || '#00d2ff') + ', #3a7bd5)';
+        var icon = exp.icon || '🧪';
+        var isFeatured = idx === 0 ? ' featured' : '';
+        var safeUrl = (exp.url || '').replace(/'/g, "\\'");
+        return '<div class="experiment-card' + isFeatured + '" onclick="openExperiment(\'' + safeUrl + '\')">' +
+          '<div class="experiment-card-img" style="background: ' + grad + ';">' + icon + '</div>' +
+          '<div class="experiment-card-info">' +
+            '<div class="experiment-title">' + (exp.title || 'Experiment') + '</div>' +
+            '<div class="experiment-author">' + (exp.author || 'by Platform') + '</div>' +
+            '<div class="experiment-stats"><span>' + (exp.badge || 'Ready') + '</span><span>♥ ' + (exp.likes || '10k') + '</span></div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+      expCarousel.innerHTML = expHtml;
     }
 
-    if (!AVAILABLE_APPS[path]) {
+    // 2. Render Stories List (.stories-scroll-container)
+    var storiesContainer = document.querySelector('#tabpanel-stories .stories-scroll-container');
+    if (storiesContainer && Array.isArray(chapter.stories_list) && chapter.stories_list.length > 0) {
+      var storiesHtml = chapter.stories_list.map(function(story) {
+        var safeVideoUrl = (story.url || '').replace(/'/g, "\\'");
+        var thumb = story.thumbnail_url || 'assets/Future verion lowres.jpg';
+        return '<div class="story-list-card" onclick="openStoryVideo(\'' + safeVideoUrl + '\')">' +
+          '<div style="width:240px; position:relative; overflow:hidden; flex-shrink:0; background:#000;">' +
+            '<img src="' + thumb + '" alt="' + (story.title || 'Story') + '" class="story-thumb" style="width:100%; height:100%; object-fit:cover;">' +
+            '<div class="play-icon" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:48px; height:48px; border-radius:50%; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; color:white; border:1px solid rgba(255,255,255,0.4);"><i class="ph ph-play-fill" style="font-size:1.4rem; margin-left:3px;"></i></div>' +
+          '</div>' +
+          '<div style="padding:24px 30px; display:flex; flex-direction:column; justify-content:center; gap:8px; flex-grow:1; position:relative;">' +
+            '<div style="display:flex; align-items:center; gap:12px;">' +
+              '<span style="font-size:0.75rem; font-weight:700; color:#22d3ee; letter-spacing:0.05em; background:rgba(34,211,238,0.1); padding:4px 10px; border-radius:6px; border:1px solid rgba(34,211,238,0.3);">' + (story.tag || 'DOCUMENTARY') + '</span>' +
+              '<span style="font-size:0.8rem; color:rgba(255,255,255,0.6); display:flex; align-items:center; gap:4px;"><i class="ph ph-clock"></i> ' + (story.duration || '5:00') + '</span>' +
+            '</div>' +
+            '<h3 style="font-size:1.25rem; font-weight:700; color:white; margin:0;">' + (story.title || 'Story Lesson') + '</h3>' +
+            '<p style="font-size:0.85rem; color:rgba(255,255,255,0.7); line-height:1.5; margin:0; max-width:600px;">' + (story.description || '') + '</p>' +
+            '<div style="margin-top:8px; display:flex; align-items:center; gap:6px; color:#22d3ee; font-size:0.85rem; font-weight:600;"><span>Watch Experience</span> <i class="ph ph-arrow-right"></i></div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+      storiesContainer.innerHTML = storiesHtml;
+    }
+  }
+
+  function openExperiment(path) {
+    if (!path) {
       showToast('This activity is not connected yet.');
       return;
     }
-
     openOverlay(encodeURI(path), 'fullscreen', { cacheBust: true });
   }
 
   function openStoryVideo(url) {
-    openOverlay(url, 'story');
+    if (!url) return;
+    var finalUrl = url;
+    if (url.includes('youtube.com/watch')) {
+      var v = url.split('v=')[1];
+      if (v) {
+        var videoId = v.split('&')[0];
+        finalUrl = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1';
+      }
+    } else if (url.includes('youtu.be/')) {
+      var v2 = url.split('youtu.be/')[1];
+      if (v2) {
+        var videoId2 = v2.split('?')[0];
+        finalUrl = 'https://www.youtube.com/embed/' + videoId2 + '?autoplay=1';
+      }
+    }
+    openOverlay(finalUrl, 'story');
   }
+
+  // Expose global methods for inline HTML onclick handlers
+  window.openExperiment = openExperiment;
+  window.openStoryVideo = openStoryVideo;
 
   function startChapterJourney() {
     var chapter = getCurrentChapter();
@@ -1266,6 +1401,51 @@
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     }
     syncStudentProfile();
+    fetchCurriculumFromSupabase();
+  }
+
+  async function fetchCurriculumFromSupabase() {
+    try {
+      var r = await fetch(SUPABASE_URL + '/rest/v1/course_chapters?select=*', {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY
+        }
+      });
+      var data = await r.json();
+      if (Array.isArray(data)) {
+        data.forEach(function(row) {
+          var slug = (row.title || '').toLowerCase().includes('light') ? 'light-shadows' : (row.chapter_slug || row.id);
+          if (!CHAPTERS[slug]) {
+            CHAPTERS[slug] = {
+              id: slug,
+              title: row.title,
+              description: row.description,
+              iconClass: 'ph ph-lightbulb',
+              sceneKey: 'lightShadows',
+              experienceUrl: row.experience_url || 'Chapter_experience_L_S.html',
+              quizReady: row.quiz_ready,
+              contentReady: true,
+              experiments_list: row.experiments_list || [],
+              stories_list: row.stories_list || []
+            };
+          } else {
+            if (row.experiments_list && row.experiments_list.length > 0) {
+              CHAPTERS[slug].experiments_list = row.experiments_list;
+            }
+            if (row.stories_list && row.stories_list.length > 0) {
+              CHAPTERS[slug].stories_list = row.stories_list;
+            }
+            if (row.experience_url) {
+              CHAPTERS[slug].experienceUrl = row.experience_url;
+            }
+          }
+        });
+        renderDynamicChapterModalities(getCurrentChapter());
+      }
+    } catch(e) {
+      console.warn('Using local chapter configuration:', e);
+    }
   }
 
   function syncStudentProfile() {

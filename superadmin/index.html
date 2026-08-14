@@ -3402,15 +3402,17 @@
     // 📚 COURSE CURRICULUM HUB — Classes, Subjects, Chapters, Modalities
     // ═══════════════════════════════════════════════════════════════
     const DEFAULT_MODALITIES = [
-      { slug: 'experience',    label: 'Experience',   emoji: '💡', icon: 'ph-lightbulb',    color: '#00E5FF', renderer: 'iframe_full',  description: '3D Chapter App / WebGL Simulation / Interactive HTML' },
-      { slug: 'experiments',   label: 'Experiments',  emoji: '🧪', icon: 'ph-flask',        color: '#A78BFA', renderer: 'iframe_full',  description: 'Virtual Lab Simulation / Interactive HTML5 Experiment' },
-      { slug: 'quiz',          label: 'Quiz',         emoji: '📝', icon: 'ph-exam',         color: '#34D399', renderer: 'quiz_engine', description: 'Assessment / HTML5 Quiz Game / Linked Test' },
-      { slug: 'mixed_reality', label: 'Mixed Reality',emoji: '👓', icon: 'ph-vr-headset',   color: '#F472B6', renderer: 'qr_vr',       description: 'WebXR App / Mobile VR QR Code / Immersive 3D Scene' },
-      { slug: 'stories',       label: 'Stories',      emoji: '📖', icon: 'ph-book-open',    color: '#FBBF24', renderer: 'video_embed', description: 'Video Explainer / PDF Story Guide / Documentary' },
+      { slug: 'experience',    label: 'Experience',   emoji: '💡', icon: 'ph-lightbulb',    color: '#00E5FF', isMulti: false, renderer: 'iframe_full',  description: '3D Chapter App / WebGL Simulation / Interactive HTML' },
+      { slug: 'experiments',   label: 'Experiments',  emoji: '🧪', icon: 'ph-flask',        color: '#A78BFA', isMulti: true,  renderer: 'multi_cards',  description: 'Interactive Virtual Labs & Experiments (Add Multiple)' },
+      { slug: 'quiz',          label: 'Quiz',         emoji: '📝', icon: 'ph-exam',         color: '#34D399', isMulti: false, renderer: 'quiz_engine', description: 'Assessment / HTML5 Quiz Game / Linked Test' },
+      { slug: 'mixed_reality', label: 'Mixed Reality',emoji: '👓', icon: 'ph-vr-headset',   color: '#F472B6', isMulti: false, renderer: 'qr_vr',       description: 'WebXR App / Mobile VR QR Code / Immersive 3D Scene' },
+      { slug: 'stories',       label: 'Stories',      emoji: '📖', icon: 'ph-book-open',    color: '#FBBF24', isMulti: true,  renderer: 'multi_stories',description: 'Video Lessons, Explanations & Documentaries (Add Multiple)' },
     ];
 
     const RENDERER_OPTIONS = [
       { value: 'iframe_full',  label: 'Full-Screen HTML5 App (iframe)' },
+      { value: 'multi_cards',  label: 'Multi-Card Experiment Carousel' },
+      { value: 'multi_stories',label: 'Multi-Item Video & Story Lesson List' },
       { value: 'video_embed',  label: 'Video Embed (YouTube / MP4 / Vimeo)' },
       { value: 'qr_vr',        label: 'VR QR Code + WebXR Launch' },
       { value: 'quiz_engine',  label: 'Built-in Quiz Engine' },
@@ -3444,7 +3446,10 @@
       const [newClass, setNewClass] = React.useState({ name: '', display_order: 1 });
       const [newSubject, setNewSubject] = React.useState({ name: '', icon: '📚', description: '' });
       const [newChapter, setNewChapter] = React.useState({ title: '', description: '', chapter_order: 1 });
-      const [newCustomMod, setNewCustomMod] = React.useState({ label: '', emoji: '⭐', renderer: 'iframe_full', description: '' });
+      const [newCustomMod, setNewCustomMod] = React.useState({ label: '', emoji: '⭐', renderer: 'iframe_full', description: '', isMulti: false });
+
+      // Multi-Item Modal State (for Experiments / Stories)
+      const [activeMultiModal, setActiveMultiModal] = React.useState(null); // { chapter, mod, itemIndex, itemData }
 
       const showToast = (msg, type='success') => { setToast({ msg, type }); setTimeout(()=>setToast(null),3500); };
 
@@ -3475,14 +3480,21 @@
         try {
           const r = await sb(`course_chapters?select=*&subject_id=eq.${subj.id}&order=chapter_order`);
           const d = await r.json();
-          setChapters(Array.isArray(d) ? d : []);
+          const loadedChapters = Array.isArray(d) ? d : [];
+          setChapters(loadedChapters);
           // Load saved modality content for all chapters
           const mods = {};
-          for (const ch of (Array.isArray(d) ? d : [])) {
+          for (const ch of loadedChapters) {
             const allMods = [...DEFAULT_MODALITIES, ...(ch.custom_modalities||[])];
             mods[ch.id] = {};
             allMods.forEach(m => {
-              mods[ch.id][m.slug] = ch[`${m.slug}_url`] || ch.modality_urls?.[m.slug] || '';
+              if (m.slug === 'experiments') {
+                mods[ch.id][m.slug] = Array.isArray(ch.experiments_list) && ch.experiments_list.length > 0 ? ch.experiments_list : (ch.experiments_url ? [{ id: 'exp_1', title: 'Default Lab', author: 'by Platform', badge: 'Ready', likes: '10k', icon: '🧪', gradient: 'linear-gradient(135deg, #00F0FF, #0070F3)', color: '#00F0FF', url: ch.experiments_url }] : []);
+              } else if (m.slug === 'stories') {
+                mods[ch.id][m.slug] = Array.isArray(ch.stories_list) && ch.stories_list.length > 0 ? ch.stories_list : (ch.stories_url ? [{ id: 'story_1', title: 'Chapter Story Video', tag: 'LESSON', duration: '5:00', description: 'Interactive video lesson', thumbnail_url: '', url: ch.stories_url }] : []);
+              } else {
+                mods[ch.id][m.slug] = ch[`${m.slug}_url`] || ch.modality_urls?.[m.slug] || '';
+              }
             });
           }
           setChapterModalities(mods);
@@ -3519,7 +3531,7 @@
             chapter_order: parseInt(newChapter.chapter_order)||1, chapter_slug: slug,
             title: newChapter.title.trim().toUpperCase(), description: newChapter.description,
             experience_ready: false, experiments_ready: false, quiz_ready: false, mixed_reality_ready: false, stories_ready: false,
-            is_published: false, custom_modalities: []
+            is_published: false, custom_modalities: [], experiments_list: [], stories_list: []
           };
           const r = await sb('course_chapters', { method: 'POST', body: JSON.stringify(payload) });
           const d = await r.json();
@@ -3532,7 +3544,7 @@
         if (!newCustomMod.label.trim()) return showToast('Modality name required', 'error');
         const slug = 'custom_' + newCustomMod.label.trim().toLowerCase().replace(/[^a-z0-9]+/g,'_');
         setCustomModalities(prev => [...prev, { ...newCustomMod, slug, color: '#94A3B8', isCustom: true }]);
-        setNewCustomMod({ label:'', emoji:'⭐', renderer:'iframe_full', description:'' });
+        setNewCustomMod({ label:'', emoji:'⭐', renderer:'iframe_full', description:'', isMulti: false });
         setShowAddCustomModal(false);
         showToast(`✅ Custom modality "${newCustomMod.label}" added!`);
       };
@@ -3544,7 +3556,6 @@
           if (isDefault) {
             updatePayload = { [`${slug}_url`]: url, [`${slug}_ready`]: !!url };
           } else {
-            // Save custom modality URLs in a modality_urls JSONB column
             const current = chapter.modality_urls || {};
             updatePayload = { modality_urls: { ...current, [slug]: url } };
           }
@@ -3553,6 +3564,28 @@
             showToast('✅ Content link saved!');
             setChapterModalities(prev => ({ ...prev, [chapter.id]: { ...prev[chapter.id], [slug]: url } }));
           } else showToast('Save failed', 'error');
+        } catch(e) { showToast('Network error', 'error'); }
+      };
+
+      const saveMultiItemList = async (chapter, slug, newList) => {
+        try {
+          const colName = `${slug}_list`;
+          const firstUrl = newList.length > 0 ? (newList[0].url || '') : '';
+          const updatePayload = {
+            [colName]: newList,
+            [`${slug}_url`]: firstUrl,
+            [`${slug}_ready`]: newList.length > 0
+          };
+          const r = await sb(`course_chapters?id=eq.${chapter.id}`, { method: 'PATCH', body: JSON.stringify(updatePayload) });
+          if (r.ok) {
+            showToast(`✅ Updated ${newList.length} items in ${slug}!`);
+            setChapterModalities(prev => ({
+              ...prev,
+              [chapter.id]: { ...prev[chapter.id], [slug]: newList }
+            }));
+          } else {
+            showToast('Failed to save items', 'error');
+          }
         } catch(e) { showToast('Network error', 'error'); }
       };
 
@@ -3569,13 +3602,151 @@
         else showToast('Delete failed', 'error');
       };
 
-      const ModalitySlot = ({ chapter, mod, isCustom=false }) => {
+      const resolvePreviewUrl = (rawUrl) => {
+        if (!rawUrl) return '';
+        let clean = rawUrl.trim();
+        if (clean.includes('youtube.com/watch')) {
+          const v = clean.split('v=')[1]?.split('&')[0];
+          if (v) return `https://www.youtube.com/embed/${v}?autoplay=1`;
+        } else if (clean.includes('youtu.be/')) {
+          const v = clean.split('youtu.be/')[1]?.split('?')[0];
+          if (v) return `https://www.youtube.com/embed/${v}?autoplay=1`;
+        }
+        if (!clean.startsWith('http://') && !clean.startsWith('https://') && !clean.startsWith('/')) {
+          return `/study-island/${clean}`;
+        }
+        return clean;
+      };
+
+      // ── MULTI-ITEM MODALITY SLOT (Experiments & Stories) ──
+      const MultiItemModalitySlot = ({ chapter, mod }) => {
+        const items = Array.isArray(chapterModalities[chapter.id]?.[mod.slug]) ? chapterModalities[chapter.id][mod.slug] : [];
+        const isExperiments = mod.slug === 'experiments';
+        const [isExpanded, setIsExpanded] = React.useState(true);
+
+        const deleteItem = (idx) => {
+          if (!window.confirm(`Remove "${items[idx]?.title || 'item'}"?`)) return;
+          const updated = items.filter((_, i) => i !== idx);
+          saveMultiItemList(chapter, mod.slug, updated);
+        };
+
+        return (
+          <div className="rounded-xl p-3.5 space-y-3 transition-all" style={{ border: `1px solid ${mod.color}40`, background: `${mod.color}0a` }}>
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xl">{mod.emoji}</span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-white">{mod.label}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold" style={{background: `${mod.color}25`, color: mod.color, border: `1px solid ${mod.color}50`}}>
+                      {items.length} {isExperiments ? (items.length===1?'Experiment':'Experiments') : (items.length===1?'Story / Video':'Stories / Videos')}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{mod.description}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveMultiModal({ chapter, mod, isNew: true, itemData: isExperiments ? { title:'', author:'by Platform', badge:'Latest!', likes:'10k', icon:'🧪', color:'#00E5FF', url:'' } : { title:'', tag:'DOCUMENTARY', duration:'5:00', description:'', thumbnail_url:'', url:'' } })}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow transition"
+                  style={{background: `${mod.color}25`, border: `1px solid ${mod.color}60`, color: mod.color}}>
+                  <i className="ph ph-plus-circle text-sm"></i> Add {isExperiments ? 'Experiment' : 'Story'}
+                </button>
+                <button onClick={() => setIsExpanded(!isExpanded)} className="px-2 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-xs">
+                  {isExpanded ? '▲' : '▼'}
+                </button>
+              </div>
+            </div>
+
+            {/* List of Items */}
+            {isExpanded && (
+              <div className="space-y-2 pt-1 border-t border-slate-700/40">
+                {items.length === 0 ? (
+                  <div className="p-4 text-center rounded-lg border border-dashed border-slate-700 bg-slate-900/40">
+                    <p className="text-xs text-slate-400">No {isExperiments ? 'experiments' : 'stories'} added yet.</p>
+                    <button
+                      onClick={() => setActiveMultiModal({ chapter, mod, isNew: true, itemData: isExperiments ? { title:'New Lab', author:'by Platform', badge:'Ready', likes:'5k', icon:'🧪', color:'#00E5FF', url:'' } : { title:'New Story', tag:'DOCUMENTARY', duration:'4:00', description:'', thumbnail_url:'', url:'' } })}
+                      className="mt-2 text-[11px] font-bold text-cyan-400 hover:underline">
+                      + Click to Add First {isExperiments ? 'Experiment' : 'Story'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {items.map((item, idx) => {
+                      const finalUrl = resolvePreviewUrl(item.url);
+                      return (
+                        <div key={item.id || idx} className="glass-panel p-3 rounded-xl border border-slate-700/70 bg-slate-900/80 flex flex-col justify-between space-y-2 hover:border-cyan-500/40 transition">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2.5 overflow-hidden">
+                              {isExperiments ? (
+                                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow flex-shrink-0" style={{background: item.gradient || `linear-gradient(135deg, ${item.color||'#00E5FF'}, #3B82F6)`}}>
+                                  {item.icon || '🧪'}
+                                </div>
+                              ) : (
+                                <div className="w-14 h-10 rounded-lg bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center flex-shrink-0 relative">
+                                  {item.thumbnail_url ? (
+                                    <img src={item.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                                  ) : (
+                                    <span className="text-lg">🎬</span>
+                                  )}
+                                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                    <i className="ph ph-play-fill text-xs text-white"></i>
+                                  </div>
+                                </div>
+                              )}
+                              <div className="overflow-hidden">
+                                <div className="flex items-center gap-1.5">
+                                  <h5 className="text-xs font-bold text-white truncate">{item.title || 'Untitled'}</h5>
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded font-bold" style={{background: '#38BDF825', color: '#38BDF8', border: '1px solid #38BDF850'}}>
+                                    {isExperiments ? (item.badge || 'Ready') : (item.tag || 'LESSON')}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-slate-400 truncate">
+                                  {isExperiments ? `${item.author || 'by Platform'} • ♥ ${item.likes || '10k'}` : `⏱ ${item.duration || '5:00'} • ${item.description || 'Video Lesson'}`}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <button onClick={() => setActiveMultiModal({ chapter, mod, isNew: false, itemIndex: idx, itemData: { ...item } })}
+                                className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold border border-slate-700">
+                                ✏️ Edit
+                              </button>
+                              <button onClick={() => deleteItem(idx)}
+                                className="px-1.5 py-1 rounded bg-red-900/30 hover:bg-red-900/50 text-red-300 text-[10px] border border-red-700/40">
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-1 border-t border-slate-800 text-[10px]">
+                            <span className="font-mono text-slate-400 truncate max-w-[220px]">{item.url || 'No URL attached'}</span>
+                            {item.url && (
+                              <a href={finalUrl} target="_blank" rel="noreferrer" className="px-2 py-0.5 rounded font-bold bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 flex items-center gap-1 transition">
+                                <i className="ph ph-arrow-square-out text-xs"></i> Preview ↗
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      // ── SINGLE-ITEM MODALITY SLOT (Experience, Quiz, Mixed Reality) ──
+      const SingleModalitySlot = ({ chapter, mod, isCustom=false }) => {
         const [url, setUrl] = React.useState(chapterModalities[chapter.id]?.[mod.slug] || '');
         const [editing, setEditing] = React.useState(false);
         const [uploading, setUploading] = React.useState(false);
         const [uploadProgress, setUploadProgress] = React.useState('');
         const [dragOver, setDragOver] = React.useState(false);
-        const [previewModal, setPreviewModal] = React.useState(false);
         const fileInputRef = React.useRef(null);
         const folderInputRef = React.useRef(null);
         const saved = chapterModalities[chapter.id]?.[mod.slug];
@@ -3615,7 +3786,6 @@
                   showToast(result.error || 'Upload to R2 failed', 'error');
                 }
               } catch (networkErr) {
-                // Fallback: If local API endpoint is unreachable, store as relative or CDN link
                 const fallbackUrl = `${R2_CDN}/courses/${(selectedClass.name).toLowerCase().replace(/[^a-z0-9]+/g,'-')}/${(selectedSubject.name).toLowerCase().replace(/[^a-z0-9]+/g,'-')}/${(chapter.chapter_slug||'ch').toLowerCase()}/${mod.slug}/${file.name}`;
                 setUrl(fallbackUrl);
                 await saveModalityUrl(chapter, mod.slug, fallbackUrl);
@@ -3640,30 +3810,7 @@
           }
         };
 
-        const resolvePreviewUrl = (rawUrl) => {
-          if (!rawUrl) return '';
-          let clean = rawUrl.trim();
-          
-          // YouTube watch link -> Embed link
-          if (clean.includes('youtube.com/watch')) {
-            const v = clean.split('v=')[1]?.split('&')[0];
-            if (v) return `https://www.youtube.com/embed/${v}?autoplay=1`;
-          } else if (clean.includes('youtu.be/')) {
-            const v = clean.split('youtu.be/')[1]?.split('?')[0];
-            if (v) return `https://www.youtube.com/embed/${v}?autoplay=1`;
-          }
-
-          // Relative local simulation files in study-island (e.g. Chapter_experience_L_S.html, Shadow_Lab.html)
-          if (!clean.startsWith('http://') && !clean.startsWith('https://') && !clean.startsWith('/')) {
-            return `/study-island/${clean}`;
-          }
-
-          return clean;
-        };
-
         const previewFinalUrl = resolvePreviewUrl(saved);
-        const isImage = saved && (saved.endsWith('.png') || saved.endsWith('.jpg') || saved.endsWith('.jpeg') || saved.endsWith('.webp') || saved.endsWith('.svg'));
-        const is3DModel = saved && (saved.endsWith('.glb') || saved.endsWith('.gltf'));
 
         return (
           <div 
@@ -3673,22 +3820,8 @@
             className={`transition-all relative rounded-xl p-3.5 ${dragOver ? 'border-2 border-cyan-400 bg-cyan-950/40 shadow-lg shadow-cyan-500/20' : ''}`}
             style={{ border: dragOver ? '2px solid #00F0FF' : `1px solid ${mod.color}33`, background: `${mod.color}08` }}>
             
-            {/* Hidden File Inputs */}
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              onChange={(e) => { if (e.target.files?.[0]) uploadFileToR2(e.target.files[0]); }} 
-            />
-            <input 
-              type="file" 
-              ref={folderInputRef} 
-              webkitdirectory="true" 
-              directory="true" 
-              multiple 
-              className="hidden" 
-              onChange={(e) => { if (e.target.files?.[0]) uploadFileToR2(e.target.files[0]); }} 
-            />
+            <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => { if (e.target.files?.[0]) uploadFileToR2(e.target.files[0]); }} />
+            <input type="file" ref={folderInputRef} webkitdirectory="true" directory="true" multiple className="hidden" onChange={(e) => { if (e.target.files?.[0]) uploadFileToR2(e.target.files[0]); }} />
 
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2.5">
@@ -3715,7 +3848,6 @@
               </div>
             </div>
 
-            {/* Upload Progress Display */}
             {uploading && (
               <div className="p-2.5 my-2 rounded-lg bg-cyan-950/70 border border-cyan-500/40 text-xs text-cyan-300 font-mono flex items-center gap-2 animate-pulse">
                 <i className="ph ph-spinner animate-spin text-base"></i>
@@ -3723,7 +3855,6 @@
               </div>
             )}
 
-            {/* Editing / Uploading Interface */}
             {editing ? (
               <div className="space-y-2 mt-2 pt-2 border-t border-slate-700/40">
                 <div className="flex gap-2">
@@ -3743,12 +3874,11 @@
                   <button onClick={() => setEditing(false)} className="px-3 py-1.5 rounded-lg text-xs text-slate-400 bg-slate-800 border border-slate-700">✕</button>
                 </div>
 
-                {/* Direct Upload Buttons Dropzone */}
                 <div className="flex items-center gap-2 pt-1">
                   <button 
                     onClick={() => fileInputRef.current?.click()}
                     className="flex-1 py-2 px-3 rounded-lg border border-dashed border-cyan-500/50 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-bold flex items-center justify-center gap-1.5 transition">
-                    <i className="ph ph-file-arrow-up text-sm"></i> Upload HTML / Model / File to R2
+                    <i className="ph ph-file-arrow-up text-sm"></i> Upload File to R2
                   </button>
                   <button 
                     onClick={() => folderInputRef.current?.click()}
@@ -3834,18 +3964,26 @@
                   </button>
                 </div>
                 {/* Default Modalities — always shown */}
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest">⬛ Default Modalities</p>
                   {DEFAULT_MODALITIES.map(mod => (
-                    <ModalitySlot key={mod.slug} chapter={chapter} mod={mod} isCustom={false} />
+                    mod.isMulti ? (
+                      <MultiItemModalitySlot key={mod.slug} chapter={chapter} mod={mod} />
+                    ) : (
+                      <SingleModalitySlot key={mod.slug} chapter={chapter} mod={mod} isCustom={false} />
+                    )
                   ))}
                 </div>
                 {/* Custom Modalities — added by admin */}
                 {[...chapterCustomMods, ...customModalities].length > 0 && (
-                  <div className="space-y-2 mt-1">
+                  <div className="space-y-2.5 mt-2">
                     <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest">✨ Custom Modalities</p>
                     {[...chapterCustomMods, ...customModalities].map(mod => (
-                      <ModalitySlot key={mod.slug} chapter={chapter} mod={mod} isCustom={true} />
+                      mod.isMulti ? (
+                        <MultiItemModalitySlot key={mod.slug} chapter={chapter} mod={mod} />
+                      ) : (
+                        <SingleModalitySlot key={mod.slug} chapter={chapter} mod={mod} isCustom={true} />
+                      )
                     ))}
                   </div>
                 )}
@@ -4047,9 +4185,213 @@
                   <input type="text" placeholder="Short description for your team..." value={newCustomMod.description} onChange={e=>setNewCustomMod({...newCustomMod,description:e.target.value})}
                     className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none" />
                 </div>
-                <div className="flex gap-2 pt-1">
-                  <button onClick={addCustomModality} className="flex-1 py-2.5 rounded-xl text-sm font-bold" style={{background:'#A78BFA25', border:'1px solid #A78BFA50', color:'#A78BFA'}}>✨ Add Modality</button>
-                  <button onClick={() => setShowAddCustomModal(false)} className="px-4 py-2.5 rounded-xl text-sm bg-slate-800 border border-slate-700 text-slate-400">Cancel</button>
+          {/* Multi-Item Add / Edit Modal (for Experiments & Stories) */}
+          {activeMultiModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+              <div className="glass-panel p-6 border border-cyan-500/40 rounded-2xl w-full max-w-lg space-y-4 shadow-2xl overflow-y-auto max-h-[90vh]">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl">{activeMultiModal.mod.emoji}</span>
+                    <div>
+                      <h4 className="text-base font-bold text-white">
+                        {activeMultiModal.isNew ? `✚ Add ${activeMultiModal.mod.label}` : `✏️ Edit ${activeMultiModal.mod.label}`}
+                      </h4>
+                      <p className="text-[11px] text-slate-400">Chapter: {activeMultiModal.chapter.title}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setActiveMultiModal(null)} className="text-slate-400 hover:text-white text-base">✕</button>
+                </div>
+
+                {/* Experiments Form */}
+                {activeMultiModal.mod.slug === 'experiments' && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs text-slate-300 font-semibold mb-1 block">Experiment Title *</label>
+                      <input type="text" placeholder="e.g. Laser Bounce or Shadow Lab"
+                        value={activeMultiModal.itemData.title || ''}
+                        onChange={e => setActiveMultiModal({ ...activeMultiModal, itemData: { ...activeMultiModal.itemData, title: e.target.value } })}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none" />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="text-[11px] text-slate-400 mb-1 block">Author / Team</label>
+                        <input type="text" placeholder="by Platform"
+                          value={activeMultiModal.itemData.author || ''}
+                          onChange={e => setActiveMultiModal({ ...activeMultiModal, itemData: { ...activeMultiModal.itemData, author: e.target.value } })}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white outline-none" />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-slate-400 mb-1 block">Badge Tag</label>
+                        <input type="text" placeholder="Latest! or Ready"
+                          value={activeMultiModal.itemData.badge || ''}
+                          onChange={e => setActiveMultiModal({ ...activeMultiModal, itemData: { ...activeMultiModal.itemData, badge: e.target.value } })}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white outline-none" />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-slate-400 mb-1 block">Likes / Stat</label>
+                        <input type="text" placeholder="50k"
+                          value={activeMultiModal.itemData.likes || ''}
+                          onChange={e => setActiveMultiModal({ ...activeMultiModal, itemData: { ...activeMultiModal.itemData, likes: e.target.value } })}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white outline-none" />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-2">
+                      <div className="col-span-1">
+                        <label className="text-[11px] text-slate-400 mb-1 block">Icon Emoji</label>
+                        <input type="text" placeholder="🌕"
+                          value={activeMultiModal.itemData.icon || '🧪'}
+                          onChange={e => setActiveMultiModal({ ...activeMultiModal, itemData: { ...activeMultiModal.itemData, icon: e.target.value } })}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-center text-white outline-none" />
+                      </div>
+                      <div className="col-span-3">
+                        <label className="text-[11px] text-slate-400 mb-1 block">Color Theme</label>
+                        <div className="flex gap-1.5 pt-1">
+                          {[
+                            { name: 'Cyan', bg: 'linear-gradient(135deg, #00F0FF, #0070F3)', color: '#00F0FF' },
+                            { name: 'Purple', bg: 'linear-gradient(135deg, #A855F7, #6366F1)', color: '#A855F7' },
+                            { name: 'Pink', bg: 'linear-gradient(135deg, #EC4899, #BE185D)', color: '#EC4899' },
+                            { name: 'Orange', bg: 'linear-gradient(135deg, #F97316, #D97706)', color: '#F97316' },
+                            { name: 'Green', bg: 'linear-gradient(135deg, #10B981, #0D9488)', color: '#10B981' }
+                          ].map(g => (
+                            <button key={g.name} type="button"
+                              onClick={() => setActiveMultiModal({ ...activeMultiModal, itemData: { ...activeMultiModal.itemData, gradient: g.bg, color: g.color } })}
+                              className={`h-7 flex-1 rounded-lg transition border ${activeMultiModal.itemData.gradient===g.bg ? 'border-white scale-105 shadow-md' : 'border-transparent opacity-75'}`}
+                              style={{ background: g.bg }} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-slate-300 font-semibold mb-1 block">Simulation URL or File Link *</label>
+                      <div className="space-y-2">
+                        <input type="text" placeholder="e.g. Shadow_Lab.html or R2 CDN Link"
+                          value={activeMultiModal.itemData.url || ''}
+                          onChange={e => setActiveMultiModal({ ...activeMultiModal, itemData: { ...activeMultiModal.itemData, url: e.target.value } })}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none" />
+                        
+                        <div className="flex items-center gap-2">
+                          <label className="flex-1 py-2 px-3 rounded-lg border border-dashed border-cyan-500/50 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition">
+                            <i className="ph ph-file-arrow-up text-sm"></i> Direct Upload HTML to R2
+                            <input type="file" className="hidden" onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const reader = new FileReader();
+                              reader.onload = async (ev) => {
+                                const base64Data = ev.target.result.split(',')[1];
+                                const res = await fetch('/api/upload-r2', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    className: selectedClass.name,
+                                    subjectName: selectedSubject.name,
+                                    chapterSlug: activeMultiModal.chapter.chapter_slug || activeMultiModal.chapter.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                                    modalitySlug: 'experiments',
+                                    filename: file.name,
+                                    base64Content: base64Data,
+                                    contentType: file.type
+                                  })
+                                });
+                                const r = await res.json();
+                                if (r.ok && r.cdnUrl) {
+                                  setActiveMultiModal(prev => ({ ...prev, itemData: { ...prev.itemData, url: r.cdnUrl } }));
+                                  showToast(`✅ Uploaded "${file.name}" to Cloudflare R2!`);
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }} />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Stories Form */}
+                {activeMultiModal.mod.slug === 'stories' && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs text-slate-300 font-semibold mb-1 block">Story Video Title *</label>
+                      <input type="text" placeholder="e.g. Shadows and Light Explained"
+                        value={activeMultiModal.itemData.title || ''}
+                        onChange={e => setActiveMultiModal({ ...activeMultiModal, itemData: { ...activeMultiModal.itemData, title: e.target.value } })}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[11px] text-slate-400 mb-1 block">Tag Category</label>
+                        <select
+                          value={activeMultiModal.itemData.tag || 'DOCUMENTARY'}
+                          onChange={e => setActiveMultiModal({ ...activeMultiModal, itemData: { ...activeMultiModal.itemData, tag: e.target.value } })}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none">
+                          <option value="DOCUMENTARY">DOCUMENTARY</option>
+                          <option value="EXPLORE">EXPLORE</option>
+                          <option value="LESSON">LESSON</option>
+                          <option value="CASE STUDY">CASE STUDY</option>
+                          <option value="EXPERIMENT GUIDE">EXPERIMENT GUIDE</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-slate-400 mb-1 block">Duration</label>
+                        <input type="text" placeholder="e.g. 5:21"
+                          value={activeMultiModal.itemData.duration || ''}
+                          onChange={e => setActiveMultiModal({ ...activeMultiModal, itemData: { ...activeMultiModal.itemData, duration: e.target.value } })}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-slate-300 font-semibold mb-1 block">Description</label>
+                      <textarea placeholder="Short synopsis of this video lesson..."
+                        value={activeMultiModal.itemData.description || ''}
+                        onChange={e => setActiveMultiModal({ ...activeMultiModal, itemData: { ...activeMultiModal.itemData, description: e.target.value } })}
+                        rows={2} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none resize-none" />
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-slate-300 font-semibold mb-1 block">Thumbnail Image URL</label>
+                      <input type="text" placeholder="https://pub-.../thumbnails/preview.webp"
+                        value={activeMultiModal.itemData.thumbnail_url || ''}
+                        onChange={e => setActiveMultiModal({ ...activeMultiModal, itemData: { ...activeMultiModal.itemData, thumbnail_url: e.target.value } })}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none" />
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-slate-300 font-semibold mb-1 block">Video Stream / YouTube Embed URL *</label>
+                      <input type="text" placeholder="https://www.youtube.com/watch?v=... or R2 MP4 URL"
+                        value={activeMultiModal.itemData.url || ''}
+                        onChange={e => setActiveMultiModal({ ...activeMultiModal, itemData: { ...activeMultiModal.itemData, url: e.target.value } })}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-2 border-t border-slate-800">
+                  <button
+                    onClick={() => {
+                      if (!activeMultiModal.itemData.title?.trim()) return showToast('Title is required', 'error');
+                      const currentList = Array.isArray(chapterModalities[activeMultiModal.chapter.id]?.[activeMultiModal.mod.slug]) ? [...chapterModalities[activeMultiModal.chapter.id][activeMultiModal.mod.slug]] : [];
+                      let updated;
+                      if (activeMultiModal.isNew) {
+                        const newItem = { ...activeMultiModal.itemData, id: `${activeMultiModal.mod.slug}_${Date.now()}` };
+                        updated = [...currentList, newItem];
+                      } else {
+                        updated = currentList.map((item, idx) => idx === activeMultiModal.itemIndex ? { ...item, ...activeMultiModal.itemData } : item);
+                      }
+                      saveMultiItemList(activeMultiModal.chapter, activeMultiModal.mod.slug, updated);
+                      setActiveMultiModal(null);
+                    }}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white shadow"
+                    style={{ background: `${activeMultiModal.mod.color}35`, border: `1px solid ${activeMultiModal.mod.color}70` }}>
+                    💾 Save {activeMultiModal.mod.label} Item
+                  </button>
+                  <button onClick={() => setActiveMultiModal(null)} className="px-4 py-2.5 rounded-xl text-sm bg-slate-800 border border-slate-700 text-slate-400">
+                    Cancel
+                  </button>
                 </div>
               </div>
             </div>
