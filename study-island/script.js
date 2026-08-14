@@ -47,8 +47,8 @@
           tag: 'DOCUMENTARY',
           duration: '5:21',
           description: 'Dive deep into the magical interplay between light sources and opaque objects. A beautifully animated introduction to the science of optics.',
-          thumbnail_url: 'assets/Future verion lowres.jpg',
-          url: 'https://www.youtube.com/embed/2_XzXg16wgo'
+          thumbnail_url: 'https://img.youtube.com/vi/fy7eoMef3e8/hqdefault.jpg',
+          url: 'https://www.youtube.com/embed/fy7eoMef3e8?autoplay=1'
         },
         {
           id: 'story_2',
@@ -56,8 +56,8 @@
           tag: 'EXPLORE',
           duration: '3:36',
           description: 'Learn how different light angles and intensities stretch and morph shadows, uncovering the geometry behind visual perception.',
-          thumbnail_url: 'assets/chapter background lowres.jpg',
-          url: 'https://www.youtube.com/embed/2_XzXg16wgo'
+          thumbnail_url: 'https://img.youtube.com/vi/4vUozykivNA/hqdefault.jpg',
+          url: 'https://www.youtube.com/embed/4vUozykivNA?autoplay=1'
         },
         {
           id: 'story_3',
@@ -65,8 +65,8 @@
           tag: 'LESSON',
           duration: '3:58',
           description: 'Discover optical phenomena in nature, camera lenses, and everyday technology.',
-          thumbnail_url: 'assets/Home screen background low res.jpg',
-          url: 'https://www.youtube.com/embed/2_XzXg16wgo'
+          thumbnail_url: 'https://img.youtube.com/vi/cDaWohR_DVo/hqdefault.jpg',
+          url: 'https://www.youtube.com/embed/cDaWohR_DVo?autoplay=1'
         }
       ]
     },
@@ -1157,6 +1157,28 @@
     carousel.addEventListener('scroll', updateCarouselArrows);
   }
 
+  function resolveStoryThumbnail(story) {
+    if (story && story.thumbnail_url && !story.thumbnail_url.includes('placeholders/')) {
+      return story.thumbnail_url;
+    }
+    var url = (story && story.url) || '';
+    var videoId = '';
+    if (url.includes('embed/')) {
+      var parts = url.split('embed/')[1];
+      videoId = parts ? parts.split('?')[0] : '';
+    } else if (url.includes('v=')) {
+      var parts2 = url.split('v=')[1];
+      videoId = parts2 ? parts2.split('&')[0] : '';
+    } else if (url.includes('youtu.be/')) {
+      var parts3 = url.split('youtu.be/')[1];
+      videoId = parts3 ? parts3.split('?')[0] : '';
+    }
+    if (videoId) {
+      return 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg';
+    }
+    return 'assets/chapter%20background%20lowres.jpg';
+  }
+
   function renderDynamicChapterModalities(chapter) {
     if (!chapter) return;
 
@@ -1186,25 +1208,32 @@
       window.setTimeout(updateCarouselArrows, 60);
     }
 
-    // 2. Render Stories List (.stories-scroll-container)
-    var storiesContainer = document.querySelector('#tabpanel-stories .stories-scroll-container');
+    // 2. Render Stories List (#stories-scroll-container)
+    var storiesContainer = byId('stories-scroll-container') || document.querySelector('#tabpanel-stories .stories-scroll-container');
     if (storiesContainer && Array.isArray(chapter.stories_list) && chapter.stories_list.length > 0) {
       var storiesHtml = chapter.stories_list.map(function(story) {
         var safeVideoUrl = (story.url || '').replace(/'/g, "\\'");
-        var thumb = story.thumbnail_url || 'assets/Future verion lowres.jpg';
+        var thumb = resolveStoryThumbnail(story);
+        var fallbackThumb = 'https://img.youtube.com/vi/fy7eoMef3e8/hqdefault.jpg';
         return '<div class="story-list-card" onclick="openStoryVideo(\'' + safeVideoUrl + '\')">' +
-          '<div style="width:240px; position:relative; overflow:hidden; flex-shrink:0; background:#000;">' +
-            '<img src="' + thumb + '" alt="' + (story.title || 'Story') + '" class="story-thumb" style="width:100%; height:100%; object-fit:cover;">' +
-            '<div class="play-icon" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:48px; height:48px; border-radius:50%; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; color:white; border:1px solid rgba(255,255,255,0.4);"><i class="ph ph-play-fill" style="font-size:1.4rem; margin-left:3px;"></i></div>' +
-          '</div>' +
-          '<div style="padding:24px 30px; display:flex; flex-direction:column; justify-content:center; gap:8px; flex-grow:1; position:relative;">' +
-            '<div style="display:flex; align-items:center; gap:12px;">' +
-              '<span style="font-size:0.75rem; font-weight:700; color:#22d3ee; letter-spacing:0.05em; background:rgba(34,211,238,0.1); padding:4px 10px; border-radius:6px; border:1px solid rgba(34,211,238,0.3);">' + (story.tag || 'DOCUMENTARY') + '</span>' +
-              '<span style="font-size:0.8rem; color:rgba(255,255,255,0.6); display:flex; align-items:center; gap:4px;"><i class="ph ph-clock"></i> ' + (story.duration || '5:00') + '</span>' +
+          '<div style="flex: 0 0 320px; position:relative; overflow:hidden; min-height:190px; background:#000;">' +
+            '<img src="' + thumb + '" alt="' + (story.title || 'Story') + '" class="story-thumb" onerror="this.onerror=null; this.src=\'' + fallbackThumb + '\';" style="width:100%; height:100%; object-fit:cover; opacity:0.85;">' +
+            '<div style="position:absolute; inset:0; background:linear-gradient(to right, transparent 50%, rgba(0,0,0,0.9) 100%); z-index:1;"></div>' +
+            '<div class="play-icon" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:64px; height:64px; border-radius:50%; background:rgba(0,0,0,0.55); border:2px solid rgba(255,255,255,0.8); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px rgba(0,0,0,0.6); z-index:2; transition:transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;">' +
+              '<svg width="26" height="26" viewBox="0 0 24 24" fill="#ffffff" style="margin-left:3px;"><path d="M8 5v14l11-7z"/></svg>' +
             '</div>' +
-            '<h3 style="font-size:1.25rem; font-weight:700; color:white; margin:0;">' + (story.title || 'Story Lesson') + '</h3>' +
-            '<p style="font-size:0.85rem; color:rgba(255,255,255,0.7); line-height:1.5; margin:0; max-width:600px;">' + (story.description || '') + '</p>' +
-            '<div style="margin-top:8px; display:flex; align-items:center; gap:6px; color:#22d3ee; font-size:0.85rem; font-weight:600;"><span>Watch Experience</span> <i class="ph ph-arrow-right"></i></div>' +
+          '</div>' +
+          '<div style="flex: 1; padding:30px 40px; display:flex; flex-direction:column; justify-content:center; position:relative;">' +
+            '<div style="position:absolute; inset:0; background:radial-gradient(ellipse at left, rgba(34,211,238,0.08) 0%, transparent 60%); opacity:0;" class="card-glow"></div>' +
+            '<div style="display:flex; gap:12px; margin-bottom:12px; z-index:1;">' +
+              '<span style="padding:4px 12px; background:rgba(34,211,238,0.1); border:1px solid rgba(34,211,238,0.3); border-radius:12px; color:#22d3ee; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;">' + (story.tag || 'DOCUMENTARY') + '</span>' +
+              '<span style="padding:4px 12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#cbd5e1; font-size:0.75rem; font-weight:600; display:flex; align-items:center; gap:4px;"><i class="ph ph-clock"></i> ' + (story.duration || '5:00') + '</span>' +
+            '</div>' +
+            '<h4 style="font-size:1.6rem; font-weight:700; color:white; margin-bottom:12px; z-index:1; letter-spacing:0.5px; text-shadow:0 2px 4px rgba(0,0,0,0.5);">' + (story.title || 'Story Lesson') + '</h4>' +
+            '<p style="color:#94a3b8; font-size:1rem; line-height:1.6; max-width:90%; margin-bottom:20px; z-index:1;">' + (story.description || '') + '</p>' +
+            '<div style="display:flex; align-items:center; gap:8px; color:#22d3ee; font-weight:700; font-size:1rem; z-index:1;">' +
+              'Watch Experience <i class="ph ph-arrow-right" style="font-weight:bold;"></i>' +
+            '</div>' +
           '</div>' +
         '</div>';
       }).join('');

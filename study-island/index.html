@@ -514,11 +514,16 @@
                     filter:brightness(1.15);
                 }
                 .play-icon {
-                    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.3s;
+                    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s, background 0.3s, box-shadow 0.3s;
                 }
                 .story-list-card:hover .play-icon {
-                    transform:translate(-50%, -50%) scale(1.2);
-                    color:#22d3ee !important;
+                    transform:translate(-50%, -50%) scale(1.15);
+                    border-color:#22d3ee !important;
+                    background:rgba(34,211,238,0.25) !important;
+                    box-shadow:0 0 25px rgba(34,211,238,0.7) !important;
+                }
+                .story-list-card:hover .play-icon svg {
+                    fill:#22d3ee !important;
                 }
                 .card-glow {
                     transition:opacity 0.4s ease;
