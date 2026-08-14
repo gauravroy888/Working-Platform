@@ -15,11 +15,26 @@ export function ThemeProvider({ children }) {
   });
 
   const [profileName, setProfileName] = useState(() => {
-    return localStorage.getItem('portal_name') || 'Prof. Anderson';
+    const userStr = localStorage.getItem('edtech_user');
+    if (userStr) {
+      try {
+        const u = JSON.parse(userStr);
+        if (u.name) return u.name;
+      } catch (e) {}
+    }
+    return localStorage.getItem('portal_name') || 'Teacher';
   });
 
   const [profileDesignation, setProfileDesignation] = useState(() => {
-    return localStorage.getItem('portal_designation') || 'Senior Educator';
+    const userStr = localStorage.getItem('edtech_user');
+    if (userStr) {
+      try {
+        const u = JSON.parse(userStr);
+        if (u.role === 'teacher') return 'Faculty / Teacher';
+        if (u.role === 'super_admin' || u.role === 'superadmin') return 'Super Administrator';
+      } catch (e) {}
+    }
+    return localStorage.getItem('portal_designation') || 'Faculty / Teacher';
   });
 
   // Update localStorage when it changes
