@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import defaultBg from './assets/milky-way-starry-sky2k.jpg';
+import defaultBg from './assets/Future verion lowres.jpg';
 import defaultAvatar from './assets/avatar.png';
 
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  // Try to load from localStorage, otherwise default to the milky way image
+  // Use futuristic background by default
   const [backgroundImage, setBackgroundImage] = useState(() => {
-    return localStorage.getItem('teacher_portal_bg') || defaultBg;
+    return defaultBg;
   });
 
   const [profileImage, setProfileImage] = useState(() => {

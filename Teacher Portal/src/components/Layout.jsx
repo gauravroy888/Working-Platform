@@ -20,16 +20,6 @@ export default function Layout({ children }) {
       <Sidebar />
       
       <main className="main-content">
-        <header className="top-header">
-          <div className="header-brand">
-            <h2>TEACHER PORTAL</h2>
-            <p>Welcome back, {userName}!</p>
-          </div>
-          <div className="header-actions">
-            {/* Any global actions could go here */}
-          </div>
-        </header>
-        
         <div className="page-content">
           {children}
         </div>
