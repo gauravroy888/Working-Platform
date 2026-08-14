@@ -1287,29 +1287,77 @@
     if (classEl) classEl.textContent = storedClass;
     if (idEl) idEl.textContent = 'ID: ' + (studentId || 'STU-64029');
 
-    var class6thCourses = [
+    var officialClass6thSubjects = [
       {
-        title: 'Class 6th Physics & Optics',
+        id: 'c6-sci',
+        title: 'Class 6th Science',
         class_name: 'Class 6th',
         subject: 'Science',
-        chapters_count: 5,
+        chapters_count: 2,
         icon: '💡',
         access: 'Full Access'
       },
       {
-        title: 'Class 6th Biology & Life Systems',
+        id: 'c6-hist',
+        title: 'Class 6th Ancient & World History',
         class_name: 'Class 6th',
-        subject: 'Science',
-        chapters_count: 4,
-        icon: '🌿',
+        subject: 'History',
+        chapters_count: 1,
+        icon: '🏛️',
         access: 'Full Access'
       },
       {
-        title: 'Class 6th Physical Geography & Earth Systems',
+        id: 'c6-geo',
+        title: 'Class 6th World Geography & Continents',
         class_name: 'Class 6th',
         subject: 'Geography',
-        chapters_count: 3,
+        chapters_count: 1,
         icon: '🌍',
+        access: 'Full Access'
+      },
+      {
+        id: 'c6-math',
+        title: 'Class 6th Mathematics & Geometry',
+        class_name: 'Class 6th',
+        subject: 'Mathematics',
+        chapters_count: 1,
+        icon: '📐',
+        access: 'Full Access'
+      },
+      {
+        id: 'c6-eng',
+        title: 'Class 6th English Literature & Grammar',
+        class_name: 'Class 6th',
+        subject: 'English',
+        chapters_count: 1,
+        icon: '📝',
+        access: 'Full Access'
+      },
+      {
+        id: 'c6-art',
+        title: 'Class 6th Visual Arts & 3D Design',
+        class_name: 'Class 6th',
+        subject: 'Arts',
+        chapters_count: 1,
+        icon: '🎨',
+        access: 'Full Access'
+      },
+      {
+        id: 'c6-music',
+        title: 'Class 6th Music Theory & Acoustics',
+        class_name: 'Class 6th',
+        subject: 'Music',
+        chapters_count: 1,
+        icon: '🎵',
+        access: 'Full Access'
+      },
+      {
+        id: 'c6-pe',
+        title: 'Class 6th Physical Education & Sports Science',
+        class_name: 'Class 6th',
+        subject: 'Physical Education',
+        chapters_count: 1,
+        icon: '🏃',
         access: 'Full Access'
       }
     ];
@@ -1318,13 +1366,25 @@
       var listEl = byId('profile-courses-list');
       if (!listEl) return;
       listEl.innerHTML = '';
+
+      var subjectIcons = {
+        'Science': '💡',
+        'History': '🏛️',
+        'Geography': '🌍',
+        'Mathematics': '📐',
+        'English': '📝',
+        'Arts': '🎨',
+        'Music': '🎵',
+        'Physical Education': '🏃'
+      };
+
       coursesToDisplay.forEach(function (course) {
         var card = document.createElement('div');
         card.className = 'glass-mini';
         card.style.cssText = 'padding: 16px 22px; border-radius: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: space-between; gap: 18px; transition: all 0.25s ease; box-shadow: 0 4px 20px rgba(0,0,0,0.25);';
         
-        var chapterCount = course.chapters_count || (course.course_chapters ? course.course_chapters.length : 2);
-        var icon = course.icon || '📖';
+        var chapterCount = course.chapters_count || (course.course_chapters ? course.course_chapters.length : 1);
+        var icon = course.icon || subjectIcons[course.subject] || '📖';
 
         card.innerHTML = '\
           <div style="display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0;">\
@@ -1332,10 +1392,10 @@
               ' + icon + '\
             </div>\
             <div style="flex: 1; min-width: 0;">\
-              <h4 style="font-size: 1.15rem; font-weight: 800; color: white; margin: 0 0 6px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="' + (course.title || 'Course') + '">' + (course.title || 'Course') + '</h4>\
+              <h4 style="font-size: 1.15rem; font-weight: 800; color: white; margin: 0 0 6px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="' + (course.title || 'Subject') + '">' + (course.title || 'Subject') + '</h4>\
               <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">\
                 <span style="font-size: 0.78rem; padding: 3px 10px; border-radius: 8px; background: rgba(16,185,129,0.18); border: 1px solid rgba(16,185,129,0.35); color: #10B981; font-weight: 800; white-space: nowrap; flex-shrink: 0;">🟢 Full Access</span>\
-                <span style="color: #cbd5e1; font-size: 0.88rem; font-weight: 500; white-space: nowrap;">' + (course.class_name || 'Class 6th') + ' • ' + chapterCount + ' Interactive 3D Chapters</span>\
+                <span style="color: #cbd5e1; font-size: 0.88rem; font-weight: 500; white-space: nowrap;">' + (course.class_name || 'Class 6th') + ' • ' + (course.subject || 'Core Subject') + '</span>\
               </div>\
             </div>\
           </div>\
@@ -1354,18 +1414,13 @@
         .eq('class_name', 'Class 6th')
         .then(function (res) {
           var dbCourses = res.data || [];
-          var combined = dbCourses.slice();
-          class6thCourses.forEach(function (c) {
-            var exists = combined.some(function (dbC) { 
-              return dbC.title && dbC.title.toLowerCase() === c.title.toLowerCase(); 
-            });
-            if (!exists) {
-              combined.push(c);
-            }
-          });
-          renderCourses(combined);
+          if (dbCourses.length > 0) {
+            renderCourses(dbCourses);
+          } else {
+            renderCourses(officialClass6thSubjects);
+          }
         }).catch(function () {
-          renderCourses(class6thCourses);
+          renderCourses(officialClass6thSubjects);
         });
 
       supabaseClient
@@ -1375,7 +1430,7 @@
         })
         .subscribe();
     } else {
-      renderCourses(class6thCourses);
+      renderCourses(officialClass6thSubjects);
     }
   }
 
