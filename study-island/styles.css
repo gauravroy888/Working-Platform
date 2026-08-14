@@ -1942,7 +1942,6 @@ body.chapter-detail-open #theme-toggle {
   }
 
   .sol-tab-panel { padding: 32px 40px; }
-
   .experiments-carousel-container { padding-top: 44px; }
   .experiments-carousel-title {
     font-size: 2.7rem;
@@ -2039,51 +2038,68 @@ mark, .inline-highlight, [data-highlight] {
 }
 
 .carousel-nav {
-  position: relative; /* Un-stick from carousel edges, stopping overlap */
+  position: relative;
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  color: #fff;
+  font-size: 1.15rem;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
   z-index: 5;
   transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .carousel-nav:hover {
-  background: rgba(64, 224, 208, 0.3);
-  transform: scale(1.1);
+  background: rgba(0, 229, 255, 0.25);
+  border-color: rgba(0, 229, 255, 0.7);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.4);
+  transform: scale(1.08);
+}
+
+.carousel-nav.is-hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  cursor: default !important;
+  visibility: hidden !important;
 }
 
 .experiments-carousel {
-  flex: 1; /* Automatically takes exact room between arrows */
-  min-width: 0; /* Critical: prevents flex item from forcing parent overflow */
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 30px;
+  justify-content: center; /* Center cards when 1 or few items */
+  gap: 28px;
   width: 100%;
-  max-width: 950px;
+  max-width: 980px;
   overflow-x: auto;
-  /* overflow-x:auto on a single axis while clip on the other —
-     stops lateral bleed without breaking vertical scroll context */
   overflow-y: clip;
-  padding: 35px 30px;
+  padding: 35px 24px;
   scroll-snap-type: x mandatory;
   -ms-overflow-style: none;
   scrollbar-width: none;
   scroll-behavior: smooth;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
 
-  /* Feathered mask preserves box-shadows at edges without clipping */
-  -webkit-mask-image: linear-gradient(to right, transparent 0, black 28px, black calc(100% - 28px), transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, black 28px, black calc(100% - 28px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%);
 }
+
+.experiments-carousel:active {
+  cursor: grabbing;
+}
+
 .experiments-carousel::-webkit-scrollbar {
   display: none;
 }

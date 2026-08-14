@@ -35,37 +35,8 @@
           badge: 'Latest!',
           likes: '50k',
           icon: '🌕',
-          gradient: 'linear-gradient(135deg, #00d2ff, #3a7bd5)',
-          url: 'Shadow_Lab.html'
-        },
-        {
-          id: 'exp_2',
-          title: 'Laser Bounce',
-          author: 'by Edtech Lab',
-          badge: 'Ready',
-          likes: '12k',
-          icon: '🧬',
-          gradient: 'linear-gradient(135deg, #b000ff, #5c00a3)',
-          url: 'Shadow_Lab.html'
-        },
-        {
-          id: 'exp_3',
-          title: 'Optics Simulator',
-          author: 'by Physics Team',
-          badge: 'Ready',
-          likes: '21k',
-          icon: '🎯',
-          gradient: 'linear-gradient(135deg, #ff0073, #a10048)',
-          url: 'Shadow_Lab.html'
-        },
-        {
-          id: 'exp_4',
-          title: 'Thermal Dynamics',
-          author: 'by Core',
-          badge: 'Ready',
-          likes: '34k',
-          icon: '🔥',
-          gradient: 'linear-gradient(135deg, #ff4e50, #f9d423)',
+          gradient: 'linear-gradient(135deg, #00F0FF, #0070F3)',
+          color: '#00F0FF',
           url: 'Shadow_Lab.html'
         }
       ],
@@ -273,6 +244,12 @@
           scheduleChapterSceneBoot();
         }
       }, 10);
+    } else if (tabName === 'experiments') {
+      window.setTimeout(function () {
+        if (typeof updateCarouselArrows === 'function') {
+          updateCarouselArrows();
+        }
+      }, 30);
     }
   }
 
@@ -1092,27 +1069,121 @@
     }, 160);
   }
 
+  function updateCarouselArrows() {
+    var carousel = byId('experiments-carousel');
+    var leftBtn = document.querySelector('.carousel-nav.left');
+    var rightBtn = document.querySelector('.carousel-nav.right');
+
+    if (!carousel) return;
+
+    // Check if cards actually overflow the viewport width of the carousel container
+    var hasOverflow = carousel.scrollWidth > (carousel.clientWidth + 8);
+
+    if (!hasOverflow) {
+      carousel.style.justifyContent = 'center';
+      if (leftBtn) leftBtn.classList.add('is-hidden');
+      if (rightBtn) rightBtn.classList.add('is-hidden');
+    } else {
+      carousel.style.justifyContent = 'flex-start';
+      var atStart = carousel.scrollLeft <= 10;
+      var atEnd = (carousel.scrollLeft + carousel.clientWidth) >= (carousel.scrollWidth - 10);
+
+      if (leftBtn) {
+        if (atStart) leftBtn.classList.add('is-hidden');
+        else leftBtn.classList.remove('is-hidden');
+      }
+      if (rightBtn) {
+        if (atEnd) rightBtn.classList.add('is-hidden');
+        else rightBtn.classList.remove('is-hidden');
+      }
+    }
+  }
+
+  function initCarouselDrag() {
+    var carousel = byId('experiments-carousel');
+    if (!carousel || carousel._dragInitialized) return;
+    carousel._dragInitialized = true;
+
+    var isDown = false;
+    var startX = 0;
+    var scrollLeftPos = 0;
+    var moved = false;
+
+    carousel.addEventListener('mousedown', function(e) {
+      if (carousel.scrollWidth <= carousel.clientWidth) return;
+      isDown = true;
+      startX = e.pageX - carousel.offsetLeft;
+      scrollLeftPos = carousel.scrollLeft;
+      moved = false;
+      carousel.style.scrollBehavior = 'auto';
+    });
+
+    carousel.addEventListener('mouseleave', function() {
+      if (isDown) {
+        isDown = false;
+        carousel.style.scrollBehavior = 'smooth';
+        updateCarouselArrows();
+      }
+    });
+
+    carousel.addEventListener('mouseup', function() {
+      if (isDown) {
+        isDown = false;
+        carousel.style.scrollBehavior = 'smooth';
+        updateCarouselArrows();
+      }
+    });
+
+    carousel.addEventListener('mousemove', function(e) {
+      if (!isDown) return;
+      e.preventDefault();
+      var x = e.pageX - carousel.offsetLeft;
+      var walk = (x - startX) * 1.4;
+      if (Math.abs(walk) > 6) moved = true;
+      carousel.scrollLeft = scrollLeftPos - walk;
+    });
+
+    // Horizontal mouse wheel support
+    carousel.addEventListener('wheel', function(e) {
+      if (carousel.scrollWidth > carousel.clientWidth) {
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          e.preventDefault();
+          carousel.scrollBy({ left: e.deltaY * 0.9, behavior: 'auto' });
+          updateCarouselArrows();
+        }
+      }
+    }, { passive: false });
+
+    carousel.addEventListener('scroll', updateCarouselArrows);
+  }
+
   function renderDynamicChapterModalities(chapter) {
     if (!chapter) return;
 
     // 1. Render Experiments Carousel (#experiments-carousel)
     var expCarousel = byId('experiments-carousel');
-    if (expCarousel && Array.isArray(chapter.experiments_list) && chapter.experiments_list.length > 0) {
-      var expHtml = chapter.experiments_list.map(function(exp, idx) {
-        var grad = exp.gradient || 'linear-gradient(135deg, ' + (exp.color || '#00d2ff') + ', #3a7bd5)';
-        var icon = exp.icon || '🧪';
-        var isFeatured = idx === 0 ? ' featured' : '';
-        var safeUrl = (exp.url || '').replace(/'/g, "\\'");
-        return '<div class="experiment-card' + isFeatured + '" onclick="openExperiment(\'' + safeUrl + '\')">' +
-          '<div class="experiment-card-img" style="background: ' + grad + ';">' + icon + '</div>' +
-          '<div class="experiment-card-info">' +
-            '<div class="experiment-title">' + (exp.title || 'Experiment') + '</div>' +
-            '<div class="experiment-author">' + (exp.author || 'by Platform') + '</div>' +
-            '<div class="experiment-stats"><span>' + (exp.badge || 'Ready') + '</span><span>♥ ' + (exp.likes || '10k') + '</span></div>' +
-          '</div>' +
-        '</div>';
-      }).join('');
-      expCarousel.innerHTML = expHtml;
+    if (expCarousel && Array.isArray(chapter.experiments_list)) {
+      if (chapter.experiments_list.length === 0) {
+        expCarousel.innerHTML = '<div style="color:rgba(255,255,255,0.6); font-size:0.95rem; text-align:center; padding:40px;">No experiments connected yet.</div>';
+      } else {
+        var expHtml = chapter.experiments_list.map(function(exp, idx) {
+          var grad = exp.gradient || 'linear-gradient(135deg, ' + (exp.color || '#00d2ff') + ', #3a7bd5)';
+          var icon = exp.icon || '🧪';
+          var isFeatured = idx === 0 ? ' featured' : '';
+          var safeUrl = (exp.url || '').replace(/'/g, "\\'");
+          return '<div class="experiment-card' + isFeatured + '" onclick="openExperiment(\'' + safeUrl + '\')">' +
+            '<div class="experiment-card-img" style="background: ' + grad + ';">' + icon + '</div>' +
+            '<div class="experiment-card-info">' +
+              '<div class="experiment-title">' + (exp.title || 'Experiment') + '</div>' +
+              '<div class="experiment-author">' + (exp.author || 'by Platform') + '</div>' +
+              '<div class="experiment-stats"><span>' + (exp.badge || 'Ready') + '</span><span>♥ ' + (exp.likes || '10k') + '</span></div>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+        expCarousel.innerHTML = expHtml;
+      }
+      initCarouselDrag();
+      window.setTimeout(updateCarouselArrows, 60);
     }
 
     // 2. Render Stories List (.stories-scroll-container)
@@ -1168,10 +1239,6 @@
     openOverlay(finalUrl, 'story');
   }
 
-  // Expose global methods for inline HTML onclick handlers
-  window.openExperiment = openExperiment;
-  window.openStoryVideo = openStoryVideo;
-
   function startChapterJourney() {
     var chapter = getCurrentChapter();
 
@@ -1197,16 +1264,25 @@
 
   function scrollCarousel(direction) {
     var carousel = byId('experiments-carousel');
+    if (!carousel) return;
 
-    if (!carousel) {
-      return;
-    }
+    var card = carousel.querySelector('.experiment-card');
+    var scrollAmount = card ? (card.offsetWidth + 28) : 260;
 
     carousel.scrollBy({
-      left: direction * 320,
+      left: direction * scrollAmount,
       behavior: 'smooth'
     });
+
+    window.setTimeout(updateCarouselArrows, 350);
   }
+
+  // Expose global methods for inline HTML onclick handlers
+  window.openExperiment = openExperiment;
+  window.openStoryVideo = openStoryVideo;
+  window.scrollCarousel = scrollCarousel;
+  window.updateCarouselArrows = updateCarouselArrows;
+  window.addEventListener('resize', updateCarouselArrows);
 
   function toggleTheme() {
     var useLightTheme = !document.body.classList.contains('light-theme');
