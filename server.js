@@ -35,9 +35,27 @@ function getContentType(filePath) {
   return MIME_TYPES[ext] || 'application/octet-stream';
 }
 
-const server = http.createServer((req, res) => {
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+
+const R2_CONFIG = {
+  bucketName: 'edtechplatform',
+  publicCdnUrl: 'https://pub-670b98370fe642a2be08ee37cbfd385f.r2.dev',
+  endpoint: 'https://21b75f7da0ec0dde4d08d3f19d2102f3.r2.cloudflarestorage.com',
+  credentials: {
+    accessKeyId: '5fd10d137b4e437c604356c7d14b138c',
+    secretAccessKey: '229ede3cbc0f2264b9f72545eecf99c12a5e9e06699ba9da08d7544458755693'
+  }
+};
+
+const s3Client = new S3Client({
+  region: 'auto',
+  endpoint: R2_CONFIG.endpoint,
+  credentials: R2_CONFIG.credentials
+});
+
+const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, HEAD, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', '*');
 
   if (req.method === 'OPTIONS') {
@@ -48,6 +66,58 @@ const server = http.createServer((req, res) => {
 
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   let pathname = decodeURIComponent(url.pathname);
+
+  // ☁️ CLOUDFLARE R2 DIRECT UPLOAD API ENDPOINT
+  if (pathname === '/api/upload-r2' && req.method === 'POST') {
+    try {
+      const chunks = [];
+      for await (const chunk of req) chunks.push(chunk);
+      const rawBody = Buffer.concat(chunks).toString();
+      const body = JSON.parse(rawBody);
+
+      const { className, subjectName, chapterSlug, modalitySlug, filename, base64Content, contentType } = body;
+
+      if (!filename || !base64Content) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'filename and base64Content are required' }));
+        return;
+      }
+
+      const cleanClass = (className || 'general').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const cleanSubj = (subjectName || 'general').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const cleanChap = (chapterSlug || 'general').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const cleanMod = (modalitySlug || 'content').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const cleanFile = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+      const key = `courses/${cleanClass}/${cleanSubj}/${cleanChap}/${cleanMod}/${cleanFile}`;
+      const fileBuffer = Buffer.from(base64Content, 'base64');
+      const mime = contentType || getContentType(cleanFile);
+
+      await s3Client.send(new PutObjectCommand({
+        Bucket: R2_CONFIG.bucketName,
+        Key: key,
+        Body: fileBuffer,
+        ContentType: mime
+      }));
+
+      const cdnUrl = `${R2_CONFIG.publicCdnUrl}/${key}`;
+      console.log(`☁️ [R2 Upload] Saved ${key} (${fileBuffer.length} bytes) -> ${cdnUrl}`);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        ok: true,
+        key,
+        cdnUrl,
+        sizeBytes: fileBuffer.length,
+        contentType: mime
+      }));
+    } catch (err) {
+      console.error('❌ R2 Upload Error:', err);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: err.message }));
+    }
+    return;
+  }
 
   // Normalize path
   if (pathname === '/') {
