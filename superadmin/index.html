@@ -580,6 +580,7 @@
               <SidebarButton icon="ph-folder-open" label="Content & Cloud R2" id="content" active={activeTab} onClick={setActiveTab} />
               <SidebarButton icon="ph-lock-keyhole" label="Audit & Security" id="audit" active={activeTab} onClick={setActiveTab} />
               <SidebarButton icon="ph-sliders" label="Feature Flags & UI" id="flags" active={activeTab} onClick={setActiveTab} />
+              <SidebarButton icon="ph-books" label="Course Curriculum Hub" id="curriculum" active={activeTab} onClick={setActiveTab} />
             </nav>
 
             <div className="pt-4 border-t border-cyan-500/20 text-xs space-y-1.5 text-slate-400">
@@ -656,6 +657,7 @@
                 />
               )}
               {activeTab === 'flags' && <FeatureFlagsView flags={featureFlags} setFlags={setFeatureFlags} />}
+              {activeTab === 'curriculum' && <CourseCurriculumView />}
             </div>
           </main>
 
@@ -3394,6 +3396,493 @@
     }
 
     // ── VIEW 7: FLAGS ──
+    // ═══════════════════════════════════════════════════════════════
+    // 📚 COURSE CURRICULUM HUB — Classes, Subjects, Chapters, Modalities
+    // ═══════════════════════════════════════════════════════════════
+    const DEFAULT_MODALITIES = [
+      { slug: 'experience',    label: 'Experience',   emoji: '💡', icon: 'ph-lightbulb',    color: '#00E5FF', renderer: 'iframe_full',  description: '3D Chapter App / WebGL Simulation / Interactive HTML' },
+      { slug: 'experiments',   label: 'Experiments',  emoji: '🧪', icon: 'ph-flask',        color: '#A78BFA', renderer: 'iframe_full',  description: 'Virtual Lab Simulation / Interactive HTML5 Experiment' },
+      { slug: 'quiz',          label: 'Quiz',         emoji: '📝', icon: 'ph-exam',         color: '#34D399', renderer: 'quiz_engine', description: 'Assessment / HTML5 Quiz Game / Linked Test' },
+      { slug: 'mixed_reality', label: 'Mixed Reality',emoji: '👓', icon: 'ph-vr-headset',   color: '#F472B6', renderer: 'qr_vr',       description: 'WebXR App / Mobile VR QR Code / Immersive 3D Scene' },
+      { slug: 'stories',       label: 'Stories',      emoji: '📖', icon: 'ph-book-open',    color: '#FBBF24', renderer: 'video_embed', description: 'Video Explainer / PDF Story Guide / Documentary' },
+    ];
+
+    const RENDERER_OPTIONS = [
+      { value: 'iframe_full',  label: 'Full-Screen HTML5 App (iframe)' },
+      { value: 'video_embed',  label: 'Video Embed (YouTube / MP4 / Vimeo)' },
+      { value: 'qr_vr',        label: 'VR QR Code + WebXR Launch' },
+      { value: 'quiz_engine',  label: 'Built-in Quiz Engine' },
+      { value: 'audio_player', label: 'Audio / Podcast Player' },
+      { value: 'pdf_reader',   label: 'PDF / Document Reader' },
+    ];
+
+    function CourseCurriculumView() {
+      const SUPABASE_URL = 'https://qmyrxvtbzlbnvzxypnus.supabase.co';
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFteXJ4dnRiemxibnZ6eHlwbnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjA4OTcsImV4cCI6MjA5NTM5Njg5N30.ABvW_oBzXC2Ffxm5ToLh6t4WmdKPdtg9SyfeAE76iJo';
+      const R2_CDN = 'https://pub-670b98370fe642a2be08ee37cbfd385f.r2.dev';
+      const sb = (path, opts={}) => fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation', ...opts.headers }, ...opts });
+
+      const [step, setStep] = React.useState('classes'); // 'classes' | 'subjects' | 'chapters' | 'modalities'
+      const [classes, setClasses] = React.useState([]);
+      const [subjects, setSubjects] = React.useState([]);
+      const [chapters, setChapters] = React.useState([]);
+      const [selectedClass, setSelectedClass] = React.useState(null);
+      const [selectedSubject, setSelectedSubject] = React.useState(null);
+      const [selectedChapter, setSelectedChapter] = React.useState(null);
+      const [loading, setLoading] = React.useState(false);
+      const [toast, setToast] = React.useState(null);
+      const [showAddClass, setShowAddClass] = React.useState(false);
+      const [showAddSubject, setShowAddSubject] = React.useState(false);
+      const [showAddChapter, setShowAddChapter] = React.useState(false);
+      const [showAddCustomModal, setShowAddCustomModal] = React.useState(false);
+      const [customModalities, setCustomModalities] = React.useState([]);
+      const [chapterModalities, setChapterModalities] = React.useState({});
+      const [uploadingSlot, setUploadingSlot] = React.useState(null);
+
+      const [newClass, setNewClass] = React.useState({ name: '', display_order: 1 });
+      const [newSubject, setNewSubject] = React.useState({ name: '', icon: '📚', description: '' });
+      const [newChapter, setNewChapter] = React.useState({ title: '', description: '', chapter_order: 1 });
+      const [newCustomMod, setNewCustomMod] = React.useState({ label: '', emoji: '⭐', renderer: 'iframe_full', description: '' });
+
+      const showToast = (msg, type='success') => { setToast({ msg, type }); setTimeout(()=>setToast(null),3500); };
+
+      React.useEffect(() => { loadClasses(); }, []);
+
+      const loadClasses = async () => {
+        setLoading(true);
+        try {
+          const r = await sb('classes?select=*&order=display_order');
+          const d = await r.json();
+          setClasses(Array.isArray(d) ? d : []);
+        } catch(e) { setClasses([]); }
+        setLoading(false);
+      };
+
+      const loadSubjects = async (cls) => {
+        setLoading(true);
+        try {
+          const r = await sb(`subjects?select=*&class_id=eq.${cls.id}&order=name`);
+          const d = await r.json();
+          setSubjects(Array.isArray(d) ? d : []);
+        } catch(e) { setSubjects([]); }
+        setLoading(false);
+      };
+
+      const loadChapters = async (subj) => {
+        setLoading(true);
+        try {
+          const r = await sb(`course_chapters?select=*&subject_id=eq.${subj.id}&order=chapter_order`);
+          const d = await r.json();
+          setChapters(Array.isArray(d) ? d : []);
+          // Load saved modality content for all chapters
+          const mods = {};
+          for (const ch of (Array.isArray(d) ? d : [])) {
+            const allMods = [...DEFAULT_MODALITIES, ...(ch.custom_modalities||[])];
+            mods[ch.id] = {};
+            allMods.forEach(m => {
+              mods[ch.id][m.slug] = ch[`${m.slug}_url`] || ch.modality_urls?.[m.slug] || '';
+            });
+          }
+          setChapterModalities(mods);
+        } catch(e) { setChapters([]); }
+        setLoading(false);
+      };
+
+      const addClass = async () => {
+        if (!newClass.name.trim()) return showToast('Class name required', 'error');
+        try {
+          const r = await sb('classes', { method: 'POST', body: JSON.stringify({ name: newClass.name.trim(), display_order: parseInt(newClass.display_order)||1, status: 'Active' }) });
+          const d = await r.json();
+          if (r.ok) { showToast(`✅ ${newClass.name} created!`); setNewClass({ name:'', display_order:1 }); setShowAddClass(false); loadClasses(); }
+          else showToast(d.message||'Error creating class', 'error');
+        } catch(e) { showToast('Network error', 'error'); }
+      };
+
+      const addSubject = async () => {
+        if (!newSubject.name.trim()) return showToast('Subject name required', 'error');
+        try {
+          const r = await sb('subjects', { method: 'POST', body: JSON.stringify({ class_id: selectedClass.id, name: newSubject.name.trim(), icon: newSubject.icon||'📚', description: newSubject.description }) });
+          const d = await r.json();
+          if (r.ok) { showToast(`✅ ${newSubject.name} created!`); setNewSubject({ name:'', icon:'📚', description:'' }); setShowAddSubject(false); loadSubjects(selectedClass); }
+          else showToast(d.message||'Error creating subject', 'error');
+        } catch(e) { showToast('Network error', 'error'); }
+      };
+
+      const addChapter = async () => {
+        if (!newChapter.title.trim()) return showToast('Chapter title required', 'error');
+        const slug = newChapter.title.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-');
+        try {
+          const payload = {
+            subject_id: selectedSubject.id, class_name: selectedClass.name, subject_name: selectedSubject.name,
+            chapter_order: parseInt(newChapter.chapter_order)||1, chapter_slug: slug,
+            title: newChapter.title.trim().toUpperCase(), description: newChapter.description,
+            experience_ready: false, experiments_ready: false, quiz_ready: false, mixed_reality_ready: false, stories_ready: false,
+            is_published: false, custom_modalities: []
+          };
+          const r = await sb('course_chapters', { method: 'POST', body: JSON.stringify(payload) });
+          const d = await r.json();
+          if (r.ok) { showToast(`✅ Chapter "${newChapter.title.toUpperCase()}" created!`); setNewChapter({ title:'', description:'', chapter_order:1 }); setShowAddChapter(false); loadChapters(selectedSubject); }
+          else showToast(d.message||'Error creating chapter', 'error');
+        } catch(e) { showToast('Network error', 'error'); }
+      };
+
+      const addCustomModality = () => {
+        if (!newCustomMod.label.trim()) return showToast('Modality name required', 'error');
+        const slug = 'custom_' + newCustomMod.label.trim().toLowerCase().replace(/[^a-z0-9]+/g,'_');
+        setCustomModalities(prev => [...prev, { ...newCustomMod, slug, color: '#94A3B8', isCustom: true }]);
+        setNewCustomMod({ label:'', emoji:'⭐', renderer:'iframe_full', description:'' });
+        setShowAddCustomModal(false);
+        showToast(`✅ Custom modality "${newCustomMod.label}" added!`);
+      };
+
+      const saveModalityUrl = async (chapter, slug, url) => {
+        const isDefault = DEFAULT_MODALITIES.some(m => m.slug === slug);
+        try {
+          let updatePayload;
+          if (isDefault) {
+            updatePayload = { [`${slug}_url`]: url, [`${slug}_ready`]: !!url };
+          } else {
+            // Save custom modality URLs in a modality_urls JSONB column
+            const current = chapter.modality_urls || {};
+            updatePayload = { modality_urls: { ...current, [slug]: url } };
+          }
+          const r = await sb(`course_chapters?id=eq.${chapter.id}`, { method: 'PATCH', body: JSON.stringify(updatePayload) });
+          if (r.ok) {
+            showToast('✅ Content link saved!');
+            setChapterModalities(prev => ({ ...prev, [chapter.id]: { ...prev[chapter.id], [slug]: url } }));
+          } else showToast('Save failed', 'error');
+        } catch(e) { showToast('Network error', 'error'); }
+      };
+
+      const publishChapter = async (chapter) => {
+        const r = await sb(`course_chapters?id=eq.${chapter.id}`, { method: 'PATCH', body: JSON.stringify({ is_published: !chapter.is_published }) });
+        if (r.ok) { showToast(chapter.is_published ? '📴 Chapter unpublished' : '🚀 Chapter published LIVE!'); loadChapters(selectedSubject); }
+        else showToast('Update failed', 'error');
+      };
+
+      const deleteChapter = async (chapter) => {
+        if (!window.confirm(`Delete chapter "${chapter.title}"? This cannot be undone.`)) return;
+        const r = await sb(`course_chapters?id=eq.${chapter.id}`, { method: 'DELETE' });
+        if (r.ok) { showToast('🗑️ Chapter deleted'); loadChapters(selectedSubject); }
+        else showToast('Delete failed', 'error');
+      };
+
+      const ModalitySlot = ({ chapter, mod, isCustom=false }) => {
+        const [url, setUrl] = React.useState(chapterModalities[chapter.id]?.[mod.slug] || '');
+        const [editing, setEditing] = React.useState(false);
+        const saved = chapterModalities[chapter.id]?.[mod.slug];
+        return (
+          <div style={{ border: `1px solid ${mod.color}33`, borderRadius: 12, padding: '12px 14px', background: `${mod.color}08` }}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{mod.emoji}</span>
+                <div>
+                  <span className="text-xs font-bold text-white">{mod.label}</span>
+                  {isCustom && <span className="ml-1.5 text-[9px] px-1.5 py-0.5 rounded" style={{background:'#94A3B822', color:'#94A3B8', border:'1px solid #94A3B840'}}>CUSTOM</span>}
+                  <p className="text-[10px] text-slate-500 mt-0.5">{mod.description}</p>
+                </div>
+              </div>
+              {saved ? (
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{background:'#34D39920', color:'#34D399', border:'1px solid #34D39940'}}>✓ LINKED</span>
+              ) : (
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{background:'#F4722820', color:'#F47228', border:'1px solid #F4722840'}}>EMPTY</span>
+              )}
+            </div>
+            {editing ? (
+              <div className="flex gap-2 mt-1">
+                <input
+                  type="text" placeholder="Paste R2 CDN URL, video link, or WebXR URL..."
+                  value={url} onChange={e => setUrl(e.target.value)}
+                  className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-600 outline-none"
+                />
+                <button onClick={() => { saveModalityUrl(chapter, mod.slug, url); setEditing(false); }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{background: mod.color + '33', border: `1px solid ${mod.color}66`}}>
+                  Save
+                </button>
+                <button onClick={() => setEditing(false)} className="px-3 py-1.5 rounded-lg text-xs text-slate-400 bg-slate-800 border border-slate-700">✕</button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 mt-1">
+                {saved ? (
+                  <span className="flex-1 text-[10px] text-slate-400 truncate font-mono">{saved}</span>
+                ) : (
+                  <span className="flex-1 text-[10px] text-slate-600 italic">No content linked yet. Click Edit to add URL or upload.</span>
+                )}
+                <button onClick={() => setEditing(true)} className="px-2.5 py-1 rounded-lg text-[10px] font-bold" style={{background:'#0F172A', border:'1px solid #334155', color:'#94A3B8'}}>
+                  ✏️ Edit
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      const ChapterCard = ({ chapter }) => {
+        const [open, setOpen] = React.useState(false);
+        const chapterCustomMods = chapter.custom_modalities || [];
+        const allMods = [...DEFAULT_MODALITIES, ...chapterCustomMods, ...customModalities];
+        const readyCount = DEFAULT_MODALITIES.filter(m => chapterModalities[chapter.id]?.[m.slug]).length;
+        return (
+          <div className="glass-panel p-4 border border-slate-700/60 rounded-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-sm">
+                  {chapter.chapter_order}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-white">{chapter.title}</p>
+                  <p className="text-[10px] text-slate-500">{chapter.description}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded" style={{background: readyCount===5?'#34D39920':'#F4722820', color: readyCount===5?'#34D399':'#F47228', border: `1px solid ${readyCount===5?'#34D39940':'#F4722840'}`}}>
+                  {readyCount}/{DEFAULT_MODALITIES.length} Default
+                </span>
+                <button onClick={() => publishChapter(chapter)}
+                  className={`text-[10px] px-2.5 py-1 rounded-lg font-bold border ${chapter.is_published ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300' : 'bg-slate-800 border-slate-600 text-slate-400'}`}>
+                  {chapter.is_published ? '🟢 LIVE' : '📴 Draft'}
+                </button>
+                <button onClick={() => setOpen(!open)} className="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-cyan-400 font-bold">
+                  {open ? '▲ Close' : '▼ Manage Content'}
+                </button>
+                <button onClick={() => deleteChapter(chapter)} className="text-[10px] px-2 py-1 rounded-lg bg-red-900/30 border border-red-700/50 text-red-400">🗑️</button>
+              </div>
+            </div>
+            {open && (
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs font-bold text-slate-300">📂 Content Modality Slots</p>
+                  <button onClick={() => setShowAddCustomModal(true)}
+                    className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-lg font-bold" style={{background:'#A78BFA20', border:'1px solid #A78BFA40', color:'#A78BFA'}}>
+                    <i className="ph ph-plus-circle"></i> Add Custom Modality
+                  </button>
+                </div>
+                {/* Default Modalities — always shown */}
+                <div className="space-y-2">
+                  <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest">⬛ Default Modalities</p>
+                  {DEFAULT_MODALITIES.map(mod => (
+                    <ModalitySlot key={mod.slug} chapter={chapter} mod={mod} isCustom={false} />
+                  ))}
+                </div>
+                {/* Custom Modalities — added by admin */}
+                {[...chapterCustomMods, ...customModalities].length > 0 && (
+                  <div className="space-y-2 mt-1">
+                    <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest">✨ Custom Modalities</p>
+                    {[...chapterCustomMods, ...customModalities].map(mod => (
+                      <ModalitySlot key={mod.slug} chapter={chapter} mod={mod} isCustom={true} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      const breadcrumb = [
+        { label: 'All Classes', action: () => { setStep('classes'); setSelectedClass(null); setSelectedSubject(null); } },
+        selectedClass && { label: selectedClass.name, action: () => { setStep('subjects'); setSelectedSubject(null); } },
+        selectedSubject && { label: selectedSubject.icon + ' ' + selectedSubject.name, action: () => setStep('chapters') },
+        selectedChapter && { label: selectedChapter.title },
+      ].filter(Boolean);
+
+      return (
+        <div className="space-y-5 relative">
+          {/* Toast */}
+          {toast && (
+            <div className={`fixed top-5 right-5 z-50 px-5 py-3 rounded-xl shadow-2xl text-sm font-bold ${
+              toast.type==='error' ? 'bg-red-900/90 text-red-300 border border-red-600' : 'bg-emerald-900/90 text-emerald-300 border border-emerald-600'
+            }`}>{toast.msg}</div>
+          )}
+
+          {/* Header */}
+          <div className="glass-panel p-5 border border-cyan-500/25 bg-cyan-950/10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-2xl">📚</div>
+                <div>
+                  <h2 className="font-extrabold text-white text-lg">Course Curriculum Hub</h2>
+                  <p className="text-xs text-slate-400">Create Classes, Subjects & Chapters — Upload the 5 Default Modality Slots + Custom Modalities. Auto-syncs to Study Island & Student Portal.</p>
+                </div>
+              </div>
+              {/* Breadcrumb */}
+              <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                {breadcrumb.map((b,i) => (
+                  <React.Fragment key={i}>
+                    {i>0 && <span className="text-slate-600">/</span>}
+                    <button onClick={b.action} className={`hover:text-cyan-400 transition ${i===breadcrumb.length-1?'text-white font-bold':'text-slate-400'}`}>{b.label}</button>
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Default Modality Legend */}
+          <div className="glass-panel p-4 border border-slate-700/50">
+            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-3">🏷️ Default Modality Slots (Applied to Every Chapter)</p>
+            <div className="flex flex-wrap gap-2">
+              {DEFAULT_MODALITIES.map(m => (
+                <div key={m.slug} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold" style={{background:`${m.color}15`, border:`1px solid ${m.color}40`, color: m.color}}>
+                  <span>{m.emoji}</span> {m.label}
+                </div>
+              ))}
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold" style={{background:'#A78BFA15', border:'1px solid #A78BFA40', color:'#A78BFA'}}>
+                <span>✨</span> + Custom Modalities
+              </div>
+            </div>
+          </div>
+
+          {/* Step: All Classes */}
+          {step === 'classes' && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-white">📋 All Classes</h3>
+                <button onClick={() => setShowAddClass(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold" style={{background:'#00E5FF20', border:'1px solid #00E5FF40', color:'#00E5FF'}}>
+                  <i className="ph ph-plus"></i> Add New Class
+                </button>
+              </div>
+              {loading ? <div className="text-slate-400 text-sm py-4 text-center">Loading classes...</div> : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {classes.length === 0 && <p className="text-slate-500 text-sm col-span-4 py-4">No classes yet. Click "Add New Class" to get started.</p>}
+                  {classes.map(cls => (
+                    <button key={cls.id} onClick={() => { setSelectedClass(cls); setStep('subjects'); loadSubjects(cls); }}
+                      className="glass-panel p-5 border border-slate-700/60 rounded-xl text-left hover:border-cyan-500/50 hover:bg-cyan-500/5 transition group">
+                      <div className="text-2xl mb-2">🏫</div>
+                      <p className="text-sm font-bold text-white group-hover:text-cyan-300 transition">{cls.name}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">{cls.status}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {showAddClass && (
+                <div className="glass-panel p-5 border border-cyan-500/30 space-y-3">
+                  <p className="text-sm font-bold text-cyan-300">✚ Create New Class</p>
+                  <div className="flex gap-3">
+                    <input type="text" placeholder="e.g. Class 11th" value={newClass.name} onChange={e=>setNewClass({...newClass,name:e.target.value})}
+                      className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none" />
+                    <input type="number" placeholder="Order" value={newClass.display_order} onChange={e=>setNewClass({...newClass,display_order:e.target.value})}
+                      className="w-24 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none" />
+                    <button onClick={addClass} className="px-4 py-2 rounded-xl text-sm font-bold" style={{background:'#00E5FF20', border:'1px solid #00E5FF50', color:'#00E5FF'}}>Create</button>
+                    <button onClick={() => setShowAddClass(false)} className="px-3 py-2 rounded-xl text-sm bg-slate-800 border border-slate-700 text-slate-400">Cancel</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step: Subjects */}
+          {step === 'subjects' && selectedClass && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-white">📖 Subjects in <span className="text-cyan-400">{selectedClass.name}</span></h3>
+                <button onClick={() => setShowAddSubject(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold" style={{background:'#00E5FF20', border:'1px solid #00E5FF40', color:'#00E5FF'}}>
+                  <i className="ph ph-plus"></i> Add Subject
+                </button>
+              </div>
+              {loading ? <div className="text-slate-400 text-sm py-4 text-center">Loading subjects...</div> : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {subjects.length === 0 && <p className="text-slate-500 text-sm col-span-3 py-4">No subjects yet. Click "Add Subject" to begin.</p>}
+                  {subjects.map(subj => (
+                    <button key={subj.id} onClick={() => { setSelectedSubject(subj); setStep('chapters'); loadChapters(subj); }}
+                      className="glass-panel p-5 border border-slate-700/60 rounded-xl text-left hover:border-cyan-500/50 hover:bg-cyan-500/5 transition group">
+                      <div className="text-2xl mb-2">{subj.icon}</div>
+                      <p className="text-sm font-bold text-white group-hover:text-cyan-300 transition">{subj.name}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">{subj.description}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {showAddSubject && (
+                <div className="glass-panel p-5 border border-cyan-500/30 space-y-3">
+                  <p className="text-sm font-bold text-cyan-300">✚ Create Subject in {selectedClass.name}</p>
+                  <div className="flex gap-3 flex-wrap">
+                    <input type="text" placeholder="Subject name (e.g. Physics)" value={newSubject.name} onChange={e=>setNewSubject({...newSubject,name:e.target.value})}
+                      className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none" />
+                    <input type="text" placeholder="Emoji icon" value={newSubject.icon} onChange={e=>setNewSubject({...newSubject,icon:e.target.value})}
+                      className="w-20 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-center text-white outline-none" />
+                    <input type="text" placeholder="Short description" value={newSubject.description} onChange={e=>setNewSubject({...newSubject,description:e.target.value})}
+                      className="w-60 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none" />
+                    <button onClick={addSubject} className="px-4 py-2 rounded-xl text-sm font-bold" style={{background:'#00E5FF20', border:'1px solid #00E5FF50', color:'#00E5FF'}}>Create</button>
+                    <button onClick={() => setShowAddSubject(false)} className="px-3 py-2 rounded-xl text-sm bg-slate-800 border border-slate-700 text-slate-400">Cancel</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step: Chapters */}
+          {step === 'chapters' && selectedSubject && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-white">📑 Chapters — <span className="text-cyan-400">{selectedClass.name} / {selectedSubject.icon} {selectedSubject.name}</span></h3>
+                <button onClick={() => setShowAddChapter(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold" style={{background:'#00E5FF20', border:'1px solid #00E5FF40', color:'#00E5FF'}}>
+                  <i className="ph ph-plus"></i> Add Chapter
+                </button>
+              </div>
+              {loading ? <div className="text-slate-400 text-sm py-4 text-center">Loading chapters...</div> : (
+                <div className="space-y-3">
+                  {chapters.length === 0 && <p className="text-slate-500 text-sm py-4">No chapters yet. Click "Add Chapter" to begin building content.</p>}
+                  {chapters.map(ch => <ChapterCard key={ch.id} chapter={ch} />)}
+                </div>
+              )}
+              {showAddChapter && (
+                <div className="glass-panel p-5 border border-cyan-500/30 space-y-3">
+                  <p className="text-sm font-bold text-cyan-300">✚ Create Chapter in {selectedSubject.icon} {selectedSubject.name}</p>
+                  <div className="flex gap-3 flex-wrap">
+                    <input type="text" placeholder="Chapter title (e.g. Rotational Dynamics)" value={newChapter.title} onChange={e=>setNewChapter({...newChapter,title:e.target.value})}
+                      className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none" />
+                    <input type="number" placeholder="Order" value={newChapter.chapter_order} onChange={e=>setNewChapter({...newChapter,chapter_order:e.target.value})}
+                      className="w-20 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none" />
+                  </div>
+                  <textarea placeholder="Short chapter description..." value={newChapter.description} onChange={e=>setNewChapter({...newChapter,description:e.target.value})}
+                    rows={2} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none resize-none" />
+                  <div className="flex gap-2">
+                    <button onClick={addChapter} className="px-4 py-2 rounded-xl text-sm font-bold" style={{background:'#00E5FF20', border:'1px solid #00E5FF50', color:'#00E5FF'}}>Create Chapter</button>
+                    <button onClick={() => setShowAddChapter(false)} className="px-3 py-2 rounded-xl text-sm bg-slate-800 border border-slate-700 text-slate-400">Cancel</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Custom Modality Modal */}
+          {showAddCustomModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur">
+              <div className="glass-panel p-6 border border-purple-500/40 rounded-2xl w-full max-w-md space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-base font-bold text-white">✨ Add Custom Modality</p>
+                  <button onClick={() => setShowAddCustomModal(false)} className="text-slate-400 hover:text-white">✕</button>
+                </div>
+                <p className="text-xs text-slate-400">Custom modalities appear after the 5 default slots for the selected chapter. Great for Language Courses, Critical Thinking tracks, Games, etc.</p>
+                <div className="space-y-3">
+                  <div className="flex gap-3">
+                    <input type="text" placeholder="Modality name (e.g. Speaking Lab)" value={newCustomMod.label} onChange={e=>setNewCustomMod({...newCustomMod,label:e.target.value})}
+                      className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none" />
+                    <input type="text" placeholder="🎤" value={newCustomMod.emoji} onChange={e=>setNewCustomMod({...newCustomMod,emoji:e.target.value})}
+                      className="w-16 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-center text-white outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-400 mb-1 block">Content Renderer Type</label>
+                    <select value={newCustomMod.renderer} onChange={e=>setNewCustomMod({...newCustomMod,renderer:e.target.value})}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
+                      {RENDERER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                  </div>
+                  <input type="text" placeholder="Short description for your team..." value={newCustomMod.description} onChange={e=>setNewCustomMod({...newCustomMod,description:e.target.value})}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none" />
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button onClick={addCustomModality} className="flex-1 py-2.5 rounded-xl text-sm font-bold" style={{background:'#A78BFA25', border:'1px solid #A78BFA50', color:'#A78BFA'}}>✨ Add Modality</button>
+                  <button onClick={() => setShowAddCustomModal(false)} className="px-4 py-2.5 rounded-xl text-sm bg-slate-800 border border-slate-700 text-slate-400">Cancel</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+    // ═══════════════════════════════════════════════════════════════
+
     function FeatureFlagsView({ flags, setFlags }) {
       const toggle = (key) => setFlags(prev => ({ ...prev, [key]: !prev[key] }));
       return (
