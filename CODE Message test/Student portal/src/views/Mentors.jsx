@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Star, MessageCircle, X, Mail, BookOpen, Clock, MapPin, Award, CheckCircle2, Sparkles } from 'lucide-react';
+import { Search, Star, MessageCircle, X, Mail, BookOpen, Clock, MapPin, Award, CheckCircle2, Sparkles, UserCheck } from 'lucide-react';
 import Card from '../components/Card';
 import { supabase } from '../supabase';
 import { useNavigate } from 'react-router-dom';
@@ -16,167 +16,82 @@ export default function Mentors() {
   useEffect(() => {
     fetchTeachers();
 
-    const channel = supabase
-      .channel('public:teachers')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'teachers' }, () => {
-        fetchTeachers();
-      })
+    const tChannel = supabase
+      .channel('public:teachers_sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'teachers' }, fetchTeachers)
+      .subscribe();
+
+    const uChannel = supabase
+      .channel('public:users_sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, fetchTeachers)
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(tChannel);
+      supabase.removeChannel(uChannel);
     };
   }, []);
-
-  const CLASS_6TH_FACULTY = [
-    {
-      id: 't-gaurav',
-      name: 'Gaurav',
-      degree: 'Head of Science & Physics',
-      subject: 'Physics',
-      rating: 5.0,
-      status: 'Online',
-      email: 'gauravroy476@gmail.com',
-      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Gaurav&top=shortFlat&hairColor=2c1b18&skinColor=ffdbb4&clothing=blazerAndShirt&clothingColor=black&backgroundColor=b6e3f4',
-      bio: 'Senior Physics educator specializing in 3D Ray Optics, Quantum Mechanics, and interactive curriculum design for secondary education.',
-      classes: 'Class 6th, Class 7th, Class 8th, Class 9th, Class 10th',
-      office_hours: 'Mon - Fri: 09:00 AM - 04:00 PM',
-      location: 'Science Lab 3 (3D VR Room)'
-    },
-    {
-      id: 't-priya',
-      name: 'Dr. Priya Sharma',
-      degree: 'M.Sc., Ph.D. in Mathematics & Geometry',
-      subject: 'Mathematics',
-      rating: 4.9,
-      status: 'Online',
-      email: 'priya.sharma@edtech.org',
-      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=PriyaSharma&clothing=blazerAndShirt&backgroundColor=b6e3f4',
-      bio: 'Mathematics specialist focusing on spatial geometry, algebraic foundations, and interactive problem solving.',
-      classes: 'Class 6th, Class 7th',
-      office_hours: 'Mon - Thu: 10:00 AM - 03:00 PM',
-      location: 'Mathematics Wing Room 204'
-    },
-    {
-      id: 't-ananya',
-      name: 'Dr. Ananya Roy',
-      degree: 'Ph.D. in World History & Civilizations',
-      subject: 'History',
-      rating: 4.9,
-      status: 'Online',
-      email: 'ananya.roy@edtech.org',
-      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AnanyaRoy&clothing=blazerAndShirt&backgroundColor=ffd5dc',
-      bio: 'History faculty expert in Mesopotamian, Indus Valley, and Vedic civilizational heritage.',
-      classes: 'Class 6th, Class 8th',
-      office_hours: 'Tue - Fri: 09:30 AM - 02:30 PM',
-      location: 'Social Sciences Room 105'
-    },
-    {
-      id: 't-vikram-p',
-      name: 'Prof. Vikram Patel',
-      degree: 'M.Sc. in Physical & Earth Geography',
-      subject: 'Geography',
-      rating: 4.8,
-      status: 'Available',
-      email: 'vikram.patel@edtech.org',
-      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=VikramPatel&clothing=blazerAndShirt&backgroundColor=d1d4f9',
-      bio: 'Geographer specializing in plate tectonics, atmospheric science, and interactive planetary mapping.',
-      classes: 'Class 6th, Class 7th',
-      office_hours: 'Mon - Fri: 11:00 AM - 04:00 PM',
-      location: 'Earth Sciences Geo Lab 1'
-    },
-    {
-      id: 't-sunita',
-      name: 'Dr. Sunita Kapoor',
-      degree: 'M.Sc., Ph.D. in Chemistry & Life Sciences',
-      subject: 'Chemistry',
-      rating: 5.0,
-      status: 'Online',
-      email: 'sunita.kapoor@edtech.org',
-      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SunitaKapoor&clothing=blazerAndShirt&backgroundColor=c0aede',
-      bio: 'Researcher in molecular chemistry and life systems, guiding students through virtual laboratory experiments.',
-      classes: 'Class 6th, Class 9th',
-      office_hours: 'Mon - Thu: 09:00 AM - 01:00 PM',
-      location: 'Virtual Chemistry Sim Lab'
-    },
-    {
-      id: 't-rajesh',
-      name: 'Prof. Rajesh Verma',
-      degree: 'M.A. in English Literature & Linguistics',
-      subject: 'English',
-      rating: 4.8,
-      status: 'Available',
-      email: 'rajesh.verma@edtech.org',
-      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=RajeshVerma&clothing=blazerAndShirt&backgroundColor=c0aede',
-      bio: 'Literature educator developing student creative writing, grammar syntax, and public speaking skills.',
-      classes: 'Class 6th, Class 7th, Class 8th',
-      office_hours: 'Mon - Fri: 08:30 AM - 02:00 PM',
-      location: 'Humanities Room 102'
-    },
-    {
-      id: 't-rohan',
-      name: 'Prof. Rohan Gupta',
-      degree: 'Master of Fine Arts (MFA) & 3D Spatial Design',
-      subject: 'Arts',
-      rating: 4.9,
-      status: 'Available',
-      email: 'rohan.gupta@edtech.org',
-      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=RohanGupta&clothing=blazerAndShirt&backgroundColor=b6e3f4',
-      bio: 'Visual arts designer teaching digital rendering, spatial composition, and 3D architectural forms.',
-      classes: 'Class 6th, Class 7th',
-      office_hours: 'Wed - Fri: 12:00 PM - 05:00 PM',
-      location: 'Creative Arts Studio A'
-    },
-    {
-      id: 't-meera',
-      name: 'Prof. Meera Iyer',
-      degree: 'M.Mus. in Acoustics & Classical Music Theory',
-      subject: 'Music',
-      rating: 4.8,
-      status: 'Online',
-      email: 'meera.iyer@edtech.org',
-      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MeeraIyer&clothing=blazerAndShirt&backgroundColor=ffd5dc',
-      bio: 'Musicologist and acoustic physicist demonstrating sound wave resonance and melodic harmony.',
-      classes: 'Class 6th, Class 8th',
-      office_hours: 'Mon - Thu: 10:00 AM - 03:00 PM',
-      location: 'Acoustics & Sound Lab'
-    },
-    {
-      id: 't-singh',
-      name: 'Coach Vikram Singh',
-      degree: 'B.P.Ed. in Sports Science & Fitness',
-      subject: 'Physical Education',
-      rating: 5.0,
-      status: 'Available',
-      email: 'vikram.singh@edtech.org',
-      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=VikramSingh&clothing=hoodie&backgroundColor=d1d4f9',
-      bio: 'Athletic director focusing on cardiovascular health, kinetic movement, and youth sports development.',
-      classes: 'Class 6th, Class 7th, Class 8th',
-      office_hours: 'Mon - Fri: 07:30 AM - 01:30 PM',
-      location: 'Main Sports Complex & Gymnasium'
-    }
-  ];
 
   const fetchTeachers = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.from('teachers').select('*').order('name', { ascending: true });
-      if (data && data.length > 0) {
-        // Merge Supabase DB teachers with full faculty list
-        const merged = data.slice();
-        CLASS_6TH_FACULTY.forEach(fac => {
-          const exists = merged.some(t => (t.email && t.email.toLowerCase() === fac.email.toLowerCase()) || t.name.toLowerCase() === fac.name.toLowerCase());
-          if (!exists) {
-            merged.push(fac);
+      // 1. Query 'teachers' table
+      const { data: dbTeachers } = await supabase.from('teachers').select('*');
+      
+      // 2. Query 'users' table where role is teacher
+      const { data: dbUsers } = await supabase.from('users').select('*').eq('role', 'teacher');
+
+      const teacherMap = new Map();
+
+      // Add records from 'teachers' table
+      if (dbTeachers && dbTeachers.length > 0) {
+        dbTeachers.forEach(t => {
+          const emailKey = (t.email || t.name).toLowerCase();
+          teacherMap.set(emailKey, {
+            id: t.id,
+            name: t.name,
+            degree: t.degree || 'Faculty Instructor',
+            subject: t.subject || 'General Sciences',
+            rating: t.rating || 5.0,
+            status: t.status || 'Online',
+            email: t.email,
+            avatar_url: t.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(t.name)}`,
+            bio: t.bio || `${t.name} is a dedicated educator assigned to Class 6th interactive coursework and laboratory sessions.`,
+            classes: t.classes || 'Class 6th',
+            office_hours: t.office_hours || 'Mon - Fri: 09:00 AM - 04:00 PM',
+            location: t.location || 'Science Lab 3 (3D VR Room)'
+          });
+        });
+      }
+
+      // Add records from 'users' table where role = 'teacher'
+      if (dbUsers && dbUsers.length > 0) {
+        dbUsers.forEach(u => {
+          const emailKey = (u.email || u.full_name).toLowerCase();
+          if (!teacherMap.has(emailKey)) {
+            const isHarsh = (u.full_name || '').toLowerCase().includes('harsh') || (u.email || '').includes('rathore');
+            teacherMap.set(emailKey, {
+              id: u.id,
+              name: u.full_name || 'Teacher',
+              degree: isHarsh ? 'Faculty of Mathematics & Computing' : 'Faculty Instructor',
+              subject: isHarsh ? 'Mathematics' : 'Science',
+              rating: 5.0,
+              status: 'Online',
+              email: u.email,
+              avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.full_name || 'Teacher')}&clothing=blazerAndShirt&backgroundColor=b6e3f4`,
+              bio: `${u.full_name} is a verified Class 6th faculty instructor in the Edtech Island platform.`,
+              classes: 'Class 6th',
+              office_hours: 'Mon - Fri: 09:00 AM - 04:00 PM',
+              location: isHarsh ? 'Mathematics Wing Room 204' : 'Lab 3 (3D VR Room)'
+            });
           }
         });
-        setTeachers(merged);
-      } else {
-        setTeachers(CLASS_6TH_FACULTY);
       }
+
+      const list = Array.from(teacherMap.values());
+      setTeachers(list);
     } catch (err) {
-      console.error('Error fetching teachers from database:', err);
-      setTeachers(CLASS_6TH_FACULTY);
+      console.error('Error fetching database teachers:', err);
     } finally {
       setIsLoading(false);
     }
@@ -189,14 +104,15 @@ export default function Mentors() {
 
   const filteredTeachers = teachers.filter(t => 
     t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    (t.subject && t.subject.toLowerCase().includes(searchQuery.toLowerCase()))
+    (t.subject && t.subject.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (t.email && t.email.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
     <div className="view-container animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
         <h2 style={{ fontSize: '1.8rem', fontWeight: '800', margin: '0 0 6px 0', color: 'white' }}>Teachers & Mentors</h2>
-        <p style={{ margin: 0, color: '#94a3b8', fontSize: '1rem' }}>Connect directly with your course instructors and faculty.</p>
+        <p style={{ margin: 0, color: '#94a3b8', fontSize: '1rem' }}>Active faculty members registered and assigned to Class 6th.</p>
       </div>
 
       <Card className="full-height-card">
@@ -215,7 +131,7 @@ export default function Mentors() {
                 cursor: 'pointer'
               }}
             >
-              All Teachers ({filteredTeachers.length})
+              Assigned Faculty ({filteredTeachers.length})
             </button>
           </div>
           
@@ -223,7 +139,7 @@ export default function Mentors() {
             <Search size={16} color="#94a3b8" />
             <input 
               type="text" 
-              placeholder="Search teachers..." 
+              placeholder="Search faculty..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ background: 'transparent', border: 'none', color: 'white', outline: 'none', width: '100%' }}
@@ -233,16 +149,16 @@ export default function Mentors() {
         
         <div className="mentors-list">
           {isLoading ? (
-            <p style={{ color: '#94a3b8', padding: '20px' }}>Loading teachers...</p>
+            <p style={{ color: '#94a3b8', padding: '20px' }}>Querying database teachers...</p>
           ) : filteredTeachers.length === 0 ? (
-            <p style={{ color: '#94a3b8', padding: '20px' }}>No teachers found matching your search.</p>
+            <p style={{ color: '#94a3b8', padding: '20px' }}>No teachers found in database.</p>
           ) : (
             filteredTeachers.map(mentor => (
               <div key={mentor.id} className="mentor-row">
                 <div className="mentor-info-block">
                   <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0 }}>
                     <img 
-                      src={mentor.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + mentor.name} 
+                      src={mentor.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${mentor.name}`} 
                       alt={mentor.name} 
                       style={{
                         width: '100%',
@@ -266,19 +182,19 @@ export default function Mentors() {
                   </div>
                   <div>
                     <h4 className="mentor-name" style={{ color: 'white', fontWeight: '700', margin: '0 0 2px 0' }}>{mentor.name}</h4>
-                    <p className="mentor-title" style={{ color: '#94a3b8', margin: '0 0 2px 0', fontSize: '0.85rem' }}>{mentor.degree || 'Head of Science & Physics'}</p>
-                    <span className="status-text online" style={{ color: '#10B981', fontSize: '0.8rem', fontWeight: '600' }}>● {mentor.status || 'Online'}</span>
+                    <p className="mentor-title" style={{ color: '#94a3b8', margin: '0 0 2px 0', fontSize: '0.85rem' }}>{mentor.degree}</p>
+                    <span className="status-text online" style={{ color: '#10B981', fontSize: '0.8rem', fontWeight: '600' }}>● {mentor.status}</span>
                   </div>
                 </div>
                 
                 <div className="mentor-subject">
                   <span className="subject-badge" style={{ background: 'rgba(0,240,255,0.1)', color: '#00F0FF', border: '1px solid rgba(0,240,255,0.3)', padding: '6px 16px', borderRadius: '20px', fontWeight: '700', fontSize: '0.85rem' }}>
-                    {mentor.subject || 'Physics'}
+                    {mentor.subject}
                   </span>
                 </div>
                 
                 <div className="mentor-rating">
-                  <span className="rating-val" style={{ color: 'white', fontWeight: '800', fontSize: '1.1rem' }}>{mentor.rating || 5.0}</span>
+                  <span className="rating-val" style={{ color: 'white', fontWeight: '800', fontSize: '1.1rem' }}>{mentor.rating}</span>
                   <Star size={16} fill="#EAB308" color="#EAB308" />
                 </div>
                 
@@ -365,7 +281,7 @@ export default function Mentors() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
               <div style={{ position: 'relative', width: '72px', height: '72px', flexShrink: 0 }}>
                 <img
-                  src={selectedTeacher.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + selectedTeacher.name}
+                  src={selectedTeacher.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedTeacher.name}`}
                   alt={selectedTeacher.name}
                   style={{
                     width: '100%',
@@ -392,16 +308,16 @@ export default function Mentors() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: '800', color: 'white' }}>{selectedTeacher.name}</h3>
                   <span style={{ padding: '2px 8px', borderRadius: '6px', background: 'rgba(0,240,255,0.15)', color: '#00F0FF', fontSize: '0.75rem', fontWeight: '800' }}>
-                    VERIFIED FACULTY
+                    REGISTERED FACULTY
                   </span>
                 </div>
                 <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '0.92rem' }}>
-                  {selectedTeacher.degree || 'Head of Science & Physics'}
+                  {selectedTeacher.degree}
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
                   <Star size={14} fill="#EAB308" color="#EAB308" />
-                  <span style={{ color: 'white', fontWeight: '700', fontSize: '0.88rem' }}>{selectedTeacher.rating || 5.0} / 5.0</span>
-                  <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>• 98 Student Reviews</span>
+                  <span style={{ color: 'white', fontWeight: '700', fontSize: '0.88rem' }}>{selectedTeacher.rating} / 5.0</span>
+                  <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>• Verified Instructor</span>
                 </div>
               </div>
             </div>
@@ -409,7 +325,7 @@ export default function Mentors() {
             {/* Bio Card */}
             <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '18px', marginBottom: '20px' }}>
               <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.92rem', lineHeight: '1.6' }}>
-                {selectedTeacher.bio || 'Senior Physics and Science educator dedicated to interactive 3D simulations, optics experiments, and concept mastery.'}
+                {selectedTeacher.bio}
               </p>
             </div>
 
@@ -417,19 +333,19 @@ export default function Mentors() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#cbd5e1', fontSize: '0.9rem' }}>
                 <Mail size={16} color="#00F0FF" />
-                <span>Email: <strong style={{ color: 'white' }}>{selectedTeacher.email || 'gauravroy476@gmail.com'}</strong></span>
+                <span>Email: <strong style={{ color: 'white' }}>{selectedTeacher.email}</strong></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#cbd5e1', fontSize: '0.9rem' }}>
                 <BookOpen size={16} color="#00F0FF" />
-                <span>Assigned Classes: <strong style={{ color: 'white' }}>{selectedTeacher.classes || 'Class 6th, Class 7th, Class 8th'}</strong></span>
+                <span>Assigned Classes: <strong style={{ color: 'white' }}>{selectedTeacher.classes}</strong></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#cbd5e1', fontSize: '0.9rem' }}>
                 <Clock size={16} color="#00F0FF" />
-                <span>Office Hours: <strong style={{ color: 'white' }}>{selectedTeacher.office_hours || 'Mon - Fri: 09:00 AM - 04:00 PM'}</strong></span>
+                <span>Office Hours: <strong style={{ color: 'white' }}>{selectedTeacher.office_hours}</strong></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#cbd5e1', fontSize: '0.9rem' }}>
                 <MapPin size={16} color="#00F0FF" />
-                <span>Room / Lab: <strong style={{ color: 'white' }}>{selectedTeacher.location || 'Lab 3 (3D VR Room)'}</strong></span>
+                <span>Room / Lab: <strong style={{ color: 'white' }}>{selectedTeacher.location}</strong></span>
               </div>
             </div>
 
