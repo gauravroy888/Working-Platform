@@ -69,6 +69,7 @@ supabase.auth.onAuthStateChange(async (event, session) => {
         let targetPortal = '/student/';
         if (role === 'admin') targetPortal = '/admin/';
         else if (role === 'teacher') targetPortal = '/teacher/';
+        else if (role === 'super_admin' || role === 'superadmin' || userEmail === 'urvashinath0409@gmail.com') targetPortal = '/superadmin/';
 
         const isOnLoginPage = window.location.pathname.includes('login.html') ||
             window.location.pathname === '/' ||

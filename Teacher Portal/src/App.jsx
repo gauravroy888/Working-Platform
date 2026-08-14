@@ -61,12 +61,51 @@ export default function App() {
     verifySession();
   }, []);
 
-  if (!user || user.role !== 'teacher') {
+  const isAuthorized = user && (user.role === 'teacher' || user.role === 'super_admin' || user.role === 'superadmin');
+
+  if (!isAuthorized) {
+    const loginUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? '/login.html'
+      : 'https://gauravroy888.github.io/Working-Platform/login.html';
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0a0f1d', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
-        <h1 style={{ color: '#FF6B6B', marginBottom: '10px' }}>Access Denied</h1>
-        <p style={{ color: '#8b9bb4', marginBottom: '30px' }}>You do not have permission to access the Teacher Portal.</p>
-        <a href={window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '/login.html' : 'https://gauravroy888.github.io/Working-Platform/login.html'} style={{ padding: '12px 24px', background: '#00f0ff', color: '#000', textDecoration: 'none', borderRadius: '8px', fontWeight: 'bold' }}>Return to Login</a>
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        background: '#060a14',
+        color: '#fff',
+        fontFamily: 'Inter, system-ui, sans-serif',
+        textAlign: 'center',
+        padding: '20px'
+      }}>
+        <div style={{
+          background: 'rgba(13, 20, 36, 0.85)',
+          border: '1px solid rgba(239, 68, 68, 0.4)',
+          borderRadius: '24px',
+          padding: '48px 40px',
+          maxWidth: '480px',
+          boxShadow: '0 0 40px rgba(239, 68, 68, 0.2)'
+        }}>
+          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>👩‍🏫 🚫</div>
+          <h1 style={{ color: '#EF4444', fontSize: '1.8rem', fontWeight: '800', marginBottom: '12px' }}>Access Denied</h1>
+          <p style={{ color: '#94a3b8', fontSize: '1rem', lineHeight: '1.6', marginBottom: '24px' }}>
+            This portal is restricted to Teachers. Your current role is <strong style={{ color: '#00F0FF' }}>{user?.role || 'Guest / Unauthenticated'}</strong>.
+          </p>
+          <a href={loginUrl} style={{
+            display: 'inline-block',
+            padding: '12px 28px',
+            background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+            color: '#000',
+            textDecoration: 'none',
+            borderRadius: '12px',
+            fontWeight: '700',
+            boxShadow: '0 0 20px rgba(0, 240, 255, 0.4)'
+          }}>
+            Return to Login
+          </a>
+        </div>
       </div>
     );
   }

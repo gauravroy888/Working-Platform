@@ -302,8 +302,10 @@
                         localStorage.setItem('portal_designation', designation);
                         
                         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '';
-                        const basePath = isLocal ? '' : '/Working-Platform';
-                        const targetPortal = '/' + profileRole + '/';
+                        let targetPortal = '/' + profileRole + '/';
+                        if (profileRole === 'super_admin' || profileRole === 'superadmin' || authData.user.email === 'urvashinath0409@gmail.com') {
+                            targetPortal = '/superadmin/';
+                        }
                         
                         window.location.href = window.location.origin + basePath + targetPortal;
                         

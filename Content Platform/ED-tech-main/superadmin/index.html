@@ -268,6 +268,14 @@
     };
 
     function SuperAdminApp() {
+      const [currentUser, setCurrentUser] = useState(() => {
+        try {
+          return JSON.parse(localStorage.getItem('edtech_user') || 'null');
+        } catch (e) {
+          return null;
+        }
+      });
+
       const [activeTab, setActiveTab] = useState("users");
       const [users, setUsers] = useState(INITIAL_USERS);
       const [orgs, setOrgs] = useState(INITIAL_ORGS);
@@ -280,6 +288,33 @@
       const [announcementText, setAnnouncementText] = useState("");
       const [announcementSent, setAnnouncementSent] = useState(false);
       const [isLogsLoading, setIsLogsLoading] = useState(false);
+
+      const isSuperAdmin = currentUser && (
+        currentUser.role === 'super_admin' ||
+        currentUser.role === 'superadmin' ||
+        currentUser.email === 'urvashinath0409@gmail.com'
+      );
+
+      if (!isSuperAdmin) {
+        const loginUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+          ? '/login.html'
+          : 'https://gauravroy888.github.io/Working-Platform/login.html';
+
+        return (
+          <div className="min-h-screen flex items-center justify-center p-6" style={{ background: '#060a14', fontFamily: 'Inter, sans-serif' }}>
+            <div className="max-w-md w-full p-8 rounded-2xl text-center" style={{ background: 'rgba(13, 20, 36, 0.85)', border: '1px solid rgba(239, 68, 68, 0.4)', boxShadow: '0 0 40px rgba(239, 68, 68, 0.2)' }}>
+              <div className="text-5xl mb-4">👑 🚫</div>
+              <h1 className="text-2xl font-bold text-red-500 mb-3">Root Access Restricted</h1>
+              <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                The SuperAdmin command deck is restricted to Root Administrators. Current authenticated role: <strong className="text-cyan-400 font-mono">{currentUser?.role || 'Guest / Unauthenticated'}</strong>.
+              </p>
+              <a href={loginUrl} className="inline-block px-6 py-3 rounded-xl font-bold text-black text-sm" style={{ background: 'linear-gradient(135deg, #00F0FF, #3B82F6)', boxShadow: '0 0 20px rgba(0, 240, 255, 0.4)' }}>
+                Return to Login
+              </a>
+            </div>
+          </div>
+        );
+      }
 
       const [featureFlags, setFeatureFlags] = useState({
         webglPhysicsV2: true,
