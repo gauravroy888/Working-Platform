@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../components/Card';
-import { Video, Calendar as CalendarIcon, Clock, Play, FileText, CheckCircle, ExternalLink, Loader2 } from 'lucide-react';
+import { Video, Calendar as CalendarIcon, Clock, Play, FileText, CheckCircle, ExternalLink, Loader2, Award } from 'lucide-react';
 import { supabase } from '../supabase';
+import TestRunnerModal from '../components/TestRunnerModal';
 import './LiveClass.css';
 
 export default function LiveClass() {
@@ -10,6 +11,14 @@ export default function LiveClass() {
   const [upcomingClasses, setUpcomingClasses] = useState([]);
   const [testsList, setTestsList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [runningTest, setRunningTest] = useState(null);
+  const [completedResults, setCompletedResults] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('student_test_results') || '{}');
+    } catch {
+      return {};
+    }
+  });
 
   useEffect(() => {
     fetchLiveData();
@@ -194,47 +203,108 @@ export default function LiveClass() {
 
       {activeTab === 'tests' && (
         <Card>
-          <h3 style={{ margin: '0 0 20px 0', color: 'white', fontSize: '1.3rem', fontWeight: '800' }}>Assigned Tests & Quizzes</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div>
+              <h3 style={{ margin: '0 0 4px 0', color: 'white', fontSize: '1.3rem', fontWeight: '800' }}>Assigned Tests & Assessments</h3>
+              <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem' }}>Complete quizzes and exams to earn XP and build subject mastery.</p>
+            </div>
+            <span style={{ padding: '6px 16px', borderRadius: '12px', background: 'rgba(0, 240, 255, 0.1)', color: '#00F0FF', fontWeight: '700', fontSize: '0.85rem' }}>
+              {testsList.length} Active Tests
+            </span>
+          </div>
+
           {testsList.length === 0 ? (
             <p style={{ color: '#94a3b8', margin: 0 }}>No tests or quizzes have been assigned by teachers yet.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {testsList.map((test) => (
-                <div key={test.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', borderRadius: '16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                      <span style={{ padding: '2px 8px', borderRadius: '6px', background: 'rgba(0,240,255,0.15)', color: '#00F0FF', fontSize: '0.75rem', fontWeight: '700' }}>
-                        {test.type ? test.type.toUpperCase() : 'QUIZ'}
-                      </span>
-                      <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
-                        {test.duration ? `${test.duration} mins` : 'Unlimited time'} • {test.questions ? test.questions.length : 0} Questions
-                      </span>
+              {testsList.map((test) => {
+                const isCompleted = completedResults && completedResults[test.id];
+                const scoreInfo = isCompleted ? completedResults[test.id] : null;
+
+                return (
+                  <div key={test.id} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '20px 24px',
+                    borderRadius: '16px',
+                    background: 'rgba(255,255,255,0.03)',
+                    border: isCompleted ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255,255,255,0.08)'
+                  }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                        <span style={{ padding: '2px 8px', borderRadius: '6px', background: 'rgba(0,240,255,0.15)', color: '#00F0FF', fontSize: '0.75rem', fontWeight: '700' }}>
+                          {test.type ? test.type.toUpperCase() : 'QUIZ'}
+                        </span>
+                        <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+                          {test.duration ? `${test.duration} mins` : '15 mins'} • {test.questions ? test.questions.length : 3} Questions
+                        </span>
+                        {isCompleted && (
+                          <span style={{ padding: '2px 8px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', fontSize: '0.75rem', fontWeight: '700' }}>
+                            ✓ Scored {scoreInfo.percentage}% ({scoreInfo.grade})
+                          </span>
+                        )}
+                      </div>
+                      <h4 style={{ margin: 0, color: 'white', fontSize: '1.15rem', fontWeight: '700' }}>{test.title}</h4>
                     </div>
-                    <h4 style={{ margin: 0, color: 'white', fontSize: '1.1rem', fontWeight: '700' }}>{test.title}</h4>
+
+                    <div>
+                      {isCompleted ? (
+                        <button
+                          onClick={() => setRunningTest(test)}
+                          style={{
+                            background: 'rgba(16, 185, 129, 0.15)',
+                            color: '#10B981',
+                            border: '1px solid rgba(16, 185, 129, 0.3)',
+                            fontWeight: '700',
+                            padding: '10px 20px',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          <Award size={16} /> Retake / Review
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setRunningTest(test)}
+                          style={{
+                            background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                            color: '#000',
+                            fontWeight: '700',
+                            border: 'none',
+                            padding: '10px 22px',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            boxShadow: '0 0 15px rgba(0, 240, 255, 0.3)'
+                          }}
+                        >
+                          <Play size={16} /> Start Test
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <button
-                    onClick={() => alert(`Starting test: ${test.title}`)}
-                    style={{
-                      background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
-                      color: '#000',
-                      fontWeight: '700',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '10px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      boxShadow: '0 0 15px rgba(0, 240, 255, 0.3)'
-                    }}
-                  >
-                    <Play size={16} /> Start Test
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </Card>
+      )}
+
+      {/* Interactive Test Runner Modal */}
+      {runningTest && (
+        <TestRunnerModal
+          test={runningTest}
+          onClose={() => setRunningTest(null)}
+          onComplete={(res) => {
+            setCompletedResults(prev => ({ ...prev, [runningTest.id]: res }));
+          }}
+        />
       )}
     </div>
   );
