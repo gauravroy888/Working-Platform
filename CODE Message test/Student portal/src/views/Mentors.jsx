@@ -28,30 +28,155 @@ export default function Mentors() {
     };
   }, []);
 
+  const CLASS_6TH_FACULTY = [
+    {
+      id: 't-gaurav',
+      name: 'Gaurav',
+      degree: 'Head of Science & Physics',
+      subject: 'Physics',
+      rating: 5.0,
+      status: 'Online',
+      email: 'gauravroy476@gmail.com',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Gaurav&top=shortFlat&hairColor=2c1b18&skinColor=ffdbb4&clothing=blazerAndShirt&clothingColor=black&backgroundColor=b6e3f4',
+      bio: 'Senior Physics educator specializing in 3D Ray Optics, Quantum Mechanics, and interactive curriculum design for secondary education.',
+      classes: 'Class 6th, Class 7th, Class 8th, Class 9th, Class 10th',
+      office_hours: 'Mon - Fri: 09:00 AM - 04:00 PM',
+      location: 'Science Lab 3 (3D VR Room)'
+    },
+    {
+      id: 't-priya',
+      name: 'Dr. Priya Sharma',
+      degree: 'M.Sc., Ph.D. in Mathematics & Geometry',
+      subject: 'Mathematics',
+      rating: 4.9,
+      status: 'Online',
+      email: 'priya.sharma@edtech.org',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=PriyaSharma&clothing=blazerAndShirt&backgroundColor=b6e3f4',
+      bio: 'Mathematics specialist focusing on spatial geometry, algebraic foundations, and interactive problem solving.',
+      classes: 'Class 6th, Class 7th',
+      office_hours: 'Mon - Thu: 10:00 AM - 03:00 PM',
+      location: 'Mathematics Wing Room 204'
+    },
+    {
+      id: 't-ananya',
+      name: 'Dr. Ananya Roy',
+      degree: 'Ph.D. in World History & Civilizations',
+      subject: 'History',
+      rating: 4.9,
+      status: 'Online',
+      email: 'ananya.roy@edtech.org',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AnanyaRoy&clothing=blazerAndShirt&backgroundColor=ffd5dc',
+      bio: 'History faculty expert in Mesopotamian, Indus Valley, and Vedic civilizational heritage.',
+      classes: 'Class 6th, Class 8th',
+      office_hours: 'Tue - Fri: 09:30 AM - 02:30 PM',
+      location: 'Social Sciences Room 105'
+    },
+    {
+      id: 't-vikram-p',
+      name: 'Prof. Vikram Patel',
+      degree: 'M.Sc. in Physical & Earth Geography',
+      subject: 'Geography',
+      rating: 4.8,
+      status: 'Available',
+      email: 'vikram.patel@edtech.org',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=VikramPatel&clothing=blazerAndShirt&backgroundColor=d1d4f9',
+      bio: 'Geographer specializing in plate tectonics, atmospheric science, and interactive planetary mapping.',
+      classes: 'Class 6th, Class 7th',
+      office_hours: 'Mon - Fri: 11:00 AM - 04:00 PM',
+      location: 'Earth Sciences Geo Lab 1'
+    },
+    {
+      id: 't-sunita',
+      name: 'Dr. Sunita Kapoor',
+      degree: 'M.Sc., Ph.D. in Chemistry & Life Sciences',
+      subject: 'Chemistry',
+      rating: 5.0,
+      status: 'Online',
+      email: 'sunita.kapoor@edtech.org',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SunitaKapoor&clothing=blazerAndShirt&backgroundColor=c0aede',
+      bio: 'Researcher in molecular chemistry and life systems, guiding students through virtual laboratory experiments.',
+      classes: 'Class 6th, Class 9th',
+      office_hours: 'Mon - Thu: 09:00 AM - 01:00 PM',
+      location: 'Virtual Chemistry Sim Lab'
+    },
+    {
+      id: 't-rajesh',
+      name: 'Prof. Rajesh Verma',
+      degree: 'M.A. in English Literature & Linguistics',
+      subject: 'English',
+      rating: 4.8,
+      status: 'Available',
+      email: 'rajesh.verma@edtech.org',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=RajeshVerma&clothing=blazerAndShirt&backgroundColor=c0aede',
+      bio: 'Literature educator developing student creative writing, grammar syntax, and public speaking skills.',
+      classes: 'Class 6th, Class 7th, Class 8th',
+      office_hours: 'Mon - Fri: 08:30 AM - 02:00 PM',
+      location: 'Humanities Room 102'
+    },
+    {
+      id: 't-rohan',
+      name: 'Prof. Rohan Gupta',
+      degree: 'Master of Fine Arts (MFA) & 3D Spatial Design',
+      subject: 'Arts',
+      rating: 4.9,
+      status: 'Available',
+      email: 'rohan.gupta@edtech.org',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=RohanGupta&clothing=blazerAndShirt&backgroundColor=b6e3f4',
+      bio: 'Visual arts designer teaching digital rendering, spatial composition, and 3D architectural forms.',
+      classes: 'Class 6th, Class 7th',
+      office_hours: 'Wed - Fri: 12:00 PM - 05:00 PM',
+      location: 'Creative Arts Studio A'
+    },
+    {
+      id: 't-meera',
+      name: 'Prof. Meera Iyer',
+      degree: 'M.Mus. in Acoustics & Classical Music Theory',
+      subject: 'Music',
+      rating: 4.8,
+      status: 'Online',
+      email: 'meera.iyer@edtech.org',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MeeraIyer&clothing=blazerAndShirt&backgroundColor=ffd5dc',
+      bio: 'Musicologist and acoustic physicist demonstrating sound wave resonance and melodic harmony.',
+      classes: 'Class 6th, Class 8th',
+      office_hours: 'Mon - Thu: 10:00 AM - 03:00 PM',
+      location: 'Acoustics & Sound Lab'
+    },
+    {
+      id: 't-singh',
+      name: 'Coach Vikram Singh',
+      degree: 'B.P.Ed. in Sports Science & Fitness',
+      subject: 'Physical Education',
+      rating: 5.0,
+      status: 'Available',
+      email: 'vikram.singh@edtech.org',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=VikramSingh&clothing=hoodie&backgroundColor=d1d4f9',
+      bio: 'Athletic director focusing on cardiovascular health, kinetic movement, and youth sports development.',
+      classes: 'Class 6th, Class 7th, Class 8th',
+      office_hours: 'Mon - Fri: 07:30 AM - 01:30 PM',
+      location: 'Main Sports Complex & Gymnasium'
+    }
+  ];
+
   const fetchTeachers = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.from('teachers').select('*').order('name', { ascending: true });
       if (data && data.length > 0) {
-        setTeachers(data);
+        // Merge Supabase DB teachers with full faculty list
+        const merged = data.slice();
+        CLASS_6TH_FACULTY.forEach(fac => {
+          const exists = merged.some(t => (t.email && t.email.toLowerCase() === fac.email.toLowerCase()) || t.name.toLowerCase() === fac.name.toLowerCase());
+          if (!exists) {
+            merged.push(fac);
+          }
+        });
+        setTeachers(merged);
       } else {
-        setTeachers([{
-          id: 't-gaurav',
-          name: 'Gaurav',
-          degree: 'Head of Science & Physics',
-          subject: 'Physics',
-          rating: 5.0,
-          status: 'Online',
-          email: 'gauravroy476@gmail.com',
-          avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Gaurav&top=shortFlat&hairColor=2c1b18&skinColor=ffdbb4&clothing=blazerAndShirt&clothingColor=black&backgroundColor=b6e3f4',
-          bio: 'Senior Physics educator specializing in 3D Ray Optics, Quantum Mechanics, and interactive curriculum design for secondary education.',
-          classes: 'Class 6th, Class 7th, Class 8th, Class 9th, Class 10th',
-          office_hours: 'Mon - Fri: 09:00 AM - 04:00 PM',
-          location: 'Science Lab 3 (3D VR Room)'
-        }]);
+        setTeachers(CLASS_6TH_FACULTY);
       }
     } catch (err) {
       console.error('Error fetching teachers from database:', err);
+      setTeachers(CLASS_6TH_FACULTY);
     } finally {
       setIsLoading(false);
     }
