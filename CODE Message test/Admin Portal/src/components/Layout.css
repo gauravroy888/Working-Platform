@@ -46,7 +46,7 @@
 }
 
 .header-brand h2 {
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 800;
   margin: 0;
   background: linear-gradient(135deg, #ffffff, #94a3b8);
@@ -55,11 +55,68 @@
   letter-spacing: 0.5px;
 }
 
-.header-brand p {
-  color: #00F0FF;
+.header-sub {
+  color: #00F0FF !important;
   margin: 4px 0 0 0;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.header-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 20px;
+  color: #34d399;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace, sans-serif;
+}
+
+.live-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10B981;
+  box-shadow: 0 0 10px #10B981;
+  animation: pulse-glow 2s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+.study-island-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(59, 130, 246, 0.15));
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  border-radius: 12px;
+  color: #00F0FF;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+  transition: all 0.2s ease;
+}
+
+.study-island-link:hover {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.3), rgba(59, 130, 246, 0.3));
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.35);
+  transform: translateY(-1px);
 }
 
 .page-content {

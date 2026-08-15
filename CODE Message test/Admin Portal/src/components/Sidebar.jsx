@@ -18,6 +18,8 @@ const navItems = [
 export default function Sidebar() {
   const { profileImage, profileName, profileDesignation } = useTheme();
 
+  const fallbackAvatar = `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(profileName || 'Admin')}&backgroundColor=060a14`;
+
   return (
     <aside className="portal-sidebar">
       <div className="brand-logo">
@@ -27,11 +29,19 @@ export default function Sidebar() {
 
       <div className="profile-section">
         <div className="avatar-wrapper">
-          <img src={profileImage} alt="Admin Profile" className="avatar" />
+          <img 
+            src={profileImage || fallbackAvatar} 
+            alt={profileName || 'Admin Profile'} 
+            className="avatar"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = fallbackAvatar;
+            }}
+          />
           <span className="status-dot"></span>
         </div>
-        <h3 className="profile-name">{profileName}</h3>
-        <p className="profile-role">{profileDesignation}</p>
+        <h3 className="profile-name">{profileName || 'Administrator'}</h3>
+        <p className="profile-role">{profileDesignation || 'Immersion Labs Admin'}</p>
       </div>
       
       <nav className="nav-menu">
@@ -41,6 +51,7 @@ export default function Sidebar() {
             <NavLink 
               key={item.id} 
               to={item.path}
+              end={item.path === '/'}
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >
               <Icon size={20} className="nav-icon" />
@@ -51,7 +62,10 @@ export default function Sidebar() {
       </nav>
       
       <div className="sidebar-footer">
-        <NavLink to="/notifications" className={({ isActive }) => `nav-link notification-btn ${isActive ? 'active' : ''}`}>
+        <NavLink 
+          to="/notifications" 
+          className={({ isActive }) => `nav-link notification-btn ${isActive ? 'active' : ''}`}
+        >
           <Bell size={20} className="nav-icon" />
           <span>Notifications</span>
         </NavLink>
@@ -59,3 +73,4 @@ export default function Sidebar() {
     </aside>
   );
 }
+

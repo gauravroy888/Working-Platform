@@ -2,7 +2,13 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './views/Dashboard';
+import Events from './views/Events';
+import TimeTable from './views/TimeTable';
+import Teachers from './views/Teachers';
+import Classes from './views/Classes';
 import Communications from './views/Communications';
+import Analytics from './views/Analytics';
+import Settings from './views/Settings';
 import Notifications from './views/Notifications';
 import { ThemeProvider } from './ThemeContext';
 import { supabase } from './supabase';
@@ -31,7 +37,6 @@ export default function App() {
     const verifySession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        // No active session — verify if local user exists
         const userStr = localStorage.getItem('edtech_user');
         if (!userStr) {
           setUser(null);
@@ -58,7 +63,15 @@ export default function App() {
     ? '/login.html'
     : 'https://gauravroy888.github.io/Working-Platform/login.html';
 
-  const isAuthorized = user && (user.role === 'admin' || user.role === 'super_admin' || user.role === 'superadmin');
+  const role = user?.role?.toLowerCase();
+  const isAuthorized = user && (
+    role === 'admin' || 
+    role === 'super_admin' || 
+    role === 'superadmin' ||
+    user?.email === 'immersionlabsindia@gmail.com' ||
+    user?.email === 'aimodelnewplay@gmail.com' ||
+    user?.email === 'urvashinath0409@gmail.com'
+  );
 
   if (!isAuthorized) {
     return (
@@ -110,13 +123,13 @@ export default function App() {
         <Layout>
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/events" element={<Dashboard />} />
-            <Route path="/timetable" element={<Dashboard />} />
-            <Route path="/teachers" element={<Dashboard />} />
-            <Route path="/classes" element={<Dashboard />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/timetable" element={<TimeTable />} />
+            <Route path="/teachers" element={<Teachers />} />
+            <Route path="/classes" element={<Classes />} />
             <Route path="/communications" element={<Communications />} />
-            <Route path="/analytics" element={<Dashboard />} />
-            <Route path="/settings" element={<Dashboard />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
@@ -125,3 +138,4 @@ export default function App() {
     </ThemeProvider>
   );
 }
+

@@ -63,6 +63,7 @@
   border: 2px solid rgba(0, 240, 255, 0.4);
   box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
   object-fit: cover;
+  background: #0A0F1D;
 }
 
 .status-dot {
