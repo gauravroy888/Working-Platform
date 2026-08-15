@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../components/Card';
-import { Users, Calendar, Video, FileText, ArrowRight, TrendingUp, PlusCircle } from 'lucide-react';
+import { Users, Calendar, Video, FileText, ArrowRight, TrendingUp, PlusCircle, Tv } from 'lucide-react';
 import { supabase } from '../supabase';
 
 export default function Dashboard() {
@@ -52,13 +52,15 @@ export default function Dashboard() {
       
       {/* Welcome Hero Banner */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(59, 130, 246, 0.15))',
-        border: '1px solid rgba(0, 240, 255, 0.3)',
+        background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(168, 85, 247, 0.15), rgba(59, 130, 246, 0.15))',
+        border: '1px solid rgba(0, 240, 255, 0.35)',
         borderRadius: '20px',
         padding: '28px 36px',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '20px'
       }}>
         <div>
           <h2 style={{ fontSize: '1.8rem', fontWeight: '800', margin: '0 0 8px 0', color: 'white' }}>
@@ -68,14 +70,14 @@ export default function Dashboard() {
             You have <strong>{stats.classesToday} Classes Scheduled</strong> and <strong>{stats.activeTests} Active Tests</strong> running.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           <a
-            href="#/liveclass"
+            href="#/smartboard"
             style={{
               background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
               color: '#000',
-              fontWeight: '700',
-              padding: '14px 28px',
+              fontWeight: '800',
+              padding: '14px 24px',
               borderRadius: '14px',
               textDecoration: 'none',
               display: 'flex',
@@ -84,7 +86,25 @@ export default function Dashboard() {
               boxShadow: '0 0 25px rgba(0, 240, 255, 0.4)'
             }}
           >
-            <Video size={20} /> Launch Live Class <ArrowRight size={16} />
+            <Tv size={20} /> Teach on Smartboard <ArrowRight size={16} />
+          </a>
+
+          <a
+            href="#/liveclass"
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              color: '#fff',
+              fontWeight: '700',
+              padding: '14px 20px',
+              borderRadius: '14px',
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <Video size={20} /> Live Class
           </a>
         </div>
       </div>

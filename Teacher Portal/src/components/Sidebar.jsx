@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Calendar, CheckSquare, MessageSquare, Users, BarChart2, Video, Database, Settings as SettingsIcon, Bell, Camera } from 'lucide-react';
+import { LayoutDashboard, Calendar, CheckSquare, MessageSquare, Users, BarChart2, Video, Database, Settings as SettingsIcon, Bell, Camera, Tv, Sparkles } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
 import { useUnreadMessages } from '../hooks/useUnreadMessages';
 import { useUnreadNotifications } from '../hooks/useUnreadNotifications';
@@ -68,6 +68,22 @@ export default function Sidebar({ isOpen = false, closeMenu = () => {} }) {
         <NavLink to="/" onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'} end>
           <LayoutDashboard size={20} />
           <span>Dashboard</span>
+        </NavLink>
+        <NavLink to="/smartboard" onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <Tv size={20} />
+            <span style={{
+              position: 'absolute',
+              top: '-4px',
+              right: '-6px',
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              background: '#00F0FF',
+              boxShadow: '0 0 8px #00F0FF'
+            }} />
+          </div>
+          <span>Smartboard / Study Island</span>
         </NavLink>
         <NavLink to="/timetable" onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
           <Calendar size={20} />

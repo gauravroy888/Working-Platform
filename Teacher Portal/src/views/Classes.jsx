@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../components/Card';
-import { Users, BookOpen, X, Check, Search, Palette, UserPlus, Trash2, Edit2 } from 'lucide-react';
+import { Users, BookOpen, X, Check, Search, Palette, UserPlus, Trash2, Edit2, Tv, ArrowUpRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 
 export default function Classes() {
+  const navigate = useNavigate();
   const [activeModal, setActiveModal] = useState(null); // 'roster' | 'manageGroups' | null
   const [selectedClass, setSelectedClass] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -187,9 +189,33 @@ export default function Classes() {
               </div>
             </div>
             
-            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-              <button className="btn btn-ghost" onClick={() => openModal('roster', cls)} style={{ flex: 1 }}>View Roster</button>
-              <button className="btn btn-primary" onClick={() => openModal('manageGroups', cls)} style={{ flex: 1 }}>Manage Groups</button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '20px' }}>
+              <button 
+                onClick={() => navigate(`/smartboard?class=${encodeURIComponent(cls.name)}&subject=${encodeURIComponent(cls.subject || 'All')}`)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                  border: 'none',
+                  color: '#000',
+                  fontWeight: '800',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 0 15px rgba(0, 240, 255, 0.3)'
+                }}
+              >
+                <Tv size={16} /> Teach on Smartboard <ArrowUpRight size={14} />
+              </button>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button className="btn btn-ghost" onClick={() => openModal('roster', cls)} style={{ flex: 1, padding: '8px 12px', fontSize: '13px' }}>View Roster</button>
+                <button className="btn btn-primary" onClick={() => openModal('manageGroups', cls)} style={{ flex: 1, padding: '8px 12px', fontSize: '13px' }}>Manage Groups</button>
+              </div>
             </div>
           </Card>
         ))}

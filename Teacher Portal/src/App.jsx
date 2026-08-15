@@ -11,6 +11,7 @@ import LiveClass from './views/LiveClass';
 import Settings from './views/Settings';
 import Notifications from './views/Notifications';
 import QuestionBank from './views/QuestionBank';
+import SmartboardTeaching from './views/SmartboardTeaching';
 import { ThemeProvider } from './ThemeContext';
 import { supabase } from './supabase';
 
@@ -119,6 +120,8 @@ export default function App() {
             <Route path="/todo" element={<ToDoList />} />
             <Route path="/inbox" element={<Inbox />} />
             <Route path="/classes" element={<Classes />} />
+            <Route path="/smartboard" element={<SmartboardTeaching />} />
+            <Route path="/curriculum" element={<SmartboardTeaching />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/liveclass" element={<LiveClass />} />
             <Route path="/settings" element={<Settings />} />
