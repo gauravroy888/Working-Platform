@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Settings as SettingsIcon, Shield, Cloud, Bell, Palette, School, Save, Check, Key, Lock, Image as ImageIcon } from 'lucide-react';
+import { Settings as SettingsIcon, Shield, Bell, Palette, School, Save, Check, Key, Lock, Image as ImageIcon, User } from 'lucide-react';
 import Card from '../components/Card';
 import { useTheme } from '../ThemeContext';
+import ProfilePhotoModal from '../components/ProfilePhotoModal';
 
 export default function Settings() {
-  const { backgroundImage, setBackgroundImage, profileName, setProfileName, profileDesignation, setProfileDesignation } = useTheme();
+  const { backgroundImage, setBackgroundImage, profileName, setProfileName, profileDesignation, setProfileDesignation, profileImage } = useTheme();
 
   const [schoolName, setSchoolName] = useState('Delhi Public School (DPS)');
   const [schoolDomain, setSchoolDomain] = useState('dps-delhi.immersionlabs.in');
@@ -14,6 +15,7 @@ export default function Settings() {
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [smsAlerts, setSmsAlerts] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
 
   const WALLPAPERS = [
     { id: 'future', name: 'Future Version Cyber Glass', path: '/assets/Future%20verion%20lowres.jpg' },
@@ -27,13 +29,15 @@ export default function Settings() {
     setTimeout(() => setSavedSuccess(false), 3000);
   };
 
+  const fallbackAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileName || 'Admin')}&backgroundColor=b6e3f4`;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1000px' }}>
       {/* Top Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h3 style={{ margin: '0 0 4px 0', color: '#fff', fontSize: '1.4rem', fontWeight: '800' }}>Institution &amp; System Configuration</h3>
-          <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem' }}>Configure tenant branding, Cloudflare R2 storage quotas, 2FA policies, and themes.</p>
+          <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem' }}>Configure tenant branding, 2FA policies, portal themes, and administrator profile.</p>
         </div>
 
         <button
@@ -61,6 +65,55 @@ export default function Settings() {
 
       {/* Grid Settings Layout */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))', gap: '20px' }}>
+        {/* Section 0: Admin Profile Photo & Personalization */}
+        <Card>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+            <User size={20} color="#00F0FF" />
+            <h4 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>Administrator Profile &amp; Avatar</h4>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <div style={{
+              width: '85px',
+              height: '85px',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              border: '2px solid #00F0FF',
+              boxShadow: '0 0 20px rgba(0, 240, 255, 0.3)',
+              background: '#060a14',
+              flexShrink: 0
+            }}>
+              <img 
+                src={profileImage || fallbackAvatar} 
+                alt="Admin Avatar" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => { e.target.src = fallbackAvatar; }}
+              />
+            </div>
+
+            <div>
+              <h5 style={{ margin: '0 0 4px 0', color: '#fff', fontSize: '1rem', fontWeight: '700' }}>Your Avatar</h5>
+              <p style={{ margin: '0 0 12px 0', color: '#94a3b8', fontSize: '0.85rem' }}>Customize your generated avatar or upload a custom photo.</p>
+              <button 
+                onClick={() => setShowPhotoModal(true)}
+                style={{
+                  background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                  color: '#000',
+                  fontWeight: '700',
+                  border: 'none',
+                  padding: '8px 18px',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  boxShadow: '0 0 15px rgba(0, 240, 255, 0.3)'
+                }}
+              >
+                Edit Profile Photo
+              </button>
+            </div>
+          </div>
+        </Card>
+
         {/* Section 1: Institution Profile */}
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
@@ -101,48 +154,7 @@ export default function Settings() {
           </div>
         </Card>
 
-        {/* Section 2: Cloudflare R2 Storage Allocation */}
-        <Card>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-            <Cloud size={20} color="#a855f7" />
-            <h4 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>Cloudflare R2 Storage &amp; Edge CDN</h4>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>3D GLB &amp; Media Storage Used</span>
-                <p style={{ color: '#fff', fontSize: '1.2rem', fontWeight: '800', margin: '4px 0 0 0', fontFamily: 'monospace' }}>
-                  4.82 GB <span style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: 'normal' }}>/ 50.00 GB Cap</span>
-                </p>
-              </div>
-              <span style={{ padding: '4px 10px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', fontSize: '0.75rem', fontWeight: '700' }}>
-                9.6% Allocated
-              </span>
-            </div>
-
-            <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
-              <div style={{ width: '9.6%', height: '100%', background: 'linear-gradient(90deg, #a855f7, #00F0FF)', borderRadius: '4px' }}></div>
-            </div>
-
-            <div style={{ padding: '12px', background: 'rgba(0,0,0,0.25)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#94a3b8' }}>R2 Edge Bucket:</span>
-                <span style={{ color: '#cbd5e1', fontFamily: 'monospace' }}>edtechplatform</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#94a3b8' }}>CDN Egress Fee:</span>
-                <span style={{ color: '#34d399', fontWeight: '700' }}>$0.00 (Zero Egress)</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#94a3b8' }}>Live Edge Endpoint:</span>
-                <span style={{ color: '#00F0FF', fontFamily: 'monospace' }}>pub-670b...r2.dev</span>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Section 3: Security & Access Policies */}
+        {/* Section 2: Security & Access Policies */}
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
             <Shield size={20} color="#10B981" />
@@ -220,6 +232,8 @@ export default function Settings() {
           </div>
         </Card>
       </div>
+
+      <ProfilePhotoModal isOpen={showPhotoModal} onClose={() => setShowPhotoModal(false)} />
     </div>
   );
 }

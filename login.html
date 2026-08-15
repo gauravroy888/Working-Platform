@@ -104,16 +104,17 @@
     </nav>
 
     <div class="login-page">
-        <div class="login-container glass-card">
+        <div class="login-container glass-card" style="max-width: 480px;">
             <div class="login-header">
                 <h2>Portal Login</h2>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 5px;">Select your portal to continue</p>
             </div>
             
-            <div class="login-tabs">
-                <div class="login-tab active" data-tab="student">Student</div>
-                <div class="login-tab" data-tab="teacher">Teacher</div>
-                <div class="login-tab" data-tab="admin">Admin</div>
+            <div class="login-tabs" style="gap: 4px;">
+                <div class="login-tab active" data-tab="student" style="font-size: 0.82rem; padding: 9px 0;">Student</div>
+                <div class="login-tab" data-tab="teacher" style="font-size: 0.82rem; padding: 9px 0;">Teacher</div>
+                <div class="login-tab" data-tab="admin" style="font-size: 0.82rem; padding: 9px 0;">Admin</div>
+                <div class="login-tab" data-tab="superadmin" style="font-size: 0.82rem; padding: 9px 0; font-weight: 700;">👑 SuperAdmin</div>
             </div>
             
             <!-- Student Login -->
@@ -158,6 +159,21 @@
                         <input type="password" id="admin-pwd" class="form-control" placeholder="••••••••" required>
                     </div>
                     <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px; background: linear-gradient(90deg, #b05cff, #f96dff); box-shadow: 0 0 20px rgba(176,92,255,0.4); color: #fff;">Login as Admin</button>
+                </form>
+            </div>
+
+            <!-- SuperAdmin Login -->
+            <div class="login-form-container" id="form-superadmin">
+                <form>
+                    <div class="form-group">
+                        <label>Root SuperAdmin Email / Key</label>
+                        <input type="text" id="superadmin-id" class="form-control" placeholder="urvashinath0409@gmail.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password / Master Access Key</label>
+                        <input type="password" id="superadmin-pwd" class="form-control" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px; background: linear-gradient(90deg, #00F0FF, #3B82F6); box-shadow: 0 0 20px rgba(0,240,255,0.4); color: #000; font-weight: 800;">Login as Root SuperAdmin</button>
                 </form>
             </div>
             
@@ -239,6 +255,9 @@
                     } else if (role === 'admin') {
                         loginId = document.getElementById('admin-id').value.trim();
                         pwd = document.getElementById('admin-pwd').value;
+                    } else if (role === 'superadmin' || role === 'super_admin') {
+                        loginId = document.getElementById('superadmin-id').value.trim();
+                        pwd = document.getElementById('superadmin-pwd').value;
                     }
                     
                     if (!window.supabase) {
@@ -280,7 +299,10 @@
                             .eq('auth_id', authData.user.id)
                             .single();
 
-                        const profileRole = profile?.role || role;
+                        let profileRole = profile?.role || role;
+                        if (authData.user.email === 'urvashinath0409@gmail.com' || role === 'superadmin') {
+                            profileRole = 'super_admin';
+                        }
                         const profileName = profile?.name || loginId;
                         const profileAvatar = profile?.avatar_url || null;
 
@@ -299,6 +321,7 @@
                         let designation = 'Student';
                         if (profileRole === 'admin') designation = 'Administrator';
                         else if (profileRole === 'teacher') designation = 'Teacher';
+                        else if (profileRole === 'super_admin' || profileRole === 'superadmin') designation = 'Super Administrator';
                         localStorage.setItem('portal_designation', designation);
                         
                         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '';

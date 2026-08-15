@@ -2,18 +2,41 @@ import React, { useState } from 'react';
 import { User, Bell, Lock, Palette } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
 import ProfilePhotoModal from '../components/ProfilePhotoModal';
+import { supabase } from '../supabase';
 
 export default function Settings() {
   const { profileName, setProfileName, profileImage } = useTheme();
-  const [name, setName] = useState(profileName || 'Alex');
-  const [email, setEmail] = useState('alex@student.edtech.org');
-  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  
+  const getAuthUser = () => {
+    try {
+      return JSON.parse(localStorage.getItem('edtech_user') || 'null');
+    } catch(e) { return null; }
+  };
+  const authUser = getAuthUser();
 
-  const handleSaveName = (e) => {
+  const [name, setName] = useState(authUser?.name || profileName || 'Alex');
+  const [email, setEmail] = useState(authUser?.email || 'alex@student.edtech.org');
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const handleSaveName = async (e) => {
     e.preventDefault();
     setProfileName(name);
-    alert('Settings updated successfully!');
+    try {
+      const user = getAuthUser();
+      if (user) {
+        user.name = name;
+        localStorage.setItem('edtech_user', JSON.stringify(user));
+        await supabase.from('profiles').update({ name }).eq('email', user.email);
+      }
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2500);
+    } catch(err) {
+      console.error(err);
+    }
   };
+
+  const fallbackAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'Student')}&backgroundColor=b6e3f4`;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '800px' }}>
@@ -42,9 +65,16 @@ export default function Settings() {
             borderRadius: '50%',
             overflow: 'hidden',
             border: '2px solid #00F0FF',
-            boxShadow: '0 0 15px rgba(0, 240, 255, 0.3)'
+            boxShadow: '0 0 15px rgba(0, 240, 255, 0.3)',
+            background: '#0D1424',
+            flexShrink: 0
           }}>
-            <img src={profileImage || '/assets/avatar.png'} alt="Your Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img 
+              src={profileImage || fallbackAvatar} 
+              alt="Your Avatar" 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={(e) => { e.target.src = fallbackAvatar; }} 
+            />
           </div>
 
           <div>
@@ -102,19 +132,20 @@ export default function Settings() {
           </div>
 
           <div>
-            <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.9rem', marginBottom: '6px', fontWeight: '600' }}>Email Address</label>
+            <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.9rem', marginBottom: '6px', fontWeight: '600' }}>Email Address (Read Only)</label>
             <input 
               type="email" 
               value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
+              readOnly
               style={{
                 width: '100%',
                 padding: '12px 16px',
                 borderRadius: '10px',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: 'white',
-                fontSize: '0.95rem'
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                color: '#94a3b8',
+                fontSize: '0.95rem',
+                cursor: 'not-allowed'
               }}
             />
           </div>
@@ -123,16 +154,17 @@ export default function Settings() {
             type="submit"
             style={{
               alignSelf: 'flex-start',
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              color: 'white',
+              background: saveSuccess ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+              border: saveSuccess ? '1px solid #10B981' : '1px solid rgba(255, 255, 255, 0.2)',
+              color: saveSuccess ? '#34d399' : 'white',
               fontWeight: '700',
               padding: '10px 24px',
               borderRadius: '10px',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
             }}
           >
-            Save Changes
+            {saveSuccess ? 'Changes Saved!' : 'Save Changes'}
           </button>
         </form>
       </div>

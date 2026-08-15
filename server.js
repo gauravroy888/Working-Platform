@@ -75,7 +75,7 @@ const server = http.createServer(async (req, res) => {
       const rawBody = Buffer.concat(chunks).toString();
       const body = JSON.parse(rawBody);
 
-      const { className, subjectName, chapterSlug, modalitySlug, filename, base64Content, contentType } = body;
+      const { className, subjectName, chapterSlug, modalitySlug, filename, base64Content, contentType, category, isAvatar, userEmail } = body;
 
       if (!filename || !base64Content) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -83,15 +83,22 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const cleanClass = (className || 'general').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      const cleanSubj = (subjectName || 'general').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      const cleanChap = (chapterSlug || 'general').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      const cleanMod = (modalitySlug || 'content').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      const cleanFile = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+      let key;
+      if (category === 'avatars' || isAvatar) {
+        const cleanEmail = (userEmail || 'user').toLowerCase().replace(/[^a-z0-9]/g, '_');
+        const cleanFile = (filename || 'avatar.jpg').replace(/[^a-zA-Z0-9._-]/g, '_');
+        key = `avatars/${cleanEmail}_${Date.now()}_${cleanFile}`;
+      } else {
+        const cleanClass = (className || 'general').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const cleanSubj = (subjectName || 'general').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const cleanChap = (chapterSlug || 'general').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const cleanMod = (modalitySlug || 'content').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const cleanFile = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+        key = `courses/${cleanClass}/${cleanSubj}/${cleanChap}/${cleanMod}/${cleanFile}`;
+      }
 
-      const key = `courses/${cleanClass}/${cleanSubj}/${cleanChap}/${cleanMod}/${cleanFile}`;
       const fileBuffer = Buffer.from(base64Content, 'base64');
-      const mime = contentType || getContentType(cleanFile);
+      const mime = contentType || getContentType(filename);
 
       await s3Client.send(new PutObjectCommand({
         Bucket: R2_CONFIG.bucketName,

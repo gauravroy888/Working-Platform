@@ -1,15 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Calendar, CheckSquare, MessageSquare, Users, BarChart2, Video, Database, Settings as SettingsIcon, Bell } from 'lucide-react';
+import { LayoutDashboard, Calendar, CheckSquare, MessageSquare, Users, BarChart2, Video, Database, Settings as SettingsIcon, Bell, Camera } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
 import { useUnreadMessages } from '../hooks/useUnreadMessages';
 import { useUnreadNotifications } from '../hooks/useUnreadNotifications';
+import ProfilePhotoModal from './ProfilePhotoModal';
 import './Sidebar.css';
 
 export default function Sidebar({ isOpen = false, closeMenu = () => {} }) {
   const { profileImage, profileName, profileDesignation } = useTheme();
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
   const unreadCount = useUnreadMessages();
   const unreadNotifs = useUnreadNotifications();
+
+  const fallbackAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileName || 'Teacher')}&backgroundColor=b6e3f4`;
 
   return (
     <aside className={`portal-sidebar ${isOpen ? 'mobile-open' : ''}`}>
@@ -19,13 +23,46 @@ export default function Sidebar({ isOpen = false, closeMenu = () => {} }) {
       </div>
 
       <div className="profile-section">
-        <div className="avatar-wrapper">
-          <img src={profileImage || '/assets/avatar.png'} alt={profileName || 'Teacher'} className="avatar" />
+        <div 
+          className="avatar-wrapper"
+          onClick={() => setShowPhotoModal(true)}
+          style={{ cursor: 'pointer', position: 'relative' }}
+          title="Click to customize avatar or upload photo"
+        >
+          <img 
+            src={profileImage || fallbackAvatar} 
+            alt={profileName || 'Teacher'} 
+            className="avatar"
+            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = fallbackAvatar; }} 
+          />
           <span className="status-dot" style={{ backgroundColor: '#10B981' }}></span>
         </div>
-        <h3 className="profile-name">{profileName || 'Teacher'}</h3>
+        <h3 className="profile-name" style={{ cursor: 'pointer' }} onClick={() => setShowPhotoModal(true)}>{profileName || 'Teacher'}</h3>
         <p className="profile-role">{profileDesignation || 'Faculty / Teacher'}</p>
+        <button
+          onClick={() => setShowPhotoModal(true)}
+          style={{
+            marginTop: '8px',
+            background: 'rgba(0, 240, 255, 0.1)',
+            border: '1px solid rgba(0, 240, 255, 0.3)',
+            color: '#00F0FF',
+            borderRadius: '8px',
+            padding: '4px 10px',
+            fontSize: '0.75rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <Camera size={12} />
+          <span>Edit Avatar</span>
+        </button>
       </div>
+
+      <ProfilePhotoModal isOpen={showPhotoModal} onClose={() => setShowPhotoModal(false)} />
 
       <nav className="sidebar-nav">
         <NavLink to="/" onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'} end>

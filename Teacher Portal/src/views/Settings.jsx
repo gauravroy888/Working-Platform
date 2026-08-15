@@ -14,12 +14,20 @@ export default function Settings() {
     backgroundImage, setBackgroundImage 
   } = useTheme();
 
-  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const getAuthUser = () => {
+    try {
+      return JSON.parse(localStorage.getItem('edtech_user') || 'null');
+    } catch (e) { return null; }
+  };
+  const authUser = getAuthUser();
 
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Local state for the form so we don't update context on every keystroke
-  const [localName, setLocalName] = useState(profileName);
-  const [localDesignation, setLocalDesignation] = useState(profileDesignation);
+  const [localName, setLocalName] = useState(authUser?.name || profileName || 'Teacher');
+  const [localDesignation, setLocalDesignation] = useState(profileDesignation || 'Faculty Member');
+  const [userEmail] = useState(authUser?.email || 'teacher@edtech.edu');
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
@@ -27,19 +35,22 @@ export default function Settings() {
     setProfileDesignation(localDesignation);
     
     try {
-      const userStr = localStorage.getItem('edtech_user');
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        // Only saving name back to DB
-        const { supabase } = await import('../supabase');
-        await supabase.from('profiles').update({ name: localName }).eq('email', user.email);
+      const user = getAuthUser();
+      if (user) {
         user.name = localName;
         localStorage.setItem('edtech_user', JSON.stringify(user));
+        const { supabase } = await import('../supabase');
+        await supabase.from('profiles').update({ name: localName }).eq('email', user.email);
+        await supabase.from('teachers').update({ name: localName, degree: localDesignation }).eq('email', user.email);
       }
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2500);
     } catch (err) {
       console.error(err);
     }
   };
+
+  const fallbackAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(localName)}&backgroundColor=b6e3f4`;
 
   const handleImageUpload = (e, setter) => {
     const file = e.target.files[0];
@@ -114,10 +125,10 @@ export default function Settings() {
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: 'var(--text-secondary)' }}>Email (Read Only)</label>
-              <input type="email" value="anderson@edtech.edu" readOnly style={{ ...inputStyle, opacity: 0.5, cursor: 'not-allowed' }} />
+              <input type="email" value={userEmail} readOnly style={{ ...inputStyle, opacity: 0.5, cursor: 'not-allowed' }} />
             </div>
-            <button type="submit" className="btn btn-primary" style={{ justifySelf: 'start', marginTop: '10px' }}>
-              <Save size={16} /> Save Changes
+            <button type="submit" className="btn btn-primary" style={{ justifySelf: 'start', marginTop: '10px', background: saveSuccess ? 'rgba(16, 185, 129, 0.2)' : undefined, borderColor: saveSuccess ? '#10B981' : undefined, color: saveSuccess ? '#34d399' : undefined }}>
+              <Save size={16} /> {saveSuccess ? 'Changes Saved!' : 'Save Changes'}
             </button>
           </form>
         </Card>
@@ -132,7 +143,12 @@ export default function Settings() {
                 <User size={18} color="var(--accent-cyan)" /> Profile Photo
               </h4>
               <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                <img src={profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileName)}&mouth=smile,default&eyes=happy,default`} alt="Avatar Preview" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)', background: '#fff' }} />
+                <img 
+                  src={profileImage || fallbackAvatar} 
+                  alt="Avatar Preview" 
+                  style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)', background: '#fff' }}
+                  onError={(e) => { e.target.src = fallbackAvatar; }} 
+                />
                 
                 <div style={{ flex: 1 }}>
                   <h5 style={{ margin: '0 0 5px 0', color: '#fff', fontSize: '15px' }}>Your Avatar</h5>

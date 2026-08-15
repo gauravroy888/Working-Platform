@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Calendar, Video, MessageSquare, Users, BarChart2, Bell, Settings as SettingsIcon } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Calendar, Video, MessageSquare, Users, BarChart2, Bell, Settings as SettingsIcon, Camera } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
+import ProfilePhotoModal from './ProfilePhotoModal';
 import './Sidebar.css';
 
 export default function Sidebar() {
   const { profileImage, profileName, profileDesignation } = useTheme();
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+
+  const fallbackAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileName || 'Student')}&backgroundColor=b6e3f4`;
 
   return (
     <aside className="portal-sidebar">
@@ -15,13 +19,46 @@ export default function Sidebar() {
       </div>
 
       <div className="profile-section">
-        <div className="avatar-wrapper">
-          <img src={profileImage || '/assets/avatar.png'} alt={profileName || 'Student'} className="avatar" />
+        <div 
+          className="avatar-wrapper"
+          onClick={() => setShowPhotoModal(true)}
+          style={{ cursor: 'pointer', position: 'relative' }}
+          title="Click to customize avatar or upload photo"
+        >
+          <img 
+            src={profileImage || fallbackAvatar} 
+            alt={profileName || 'Student'} 
+            className="avatar"
+            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = fallbackAvatar; }} 
+          />
           <span className="status-dot" style={{ backgroundColor: '#10B981' }}></span>
         </div>
-        <h3 className="profile-name">{profileName || 'Alex'}</h3>
+        <h3 className="profile-name" style={{ cursor: 'pointer' }} onClick={() => setShowPhotoModal(true)}>{profileName || 'Alex'}</h3>
         <p className="profile-role">{profileDesignation || 'Student'}</p>
+        <button
+          onClick={() => setShowPhotoModal(true)}
+          style={{
+            marginTop: '8px',
+            background: 'rgba(0, 240, 255, 0.1)',
+            border: '1px solid rgba(0, 240, 255, 0.3)',
+            color: '#00F0FF',
+            borderRadius: '8px',
+            padding: '4px 10px',
+            fontSize: '0.75rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <Camera size={12} />
+          <span>Edit Avatar</span>
+        </button>
       </div>
+
+      <ProfilePhotoModal isOpen={showPhotoModal} onClose={() => setShowPhotoModal(false)} />
 
       <nav className="sidebar-nav">
         <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>

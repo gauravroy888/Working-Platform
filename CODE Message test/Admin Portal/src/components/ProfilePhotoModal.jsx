@@ -40,7 +40,7 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
   const genderParams = gender === 'male' ? '&facialHairProbability=100' : '&facialHairProbability=0';
   const accessoriesParams = accessories ? `&accessoriesProbability=100&accessories=${accessories}` : '&accessoriesProbability=0';
 
-  const previewAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileName || 'User')}&top=${hair}&hairColor=${hairColor}&skinColor=${skinColor}&clothing=${clothing}&clothingColor=${clothingColor}${gender === 'male' && facialHair ? `&facialHair=${facialHair}&facialHairColor=${facialHairColor}` : ''}${genderParams}${accessoriesParams}${expressionParams}&backgroundColor=${avatarBgColor}`;
+  const previewAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileName || 'Admin')}&top=${hair}&hairColor=${hairColor}&skinColor=${skinColor}&clothing=${clothing}&clothingColor=${clothingColor}${gender === 'male' && facialHair ? `&facialHair=${facialHair}&facialHairColor=${facialHairColor}` : ''}${genderParams}${accessoriesParams}${expressionParams}&backgroundColor=${avatarBgColor}`;
 
   // Reset upload state whenever modal opens or closes
   useEffect(() => {
@@ -158,7 +158,7 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
 
   const handleMouseUp = () => setIsDragging(false);
 
-  // Global save handler - uploads to Cloudflare R2 + Supabase profiles + teachers + localStorage + Context
+  // Global save handler - uploads to Cloudflare R2 + Supabase profiles + localStorage + Context
   const handleSaveToGlobal = async (imageUrl) => {
     setIsSaving(true);
     let finalUrl = imageUrl;
@@ -166,7 +166,7 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
     try {
       if (imageUrl.startsWith('data:image')) {
         const base64Data = imageUrl.split(',')[1];
-        const userEmail = (localStorage.getItem('edtech_user') ? JSON.parse(localStorage.getItem('edtech_user')).email : 'teacher@cognitiveisland.edu');
+        const userEmail = (localStorage.getItem('edtech_user') ? JSON.parse(localStorage.getItem('edtech_user')).email : 'admin@cognitiveisland.edu');
         
         // 1. Upload to Cloudflare R2 via /api/upload-r2
         try {
@@ -217,9 +217,9 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
 
       // Persist across localStorage keys for all portals
       localStorage.setItem('portal_avatar', finalUrl);
+      localStorage.setItem('admin_portal_avatar', finalUrl);
       localStorage.setItem('student_portal_avatar', finalUrl);
       localStorage.setItem('teacher_portal_avatar', finalUrl);
-      localStorage.setItem('admin_portal_avatar', finalUrl);
 
       const userStr = localStorage.getItem('edtech_user');
       if (userStr) {
@@ -231,15 +231,10 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
         // Persist to Supabase profiles table
         await supabase.from('profiles').upsert({
           email: user.email,
-          name: user.name || profileName || 'User',
-          role: user.role || 'teacher',
+          name: user.name || profileName || 'Admin',
+          role: user.role || 'admin',
           avatar_url: finalUrl
         }, { onConflict: 'email' });
-
-        // If teacher, also update teachers table
-        try {
-          await supabase.from('teachers').update({ avatar_url: finalUrl }).eq('email', user.email);
-        } catch (e) {}
       }
 
       // Notify other tabs and components

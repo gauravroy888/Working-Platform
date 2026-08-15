@@ -29,6 +29,10 @@ supabase.auth.onAuthStateChange(async (event, session) => {
             // User not found in users table — default to student
         }
 
+        if (userEmail === 'urvashinath0409@gmail.com') {
+            role = 'super_admin';
+        }
+
         const profileName = existingProfile?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
         const profileAvatar = existingProfile?.avatar_url || user.user_metadata?.avatar_url || null;
 

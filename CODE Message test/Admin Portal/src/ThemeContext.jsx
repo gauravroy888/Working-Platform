@@ -19,16 +19,19 @@ export function ThemeProvider({ children }) {
     initialUser?.org ? `${initialUser.org} Admin` : 'Immersion Labs Admin'
   );
   const [profileImage, setProfileImage] = useState(
-    initialUser?.avatar || 'https://api.dicebear.com/7.x/micah/svg?seed=ImmersionAdmin&backgroundColor=060a14'
+    initialUser?.avatar_url || initialUser?.avatar || localStorage.getItem('admin_portal_avatar') || localStorage.getItem('portal_avatar') || 'https://api.dicebear.com/7.x/micah/svg?seed=ImmersionAdmin&backgroundColor=060a14'
   );
 
   useEffect(() => {
     const handleStorage = () => {
       const u = getInitialUser();
+      const storedAvatar = localStorage.getItem('admin_portal_avatar') || localStorage.getItem('portal_avatar');
       if (u) {
         if (u.name) setProfileName(u.name);
         if (u.org) setProfileDesignation(`${u.org} Admin`);
-        if (u.avatar) setProfileImage(u.avatar);
+        if (u.avatar_url || u.avatar) setProfileImage(u.avatar_url || u.avatar);
+      } else if (storedAvatar) {
+        setProfileImage(storedAvatar);
       }
     };
     window.addEventListener('storage', handleStorage);

@@ -21,7 +21,7 @@ export default function Notifications() {
     const { data } = await supabase
       .from('notifications')
       .select('*')
-      .eq('user_email', currentUser.email)
+      .in('user_email', [currentUser.email, 'all'])
       .order('created_at', { ascending: false });
     
     if (data) {
@@ -34,14 +34,18 @@ export default function Notifications() {
     
     fetchNotifications();
 
-    const subscription = supabase.channel('public:notifications')
+    const subscription = supabase.channel('admin:notifications')
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
-        table: 'notifications',
-        filter: `user_email=eq.${currentUser.email}`
-      }, () => {
-        fetchNotifications();
+        table: 'notifications'
+      }, (payload) => {
+        if (
+          payload.new &&
+          (payload.new.user_email === currentUser.email || payload.new.user_email === 'all')
+        ) {
+          fetchNotifications();
+        }
       })
       .subscribe();
 

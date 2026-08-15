@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Calendar, Clock, Users, BookOpen, MessageSquare, BarChart2, Settings as SettingsIcon, Bell } from 'lucide-react';
+import { LayoutDashboard, Calendar, Clock, Users, BookOpen, MessageSquare, BarChart2, Settings as SettingsIcon, Bell, Camera, Edit2 } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
+import ProfilePhotoModal from './ProfilePhotoModal';
 import './Sidebar.css';
 
 const navItems = [
@@ -17,8 +18,9 @@ const navItems = [
 
 export default function Sidebar() {
   const { profileImage, profileName, profileDesignation } = useTheme();
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
 
-  const fallbackAvatar = `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(profileName || 'Admin')}&backgroundColor=060a14`;
+  const fallbackAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileName || 'Admin')}&backgroundColor=b6e3f4`;
 
   return (
     <aside className="portal-sidebar">
@@ -28,7 +30,12 @@ export default function Sidebar() {
       </div>
 
       <div className="profile-section">
-        <div className="avatar-wrapper">
+        <div 
+          className="avatar-wrapper"
+          onClick={() => setShowPhotoModal(true)}
+          style={{ cursor: 'pointer', position: 'relative' }}
+          title="Click to customize avatar or upload photo"
+        >
           <img 
             src={profileImage || fallbackAvatar} 
             alt={profileName || 'Admin Profile'} 
@@ -40,9 +47,32 @@ export default function Sidebar() {
           />
           <span className="status-dot"></span>
         </div>
-        <h3 className="profile-name">{profileName || 'Administrator'}</h3>
+        <h3 className="profile-name" style={{ cursor: 'pointer' }} onClick={() => setShowPhotoModal(true)}>{profileName || 'Administrator'}</h3>
         <p className="profile-role">{profileDesignation || 'Immersion Labs Admin'}</p>
+        <button
+          onClick={() => setShowPhotoModal(true)}
+          style={{
+            marginTop: '8px',
+            background: 'rgba(0, 240, 255, 0.1)',
+            border: '1px solid rgba(0, 240, 255, 0.3)',
+            color: '#00F0FF',
+            borderRadius: '8px',
+            padding: '4px 10px',
+            fontSize: '0.75rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <Camera size={12} />
+          <span>Edit Avatar</span>
+        </button>
       </div>
+
+      <ProfilePhotoModal isOpen={showPhotoModal} onClose={() => setShowPhotoModal(false)} />
       
       <nav className="nav-menu">
         {navItems.map(item => {

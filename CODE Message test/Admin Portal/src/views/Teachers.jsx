@@ -23,30 +23,36 @@ export default function Teachers() {
   const loadTeachers = async () => {
     setLoading(true);
     try {
-      // 1. Fetch from 'users' table where role is teacher
-      const { data: usersData, error: usersErr } = await supabase
+      // 1. Fetch from 'profiles' table where role is teacher
+      const { data: profData } = await supabase
+        .from('profiles')
+        .select('*')
+        .or('role.eq.teacher,role.eq.TEACHER');
+
+      // 2. Fetch from 'users' table where role is teacher
+      const { data: usersData } = await supabase
         .from('users')
         .select('*')
         .or('role.eq.teacher,role.eq.TEACHER');
 
-      // 2. Fetch from 'teachers' table if exists
+      // 3. Fetch from 'teachers' table
       const { data: teachersData } = await supabase
         .from('teachers')
         .select('*');
 
-      let combinedList = [];
+      const teacherMap = new Map();
 
       if (usersData && usersData.length > 0) {
         usersData.forEach(u => {
           const displayName = u.full_name || u.name || u.email.split('@')[0];
-          combinedList.push({
+          teacherMap.set(u.email.toLowerCase(), {
             id: u.id,
             name: displayName,
             email: u.email,
             role: u.role === 'teacher' ? 'Subject Faculty' : u.role,
             department: u.department || 'Academic Faculty',
             classes: ['Class 6th A'],
-            avatar: `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(displayName)}&backgroundColor=060a14`,
+            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayName)}&backgroundColor=b6e3f4`,
             rating: 5.0,
             status: 'Active',
             joined: (u.created_at || '').slice(0, 10) || new Date().toISOString().slice(0, 10)
@@ -56,24 +62,39 @@ export default function Teachers() {
 
       if (teachersData && teachersData.length > 0) {
         teachersData.forEach(t => {
-          if (!combinedList.some(item => item.email.toLowerCase() === (t.email || '').toLowerCase())) {
-            combinedList.push({
-              id: t.id,
-              name: t.name || t.email?.split('@')[0] || 'Faculty Member',
-              email: t.email || '',
-              role: t.degree || t.role || 'Teacher',
-              department: t.subject ? `${t.subject} Faculty` : 'Academic Faculty',
-              classes: ['Class 6th A'],
-              avatar: t.avatar_url || `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(t.name || t.email || 'Teacher')}&backgroundColor=060a14`,
-              rating: parseFloat(t.rating) || 5.0,
-              status: t.status || 'Active',
-              joined: (t.created_at || '').slice(0, 10) || new Date().toISOString().slice(0, 10)
-            });
-          }
+          const emailKey = (t.email || '').toLowerCase();
+          const existing = teacherMap.get(emailKey) || {};
+          teacherMap.set(emailKey, {
+            ...existing,
+            id: t.id || existing.id,
+            name: t.name || existing.name || 'Faculty Member',
+            email: t.email || existing.email,
+            role: t.degree || t.role || existing.role || 'Teacher',
+            department: t.subject ? `${t.subject} Faculty` : existing.department || 'Academic Faculty',
+            classes: ['Class 6th A'],
+            avatar: t.avatar_url || existing.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(t.name || t.email || 'Teacher')}&backgroundColor=b6e3f4`,
+            rating: parseFloat(t.rating) || 5.0,
+            status: t.status || 'Active',
+            joined: (t.created_at || '').slice(0, 10) || existing.joined || new Date().toISOString().slice(0, 10)
+          });
         });
       }
 
-      setTeachers(combinedList);
+      if (profData && profData.length > 0) {
+        profData.forEach(p => {
+          const emailKey = (p.email || '').toLowerCase();
+          const existing = teacherMap.get(emailKey) || {};
+          teacherMap.set(emailKey, {
+            ...existing,
+            id: p.id || existing.id,
+            name: p.name || existing.name || 'Faculty Member',
+            email: p.email || existing.email,
+            avatar: p.avatar_url || existing.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(p.name || p.email)}&backgroundColor=b6e3f4`
+          });
+        });
+      }
+
+      setTeachers(Array.from(teacherMap.values()));
     } catch (e) {
       console.error('Error loading teachers:', e);
       setTeachers([]);
@@ -84,6 +105,10 @@ export default function Teachers() {
 
   useEffect(() => {
     loadTeachers();
+    const profSub = supabase.channel('public:prof_teachers_sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, loadTeachers)
+      .subscribe();
+    return () => supabase.removeChannel(profSub);
   }, []);
 
   const departments = ['ALL', 'Academic Faculty', 'Science & Physics', 'Mathematics', 'Social Sciences'];

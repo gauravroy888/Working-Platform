@@ -48,26 +48,26 @@ export default function ChatInterface({ currentUser: propUser, activeTab, onUnre
       // Add from users table
       if (userData && userData.length > 0) {
         userData.forEach(u => {
-          const name = `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email;
-          combinedMap.set(u.email, {
+          const name = u.full_name || u.name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email;
+          combinedMap.set(u.email.toLowerCase(), {
             id: u.id,
             name: name,
             email: u.email,
             role: u.role || 'student',
-            avatar_url: `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(u.email)}&backgroundColor=0a0f1d`
+            avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}&backgroundColor=b6e3f4`
           });
         });
       }
 
-      // Add from profiles table (overriding or supplementing)
+      // Add from profiles table (overriding with real synced avatar_url)
       if (profData && profData.length > 0) {
         profData.forEach(p => {
-          combinedMap.set(p.email, {
+          combinedMap.set(p.email.toLowerCase(), {
             id: p.id,
             name: p.name || p.email,
             email: p.email,
             role: p.role || 'student',
-            avatar_url: p.avatar_url || `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(p.email)}&backgroundColor=0a0f1d`
+            avatar_url: p.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(p.name || p.email)}&backgroundColor=b6e3f4`
           });
         });
       }

@@ -5,7 +5,6 @@ import './ChatInterface.css';
 
 export default function ChatInterface({ currentUser, activeTab, selectedClass, isManager, onUnreadCountChange }) {
   const [profiles, setProfiles] = useState([]);
-  const [filteredProfiles, setFilteredProfiles] = useState([]);
   const [groups, setGroups] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -32,8 +31,41 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
 
   // 1. Fetch Profiles & Groups
   const fetchProfiles = async () => {
-    const { data, error } = await supabase.from('profiles').select('id,name,email,role,avatar_url').order('name');
-    if (data) setProfiles(data);
+    try {
+      const { data: profData } = await supabase.from('profiles').select('id,name,email,role,avatar_url').order('name');
+      const { data: userData } = await supabase.from('users').select('*');
+
+      const combinedMap = new Map();
+
+      if (userData && userData.length > 0) {
+        userData.forEach(u => {
+          const name = u.full_name || u.name || u.email;
+          combinedMap.set(u.email.toLowerCase(), {
+            id: u.id,
+            name: name,
+            email: u.email,
+            role: u.role || 'student',
+            avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}&backgroundColor=b6e3f4`
+          });
+        });
+      }
+
+      if (profData && profData.length > 0) {
+        profData.forEach(p => {
+          combinedMap.set(p.email.toLowerCase(), {
+            id: p.id,
+            name: p.name || p.email,
+            email: p.email,
+            role: p.role || 'student',
+            avatar_url: p.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(p.name || p.email)}&backgroundColor=b6e3f4`
+          });
+        });
+      }
+
+      setProfiles(Array.from(combinedMap.values()));
+    } catch(err) {
+      console.error('Error fetching profiles:', err);
+    }
   };
   
   const fetchGroups = async () => {
@@ -41,7 +73,7 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
     const { data } = await supabase.from('conversations')
       .select('*')
       .eq('type', 'group')
-      .contains('participants', [currentUser.email]);
+      .contains('participants', `["${currentUser.email}"]`);
     if (data) setGroups(data);
   };
 
@@ -333,7 +365,24 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
   const toggleMemberSelection = (email) => {
     setSelectedMembers(prev => prev.includes(email) ? prev.filter(e => e !== email) : [...prev, email]);
   };
-  
+
+  const filteredProfiles = [
+    ...groups.map(g => ({ ...g, isGroup: true })),
+    ...profiles.filter(p => p.email !== currentUser?.email)
+  ].filter(item => {
+    const name = item.name || item.group_name || '';
+    const email = item.email || '';
+    const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          email.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (!matchesSearch) return false;
+    if (activeTab === 'all') return true;
+    if (activeTab === 'teachers') return item.role === 'teacher' && !item.isGroup;
+    if (activeTab === 'students') return item.role === 'student' && !item.isGroup;
+    if (activeTab === 'classes') return item.isGroup;
+    return true;
+  });
+
   return (
     <div className="chat-interface-container">
       {/* Left Pane */}
@@ -363,10 +412,15 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
                 <div className="chat-contact-avatar">
                   {contact.isGroup ? (
                     <div className="avatar-placeholder" style={{ background: bgColor }}><Users size={20} /></div>
-                  ) : contact.avatar_url ? (
-                    <img src={contact.avatar_url} alt={displayName} />
                   ) : (
-                    <div className="avatar-placeholder">{displayName.charAt(0).toUpperCase()}</div>
+                    <img 
+                      src={contact.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayName)}&backgroundColor=b6e3f4`} 
+                      alt={displayName} 
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayName)}&backgroundColor=b6e3f4`;
+                      }}
+                    />
                   )}
                 </div>
                 <div className="chat-contact-info">
@@ -396,10 +450,15 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
               <div className="chat-header-avatar">
                 {activeContact.isGroup ? (
                    <div className="avatar-placeholder" style={{ background: 'var(--accent-purple)' }}><Users size={20} /></div>
-                ) : activeContact.avatar_url ? (
-                  <img src={activeContact.avatar_url} alt={activeContact.name} />
                 ) : (
-                  <div className="avatar-placeholder">{activeContact.name.charAt(0).toUpperCase()}</div>
+                  <img 
+                    src={activeContact.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(activeContact.name || 'User')}&backgroundColor=b6e3f4`} 
+                    alt={activeContact.name} 
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(activeContact.name || 'User')}&backgroundColor=b6e3f4`;
+                    }}
+                  />
                 )}
               </div>
               <div className="chat-header-info">
@@ -418,8 +477,20 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
                   return (
                     <div key={msg.id || idx} className={`chat-bubble-wrapper ${isMe ? 'is-me' : 'is-them'}`}>
                       {activeContact.isGroup && !isMe && (
-                        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', marginLeft: '4px' }}>
-                          {msg.senderName}
+                        <div style={{ marginRight: '8px', display: 'flex', alignItems: 'flex-end' }}>
+                          {(() => {
+                            const sender = profiles.find(p => p.email.toLowerCase() === (msg.senderEmail || '').toLowerCase());
+                            const senderFallback = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(msg.senderName || 'User')}&backgroundColor=b6e3f4`;
+                            return (
+                              <img 
+                                src={sender?.avatar_url || senderFallback} 
+                                title={msg.senderName} 
+                                alt={msg.senderName} 
+                                style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} 
+                                onError={(e) => { e.target.src = senderFallback; }}
+                              />
+                            );
+                          })()}
                         </div>
                       )}
                       <div className="chat-bubble">

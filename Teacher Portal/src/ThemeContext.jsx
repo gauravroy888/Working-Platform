@@ -5,54 +5,63 @@ import defaultAvatar from './assets/avatar.png';
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  // Use futuristic background by default
+  // Background image — default to the futuristic bg
   const [backgroundImage, setBackgroundImage] = useState(() => {
-    return defaultBg;
+    return localStorage.getItem('teacher_portal_bg') || defaultBg;
   });
 
+  // Avatar — prefer portal-specific key, then shared key
   const [profileImage, setProfileImage] = useState(() => {
     return localStorage.getItem('portal_avatar') || defaultAvatar;
   });
 
+  // Name — read from authenticated edtech_user object first, then fallbacks
   const [profileName, setProfileName] = useState(() => {
-    const userStr = localStorage.getItem('edtech_user');
-    if (userStr) {
-      try {
+    try {
+      const userStr = localStorage.getItem('edtech_user');
+      if (userStr) {
         const u = JSON.parse(userStr);
         if (u.name) return u.name;
-      } catch (e) {}
-    }
+      }
+    } catch (e) {}
     return localStorage.getItem('portal_name') || 'Teacher';
   });
 
+  // Designation — derive from role
   const [profileDesignation, setProfileDesignation] = useState(() => {
-    const userStr = localStorage.getItem('edtech_user');
-    if (userStr) {
-      try {
+    try {
+      const userStr = localStorage.getItem('edtech_user');
+      if (userStr) {
         const u = JSON.parse(userStr);
         if (u.role === 'teacher') return 'Faculty / Teacher';
         if (u.role === 'super_admin' || u.role === 'superadmin') return 'Super Administrator';
-      } catch (e) {}
-    }
+      }
+    } catch (e) {}
     return localStorage.getItem('portal_designation') || 'Faculty / Teacher';
   });
 
-  // Update localStorage when it changes
+  // Keep name/avatar in sync if edtech_user is updated (e.g. after login redirect)
   useEffect(() => {
-    localStorage.setItem('teacher_portal_bg', backgroundImage);
-  }, [backgroundImage]);
+    const sync = () => {
+      try {
+        const userStr = localStorage.getItem('edtech_user');
+        if (userStr) {
+          const u = JSON.parse(userStr);
+          if (u.name) setProfileName(u.name);
+          if (u.avatar_url) setProfileImage(u.avatar_url);
+        }
+      } catch (e) {}
+    };
+    sync();
+    window.addEventListener('storage', sync);
+    return () => window.removeEventListener('storage', sync);
+  }, []);
 
-  useEffect(() => {
-    localStorage.setItem('portal_avatar', profileImage);
-  }, [profileImage]);
-
-  useEffect(() => {
-    localStorage.setItem('portal_name', profileName);
-  }, [profileName]);
-
-  useEffect(() => {
-    localStorage.setItem('portal_designation', profileDesignation);
-  }, [profileDesignation]);
+  // Persist to localStorage
+  useEffect(() => { localStorage.setItem('teacher_portal_bg', backgroundImage); }, [backgroundImage]);
+  useEffect(() => { localStorage.setItem('portal_avatar', profileImage); }, [profileImage]);
+  useEffect(() => { localStorage.setItem('portal_name', profileName); }, [profileName]);
+  useEffect(() => { localStorage.setItem('portal_designation', profileDesignation); }, [profileDesignation]);
 
   return (
     <ThemeContext.Provider value={{ 
