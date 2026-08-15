@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Send, ArrowLeft, UserPlus, Trash2, MoreVertical, Users } from 'lucide-react';
+import { Search, Send, ArrowLeft, MoreVertical, MessageSquare, CheckCheck, UserCheck } from 'lucide-react';
 import { supabase } from '../supabase';
 import './ChatInterface.css';
 
-export default function ChatInterface({ currentUser: propUser, activeTab, selectedClass, isManager, onUnreadCountChange }) {
+export default function ChatInterface({ currentUser: propUser, activeTab, onUnreadCountChange }) {
+  // Resolve current logged-in user with robust fallback
   const [currentUser, setCurrentUser] = useState(() => {
     if (propUser) return propUser;
     try {
@@ -20,24 +21,15 @@ export default function ChatInterface({ currentUser: propUser, activeTab, select
 
   const [profiles, setProfiles] = useState([]);
   const [filteredProfiles, setFilteredProfiles] = useState([]);
-  const [groups, setGroups] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterRole, setFilterRole] = useState("all"); // 'all' | 'students' | 'teachers' | 'groups'
+  const [filterRole, setFilterRole] = useState("all"); // 'all' | 'students' | 'teachers'
   
-  const [activeContact, setActiveContact] = useState(null); // { isGroup, id, name, email, participants }
+  const [activeContact, setActiveContact] = useState(null); // { id, name, email, role, avatar_url }
   const [currentConversation, setCurrentConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [unreadCounts, setUnreadCounts] = useState({});
-  
-  const [showManageModal, setShowManageModal] = useState(false);
-  const [showGroupModal, setShowGroupModal] = useState(false);
-  const [manageEmail, setManageEmail] = useState("");
-  const [manageName, setManageName] = useState("");
-  const [manageRole, setManageRole] = useState("student");
-  
-  const [newGroupName, setNewGroupName] = useState("");
-  const [selectedMembers, setSelectedMembers] = useState([]);
+  const [isSending, setIsSending] = useState(false);
 
   const messagesEndRef = useRef(null);
 
@@ -45,7 +37,7 @@ export default function ChatInterface({ currentUser: propUser, activeTab, select
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // 1. Fetch Profiles & Groups
+  // 1. Fetch All Database Users from Supabase (profiles & users tables)
   const fetchProfiles = async () => {
     try {
       const { data: profData } = await supabase.from('profiles').select('*').order('name');
@@ -53,6 +45,7 @@ export default function ChatInterface({ currentUser: propUser, activeTab, select
       
       const combinedMap = new Map();
       
+      // Add from users table
       if (userData && userData.length > 0) {
         userData.forEach(u => {
           const name = `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email;
@@ -66,6 +59,7 @@ export default function ChatInterface({ currentUser: propUser, activeTab, select
         });
       }
 
+      // Add from profiles table (overriding or supplementing)
       if (profData && profData.length > 0) {
         profData.forEach(p => {
           combinedMap.set(p.email, {
@@ -80,131 +74,96 @@ export default function ChatInterface({ currentUser: propUser, activeTab, select
 
       setProfiles(Array.from(combinedMap.values()));
     } catch (err) {
-      console.error("Error fetching profiles:", err);
-    }
-  };
-  
-  const fetchGroups = async () => {
-    if (!currentUser?.email) return;
-    try {
-      const { data } = await supabase.from('conversations')
-        .select('*')
-        .eq('type', 'group');
-      if (data) setGroups(data);
-    } catch (err) {
-      console.error("Error fetching groups:", err);
+      console.error("Error fetching profiles from Supabase:", err);
     }
   };
 
   useEffect(() => {
     fetchProfiles();
-    fetchGroups();
     
-    const profilesSub = supabase.channel('public:profiles')
+    // Real-time listener for profiles changes in Supabase
+    const profilesSub = supabase.channel('public:profiles_sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, fetchProfiles)
       .subscribe();
-      
-    const groupsSub = supabase.channel('public:conversations:groups')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: "type=eq.group" }, fetchGroups)
+
+    const usersSub = supabase.channel('public:users_sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, fetchProfiles)
       .subscribe();
       
     return () => { 
       supabase.removeChannel(profilesSub); 
-      supabase.removeChannel(groupsSub);
+      supabase.removeChannel(usersSub);
     };
   }, [currentUser]);
 
-  // Fetch unread messages
+  // 2. Fetch Unread Counts from Supabase Messages
   const fetchUnreadCounts = async () => {
-    if (!currentUser) return;
+    if (!currentUser?.email) return;
     
-    const { data: myConvs } = await supabase.from('conversations')
-      .select('id, type')
-      .or(`participant1_email.eq.${currentUser.email},participant2_email.eq.${currentUser.email},participants.cs.["${currentUser.email}"]`);
+    try {
+      const { data: myConvs } = await supabase.from('conversations')
+        .select('id, participant1_email, participant2_email')
+        .or(`participant1_email.eq.${currentUser.email},participant2_email.eq.${currentUser.email}`);
+        
+      if (!myConvs || myConvs.length === 0) return;
+      const convIds = myConvs.map(c => c.id);
       
-    if (!myConvs || myConvs.length === 0) return;
-    const convIds = myConvs.map(c => c.id);
-    
-    const { data: unreadMsgs } = await supabase.from('messages')
-      .select('senderEmail, conversationId')
-      .in('conversationId', convIds)
-      .eq('is_read', false)
-      .neq('senderEmail', currentUser.email);
-      
-    if (unreadMsgs) {
-      const counts = {};
-      unreadMsgs.forEach(msg => {
-        const conv = myConvs.find(c => c.id === msg.conversationId);
-        const key = (conv && conv.type === 'group') ? msg.conversationId : msg.senderEmail;
-        counts[key] = (counts[key] || 0) + 1;
-      });
-      setUnreadCounts(counts);
+      const { data: unreadMsgs } = await supabase.from('messages')
+        .select('senderEmail, conversationId')
+        .in('conversationId', convIds)
+        .eq('is_read', false)
+        .neq('senderEmail', currentUser.email);
+        
+      if (unreadMsgs) {
+        const counts = {};
+        unreadMsgs.forEach(msg => {
+          counts[msg.senderEmail] = (counts[msg.senderEmail] || 0) + 1;
+        });
+        setUnreadCounts(counts);
+        
+        const total = Object.values(counts).reduce((a, b) => a + b, 0);
+        if (onUnreadCountChange) {
+          onUnreadCountChange({ chat: total, total });
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching unread counts:", err);
     }
   };
 
   useEffect(() => {
     fetchUnreadCounts();
-    const unreadSub = supabase.channel('public:messages:unread')
+    
+    // Realtime subscription for incoming unread messages
+    const unreadSub = supabase.channel('public:messages_unread_sync')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         if (payload.new.senderEmail !== currentUser?.email) {
           fetchUnreadCounts();
         }
       })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, () => {
+        fetchUnreadCounts();
+      })
       .subscribe();
+      
     return () => { supabase.removeChannel(unreadSub); };
-  }, [currentUser, groups]);
-  
-  useEffect(() => {
-    if (onUnreadCountChange && profiles.length > 0) {
-      let studentsCount = 0;
-      let staffCount = 0;
-      let teachersCount = 0;
-      let groupsCount = 0;
-      
-      profiles.forEach(p => {
-        const count = unreadCounts[p.email] || 0;
-        if (count > 0) {
-          if (p.role === 'student') studentsCount += count;
-          if (p.role === 'teacher' || p.role === 'admin') staffCount += count;
-          if (p.role === 'teacher') teachersCount += count;
-        }
-      });
-      
-      groups.forEach(g => {
-        groupsCount += (unreadCounts[g.id] || 0);
-      });
-      
-      const total = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
-      
-      onUnreadCountChange({
-        total,
-        students: studentsCount,
-        staff: staffCount,
-        teachers: teachersCount,
-        groups: groupsCount,
-        direct: total, 
-        chat: total 
-      });
-    }
-  }, [unreadCounts, profiles, groups, onUnreadCountChange]);
+  }, [currentUser]);
 
-  // Filter contacts based on filterRole and searchQuery
+  // 3. Filter Direct Contacts based on role and search query
   useEffect(() => {
     if (!profiles) return;
     
+    // Exclude current logged in admin user
     let baseList = profiles.filter(p => !currentUser?.email || p.email !== currentUser.email);
-    let groupList = groups.map(g => ({ ...g, isGroup: true }));
 
     let result = [];
     if (filterRole === 'students') {
       result = baseList.filter(p => p.role === 'student');
     } else if (filterRole === 'teachers') {
       result = baseList.filter(p => p.role === 'teacher' || p.role === 'admin');
-    } else if (filterRole === 'groups') {
-      result = groupList;
     } else {
       // 'all'
-      result = [...groupList, ...baseList];
+      result = baseList;
     }
     
     if (searchQuery.trim()) {
@@ -216,64 +175,79 @@ export default function ChatInterface({ currentUser: propUser, activeTab, select
     }
     
     setFilteredProfiles(result);
-  }, [profiles, groups, filterRole, searchQuery, currentUser]);
+  }, [profiles, filterRole, searchQuery, currentUser]);
 
-  // 2. Fetch or Create Conversation
+  // 4. Fetch or Create 1-on-1 Direct Conversation in Supabase
   useEffect(() => {
-    if (!activeContact || !currentUser) return;
+    if (!activeContact || !currentUser?.email) return;
 
     const fetchOrCreateConversation = async () => {
-      if (activeContact.isGroup) {
-        // It's a group, the conversation ID is the group ID
-        const { data } = await supabase.from('conversations').select('*').eq('id', activeContact.id).single();
-        if (data) setCurrentConversation(data);
-      } else {
-        // It's a 1-on-1 user chat
+      try {
         const { data, error } = await supabase.from('conversations')
           .select('*')
           .or(`and(participant1_email.eq.${currentUser.email},participant2_email.eq.${activeContact.email}),and(participant1_email.eq.${activeContact.email},participant2_email.eq.${currentUser.email})`)
-          .single();
+          .maybeSingle();
           
         if (data) {
           setCurrentConversation(data);
-        } else if (error?.code === 'PGRST116') {
+        } else {
+          // Create new direct conversation record
           const { data: newConv, error: createErr } = await supabase.from('conversations')
-            .insert({ participant1_email: currentUser.email, participant2_email: activeContact.email })
-            .select().single();
+            .insert({ 
+              participant1_email: currentUser.email, 
+              participant2_email: activeContact.email,
+              type: 'direct',
+              lastMessage: 'Conversation opened'
+            })
+            .select()
+            .single();
+            
           if (newConv) setCurrentConversation(newConv);
+          if (createErr) console.error("Error creating direct conversation:", createErr);
         }
+      } catch (err) {
+        console.error("Error in fetchOrCreateConversation:", err);
       }
     };
     fetchOrCreateConversation();
   }, [activeContact, currentUser]);
 
-  // 3. Fetch Messages
+  // 5. Fetch Messages & Realtime Subscription for Active Conversation
   const fetchMessages = async () => {
-    if (!currentConversation) return;
-    const { data } = await supabase.from('messages')
-      .select('*')
-      .eq('conversationId', currentConversation.id)
-      .order('createdAt', { ascending: true });
-    
-    if (data) {
-      setMessages(data);
-      setTimeout(scrollToBottom, 100);
+    if (!currentConversation?.id) return;
+    try {
+      const { data } = await supabase.from('messages')
+        .select('*')
+        .eq('conversationId', currentConversation.id)
+        .order('createdAt', { ascending: true });
+      
+      if (data) {
+        setMessages(data);
+        setTimeout(scrollToBottom, 50);
+      }
+    } catch (err) {
+      console.error("Error fetching messages:", err);
     }
   };
 
   useEffect(() => {
     fetchMessages();
-    if (!currentConversation) return;
+    if (!currentConversation?.id) return;
     
     const messagesSub = supabase.channel(`public:messages:${currentConversation.id}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversationId=eq.${currentConversation.id}` }, (payload) => {
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'messages', 
+        filter: `conversationId=eq.${currentConversation.id}` 
+      }, (payload) => {
         setMessages(prev => {
           if (prev.some(m => m.id === payload.new.id)) return prev;
           return [...prev, payload.new];
         });
-        setTimeout(scrollToBottom, 100);
+        setTimeout(scrollToBottom, 50);
         
-        // Mark read if chat is open
+        // Auto mark as read if message is received while chat is currently open
         if (payload.new.senderEmail !== currentUser?.email) {
           supabase.from('messages').update({ is_read: true }).eq('id', payload.new.id).then(() => fetchUnreadCounts());
         }
@@ -283,41 +257,42 @@ export default function ChatInterface({ currentUser: propUser, activeTab, select
     return () => { supabase.removeChannel(messagesSub); };
   }, [currentConversation]);
 
-  // Mark conversation as read when opened
+  // Mark all unread messages as read when conversation is opened
   useEffect(() => {
-    if (!currentConversation || !activeContact || !currentUser) return;
+    if (!currentConversation?.id || !activeContact?.email || !currentUser?.email) return;
+    
     const markAsRead = async () => {
-      await supabase.from('messages')
-        .update({ is_read: true })
-        .eq('conversationId', currentConversation.id)
-        .neq('senderEmail', currentUser.email)
-        .eq('is_read', false);
-        
-      await supabase.from('notifications')
-        .update({ is_read: true })
-        .eq('user_email', currentUser.email)
-        .eq('type', 'message')
-        .eq('is_read', false);
-        
-      setUnreadCounts(prev => ({ ...prev, [activeContact.isGroup ? activeContact.id : activeContact.email]: 0 }));
+      try {
+        await supabase.from('messages')
+          .update({ is_read: true })
+          .eq('conversationId', currentConversation.id)
+          .neq('senderEmail', currentUser.email)
+          .eq('is_read', false);
+          
+        setUnreadCounts(prev => ({ ...prev, [activeContact.email]: 0 }));
+      } catch (err) {
+        console.error("Error marking messages as read:", err);
+      }
     };
     markAsRead();
   }, [currentConversation, activeContact, currentUser]);
 
-  // 4. Send Message
+  // 6. Send Message directly to Supabase
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !currentConversation || !currentUser) return;
+    if (!newMessage.trim() || !currentConversation?.id || !currentUser?.email || isSending) return;
     
-    const msgText = newMessage;
+    const msgText = newMessage.trim();
     setNewMessage('');
+    setIsSending(true);
     
     try {
       const { data: insertedMsg, error: msgError } = await supabase.from('messages').insert({
         conversationId: currentConversation.id,
         senderEmail: currentUser.email,
-        senderName: currentUser.name,
-        text: msgText
+        senderName: currentUser.name || "Administrator",
+        text: msgText,
+        is_read: false
       }).select().single();
       
       if (msgError) throw msgError;
@@ -326,105 +301,79 @@ export default function ChatInterface({ currentUser: propUser, activeTab, select
         if (prev.some(m => m.id === insertedMsg.id)) return prev;
         return [...prev, insertedMsg];
       });
-      setTimeout(scrollToBottom, 100);
+      setTimeout(scrollToBottom, 50);
 
-      await supabase.from('conversations').update({ lastMessage: msgText, updatedAt: new Date() }).eq('id', currentConversation.id);
+      await supabase.from('conversations')
+        .update({ lastMessage: msgText, updatedAt: new Date() })
+        .eq('id', currentConversation.id);
     } catch (err) {
+      console.error("Failed to send message:", err);
       setNewMessage(msgText);
-      alert('Message failed to send.');
+      alert('Message failed to send: ' + (err.message || 'Network error'));
+    } finally {
+      setIsSending(false);
     }
   };
 
-  // 5. Create Group
-  const handleCreateGroup = async (e) => {
-    e.preventDefault();
-    if (!newGroupName.trim() || selectedMembers.length === 0) {
-      alert("Please enter a group name and select at least one student.");
-      return;
-    }
-    
-    const participants = [currentUser.email, ...selectedMembers];
-    
-    const { error } = await supabase.from('conversations').insert({
-      name: newGroupName,
-      type: 'group',
-      participants: participants,
-      class_name: selectedClass || null,
-      lastMessage: 'Group created'
-    });
-    
-    if (error) {
-      alert("Error creating group: " + error.message);
-    } else {
-      setNewGroupName("");
-      setSelectedMembers([]);
-      setShowGroupModal(false);
-      alert("Group created successfully!");
-    }
-  };
+  const studentCount = profiles.filter(p => p.role === 'student' && p.email !== currentUser?.email).length;
+  const facultyCount = profiles.filter(p => (p.role === 'teacher' || p.role === 'admin') && p.email !== currentUser?.email).length;
+  const totalCount = profiles.filter(p => p.email !== currentUser?.email).length;
 
-  const toggleMemberSelection = (email) => {
-    setSelectedMembers(prev => prev.includes(email) ? prev.filter(e => e !== email) : [...prev, email]);
-  };
-  
   return (
     <div className="chat-interface-container">
-      {/* Left Pane */}
+      {/* Left Pane: Contacts List */}
       <div className={`chat-sidebar ${activeContact ? 'hidden-mobile' : ''}`}>
         <div className="chat-sidebar-header">
           <div className="chat-search-wrapper">
             <Search size={16} className="chat-search-icon" />
-            <input type="text" placeholder="Search contacts..." className="chat-search-input" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+            <input 
+              type="text" 
+              placeholder="Search contacts by name or email..." 
+              className="chat-search-input" 
+              value={searchQuery} 
+              onChange={(e) => setSearchQuery(e.target.value)} 
+            />
           </div>
-          <button className="chat-action-btn" onClick={() => setShowGroupModal(true)} title="Create Group Activity">
-            <Users size={18} />
-          </button>
         </div>
 
-        {/* Filter Category Chips */}
+        {/* Filter Category Chips (Students & Faculty) */}
         <div className="chat-filter-chips">
           <button 
             type="button"
             className={`chat-chip ${filterRole === 'all' ? 'active' : ''}`}
             onClick={() => setFilterRole('all')}
           >
-            All ({profiles.length + groups.length})
+            All ({totalCount})
           </button>
           <button 
             type="button"
             className={`chat-chip ${filterRole === 'students' ? 'active' : ''}`}
             onClick={() => setFilterRole('students')}
           >
-            Students
+            Students ({studentCount})
           </button>
           <button 
             type="button"
             className={`chat-chip ${filterRole === 'teachers' ? 'active' : ''}`}
             onClick={() => setFilterRole('teachers')}
           >
-            Faculty
+            Faculty ({facultyCount})
           </button>
-          {groups.length > 0 && (
-            <button 
-              type="button"
-              className={`chat-chip ${filterRole === 'groups' ? 'active' : ''}`}
-              onClick={() => setFilterRole('groups')}
-            >
-              Groups ({groups.length})
-            </button>
-          )}
         </div>
         
+        {/* Contact List */}
         <div className="chat-contacts-list">
-          {filteredProfiles.length > 0 ? filteredProfiles.map(contact => {
-            const key = contact.isGroup ? contact.id : contact.email;
-            const unread = unreadCounts[key] || 0;
-            return (
-              <div key={contact.id} className={`chat-contact-item ${activeContact?.id === contact.id ? 'active' : ''}`} onClick={() => setActiveContact(contact)}>
-                <div className="chat-contact-avatar">
-                  {contact.isGroup ? (
-                    <div className="avatar-placeholder" style={{ background: 'rgba(147, 51, 234, 0.3)', border: '1px solid rgba(147, 51, 234, 0.5)' }}><Users size={20} color="#C084FC" /></div>
-                  ) : (
+          {filteredProfiles.length > 0 ? (
+            filteredProfiles.map(contact => {
+              const unread = unreadCounts[contact.email] || 0;
+              const isSelected = activeContact?.email === contact.email;
+              return (
+                <div 
+                  key={contact.id || contact.email} 
+                  className={`chat-contact-item ${isSelected ? 'active' : ''}`} 
+                  onClick={() => setActiveContact(contact)}
+                >
+                  <div className="chat-contact-avatar">
                     <img 
                       src={contact.avatar_url || `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(contact.email || contact.name)}&backgroundColor=0a0f1d`} 
                       alt={contact.name} 
@@ -433,81 +382,80 @@ export default function ChatInterface({ currentUser: propUser, activeTab, select
                         e.target.src = `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(contact.email || contact.name)}&backgroundColor=0a0f1d`;
                       }}
                     />
-                  )}
-                </div>
-                <div className="chat-contact-info">
-                  <div className="chat-contact-name-row">
-                    <span className="chat-contact-name">{contact.name}</span>
-                    {unread > 0 && <span className="unread-badge">{unread}</span>}
-                    {contact.isGroup && <span className="chat-contact-role role-group">Group</span>}
-                    {!contact.isGroup && <span className={`chat-contact-role role-${contact.role || 'student'}`}>{contact.role || 'student'}</span>}
                   </div>
-                  {!contact.isGroup && <span className="chat-contact-email">{contact.email}</span>}
-                  {contact.isGroup && <span className="chat-contact-email">{contact.participants?.length || 0} members</span>}
+                  <div className="chat-contact-info">
+                    <div className="chat-contact-name-row">
+                      <span className="chat-contact-name">{contact.name}</span>
+                      {unread > 0 && <span className="unread-badge">{unread}</span>}
+                      <span className={`chat-contact-role role-${contact.role || 'student'}`}>
+                        {contact.role || 'student'}
+                      </span>
+                    </div>
+                    <span className="chat-contact-email">{contact.email}</span>
+                  </div>
                 </div>
-              </div>
-            );
-          }) : (
-            <div className="chat-empty-state">No contacts found.</div>
+              );
+            })
+          ) : (
+            <div className="chat-empty-state">
+              No matching database contacts found.
+            </div>
           )}
         </div>
       </div>
       
-      {/* Right Pane */}
+      {/* Right Pane: Active 1-on-1 Chat Area */}
       <div className={`chat-main-area ${!activeContact ? 'hidden-mobile' : ''}`}>
         {activeContact ? (
           <>
             <div className="chat-main-header">
-              <button className="chat-back-btn" onClick={() => setActiveContact(null)}><ArrowLeft size={20} /></button>
+              <button className="chat-back-btn" onClick={() => setActiveContact(null)}>
+                <ArrowLeft size={20} />
+              </button>
               <div className="chat-header-avatar">
-                {activeContact.isGroup ? (
-                   <div className="avatar-placeholder" style={{ background: 'rgba(147, 51, 234, 0.3)', border: '1px solid rgba(147, 51, 234, 0.5)' }}><Users size={20} color="#C084FC" /></div>
-                ) : (
-                  <img 
-                    src={activeContact.avatar_url || `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(activeContact.email || activeContact.name)}&backgroundColor=0a0f1d`} 
-                    alt={activeContact.name} 
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(activeContact.email || activeContact.name)}&backgroundColor=0a0f1d`;
-                    }}
-                  />
-                )}
+                <img 
+                  src={activeContact.avatar_url || `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(activeContact.email || activeContact.name)}&backgroundColor=0a0f1d`} 
+                  alt={activeContact.name} 
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(activeContact.email || activeContact.name)}&backgroundColor=0a0f1d`;
+                  }}
+                />
               </div>
               <div className="chat-header-info">
-                <h4>{activeContact.name}</h4>
-                <span>{activeContact.isGroup ? `Group Chat (${activeContact.participants?.length || 0} members)` : activeContact.email}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h4>{activeContact.name}</h4>
+                  <span className={`chat-contact-role role-${activeContact.role || 'student'}`}>
+                    {activeContact.role || 'student'}
+                  </span>
+                </div>
+                <span>{activeContact.email} • Direct Supabase Channel</span>
               </div>
-              <div className="chat-header-actions"><MoreVertical size={20} /></div>
+              <div className="chat-header-actions">
+                <span style={{ fontSize: '12px', color: '#10B981', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }}></span>
+                  Live Connected
+                </span>
+              </div>
             </div>
             
             <div className="chat-messages-area">
               {messages.length === 0 ? (
-                <div className="chat-messages-empty">Say hi to {activeContact.name}!</div>
+                <div className="chat-messages-empty">
+                  <MessageSquare size={24} style={{ margin: '0 auto 8px', opacity: 0.6 }} />
+                  <div>No messages exchanged yet with <strong>{activeContact.name}</strong>.</div>
+                  <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.7 }}>Send a message below to initiate this direct conversation.</div>
+                </div>
               ) : (
                 messages.map((msg, idx) => {
                   const isMe = msg.senderEmail === currentUser.email;
                   return (
                     <div key={msg.id || idx} className={`chat-bubble-wrapper ${isMe ? 'is-me' : 'is-them'}`}>
-                      {activeContact.isGroup && !isMe && (
-                        <div style={{ marginRight: '8px', display: 'flex', alignItems: 'flex-end' }}>
-                          {(() => {
-                            const sender = profiles.find(p => p.email === msg.senderEmail);
-                            if (sender && sender.avatar_url) {
-                              return <img src={sender.avatar_url} title={msg.senderName} alt={msg.senderName} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />;
-                            } else {
-                              return (
-                                <div title={msg.senderName} style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--accent-purple)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' }}>
-                                  {(msg.senderName || '?').charAt(0).toUpperCase()}
-                                </div>
-                              );
-                            }
-                          })()}
-                        </div>
-                      )}
                       <div className="chat-bubble">
                         <div className="chat-bubble-text">{msg.text}</div>
                         <div className="chat-bubble-time">
-                          {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...'}
+                          {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                          {isMe && <CheckCheck size={13} style={{ marginLeft: '4px', verticalAlign: 'middle', color: '#00F0FF' }} />}
                         </div>
                       </div>
                     </div>
@@ -518,54 +466,34 @@ export default function ChatInterface({ currentUser: propUser, activeTab, select
             </div>
             
             <form className="chat-input-area" onSubmit={handleSendMessage}>
-              <input type="text" placeholder="Type a message..." className="chat-input" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} />
-              <button type="submit" className="chat-send-btn" disabled={!newMessage.trim()}><Send size={18} /></button>
+              <input 
+                type="text" 
+                placeholder={`Type a direct message to ${activeContact.name}...`} 
+                className="chat-input" 
+                value={newMessage} 
+                onChange={(e) => setNewMessage(e.target.value)} 
+                disabled={isSending}
+              />
+              <button 
+                type="submit" 
+                className="chat-send-btn" 
+                disabled={!newMessage.trim() || isSending}
+                title="Send Message"
+              >
+                <Send size={18} />
+              </button>
             </form>
           </>
         ) : (
           <div className="chat-placeholder-area">
             <div className="chat-placeholder-content">
               <div className="chat-placeholder-icon">💬</div>
-              <h3>Select a conversation</h3>
-              <p>Choose a contact from the left menu to start messaging.</p>
+              <h3>Select a User Conversation</h3>
+              <p>Choose a student or faculty member from the left menu to start direct real-time messaging.</p>
             </div>
           </div>
         )}
       </div>
-
-      {/* Group Creation Modal */}
-      {showGroupModal && (
-        <div className="chat-modal-overlay">
-          <div className="chat-modal" style={{ maxWidth: '500px' }}>
-            <h3>Create a New Group</h3>
-            <p>Select students to assign to this group activity.</p>
-            <form onSubmit={handleCreateGroup}>
-              <input type="text" placeholder="Group Name (e.g., Team Alpha)" required value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)} />
-              
-              <div style={{ maxHeight: '200px', overflowY: 'auto', background: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '10px', margin: '15px 0' }}>
-                {profiles.filter(p => p.role === 'student').map(student => (
-                  <label key={student.email} style={{ display: 'flex', alignItems: 'center', padding: '8px', cursor: 'pointer', gap: '10px' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={selectedMembers.includes(student.email)}
-                      onChange={() => toggleMemberSelection(student.email)}
-                    />
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ color: '#fff' }}>{student.name}</span>
-                      <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>{student.email}</span>
-                    </div>
-                  </label>
-                ))}
-              </div>
-              
-              <div className="chat-modal-actions">
-                <button type="button" className="btn-ghost" onClick={() => setShowGroupModal(false)}>Cancel</button>
-                <button type="submit" className="btn-primary">Create Group</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
