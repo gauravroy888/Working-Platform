@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Shield, Megaphone, MessageSquare } from 'lucide-react';
+import { Megaphone, MessageSquare, PlusCircle, CheckCircle, Send, Trash2, Calendar, Radio } from 'lucide-react';
 import { supabase } from '../supabase';
 import ChatInterface from '../components/ChatInterface';
+import './Communications.css';
 
 export default function Communications() {
   const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'announcements'
@@ -17,7 +18,13 @@ export default function Communications() {
       window.history.replaceState({}, document.title, window.location.pathname);
     } else {
       const userStr = localStorage.getItem('edtech_user');
-      if (userStr) setCurrentUser(JSON.parse(userStr));
+      if (userStr) {
+        try {
+          setCurrentUser(JSON.parse(userStr));
+        } catch (e) {
+          console.error(e);
+        }
+      }
     }
   }, []);
   
@@ -25,14 +32,20 @@ export default function Communications() {
   const [announcements, setAnnouncements] = useState([]);
   const [announceTitle, setAnnounceTitle] = useState('');
   const [announceText, setAnnounceText] = useState('');
+  const [announceCategory, setAnnounceCategory] = useState('Academic');
+  const [submitting, setSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState(null);
 
   // Fetch Announcements
+  const fetchAnnouncements = async () => {
+    const { data } = await supabase
+      .from('announcements')
+      .select('*')
+      .order('createdAt', { ascending: false });
+    if (data) setAnnouncements(data);
+  };
+
   useEffect(() => {
-    const fetchAnnouncements = async () => {
-      const { data } = await supabase.from('announcements').select('*').order('createdAt', { ascending: false });
-      if (data) setAnnouncements(data);
-    };
-    
     fetchAnnouncements();
     
     const subscription = supabase.channel('announcements_changes')
@@ -44,98 +57,191 @@ export default function Communications() {
 
   const handlePostAnnouncement = async (e) => {
     e.preventDefault();
-    if (!announceTitle || !announceText) {
+    if (!announceTitle.trim() || !announceText.trim()) {
       alert("Please enter a title and message.");
       return;
     }
-    if (!currentUser) {
-      alert("Error: You are not logged in. Please return to the Landing Page and sign in again.");
-      return;
-    }
+    
+    setSubmitting(true);
+    setFeedback(null);
     try {
       const { error } = await supabase.from('announcements').insert({
-        title: announceTitle,
-        text: announceText,
-        author: currentUser.name || "Admin",
+        title: announceTitle.trim(),
+        text: announceText.trim(),
+        author: currentUser?.name || "School Administration",
       });
       if (error) throw error;
       
       setAnnounceTitle('');
       setAnnounceText('');
-      alert("Announcement posted successfully!");
+      setFeedback("Announcement broadcasted successfully to all students & faculty!");
+      fetchAnnouncements();
+      setTimeout(() => setFeedback(null), 4000);
     } catch (error) {
       console.error("Error posting announcement:", error);
       alert("Failed to post announcement: " + error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteAnnouncement = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this broadcast notice?")) return;
+    try {
+      const { error } = await supabase.from('announcements').delete().eq('id', id);
+      if (error) throw error;
+      setAnnouncements(prev => prev.filter(a => a.id !== id));
+    } catch (err) {
+      alert("Could not delete announcement: " + err.message);
     }
   };
 
   return (
-    <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 100px)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px', flexWrap: 'wrap', gap: '20px' }}>
+    <div className="comm-container">
+      {/* Header with Styled Tab Pills */}
+      <div className="comm-header">
         <div>
-          <h1 className="text-gradient">Communications Hub</h1>
-          <p>Chat with teachers/students and broadcast global announcements.</p>
+          <h2 className="comm-title">Communications Hub</h2>
+          <p className="comm-subtitle">Direct multi-user messaging, class channels, and global broadcasts.</p>
         </div>
         
-        <div style={{ display: 'flex', gap: '10px', background: 'rgba(0,0,0,0.3)', padding: '5px', borderRadius: '12px' }}>
+        <div className="comm-tab-pill-group">
           <button 
-            className={`btn ${activeTab === 'chat' ? 'btn-primary' : 'btn-ghost'}`} 
-            style={{ border: 'none', position: 'relative' }}
+            type="button"
+            className={`comm-tab-pill ${activeTab === 'chat' ? 'active' : ''}`}
             onClick={() => setActiveTab('chat')}
           >
-            <MessageSquare size={16} /> Chat
+            <MessageSquare size={16} />
+            <span>Live Chat</span>
             {unreadCounts.chat > 0 && (
-              <span style={{ background: '#FF6B6B', color: '#fff', position: 'absolute', top: '-5px', right: '-5px', fontSize: '10px', padding: '2px 6px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span className="comm-unread-bubble">
                 {unreadCounts.chat}
               </span>
             )}
           </button>
           <button 
-            className={`btn ${activeTab === 'announcements' ? 'btn-primary' : 'btn-ghost'}`} 
-            style={{ border: 'none' }}
+            type="button"
+            className={`comm-tab-pill ${activeTab === 'announcements' ? 'active' : ''}`}
             onClick={() => setActiveTab('announcements')}
           >
-            <Megaphone size={16} /> Announcements
+            <Megaphone size={16} />
+            <span>Broadcasts ({announcements.length})</span>
           </button>
         </div>
       </div>
 
-      <div className="glass-panel" style={{ flex: 1, display: 'flex', overflow: 'hidden', padding: 0 }}>
+      {/* Main Content Area */}
+      <div className="comm-main-panel">
         {activeTab === 'announcements' ? (
-          <div style={{ flex: 1, display: 'flex', padding: '20px', gap: '30px', overflowY: 'auto' }}>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <h3 style={{ marginBottom: '20px' }}>Recent Announcements</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                {announcements.length > 0 ? announcements.map(ann => (
-                  <div key={ann.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--panel-border)', padding: '20px', borderRadius: '12px', borderLeft: '4px solid var(--accent-purple)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <h4 style={{ color: '#fff', margin: 0 }}>{ann.title}</h4>
-                      <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
-                        {ann.createdAt ? new Date(ann.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'Just now'}
+          <div className="announcements-grid">
+            {/* Left Column: Recent Announcements */}
+            <div className="announcements-list-col">
+              <div className="announcements-section-title">
+                <h3>
+                  <Radio size={18} color="#00F0FF" />
+                  Live Announcement Feed
+                </h3>
+                <span className="announcements-badge">{announcements.length} Published</span>
+              </div>
+
+              {announcements.length > 0 ? (
+                announcements.map((ann) => (
+                  <div key={ann.id} className="announcement-card">
+                    <div className="announcement-card-header">
+                      <h4 className="announcement-card-title">{ann.title}</h4>
+                      <span className="announcement-card-date">
+                        {ann.createdAt ? new Date(ann.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent'}
                       </span>
                     </div>
-                    <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '14px', lineHeight: '1.5' }}>{ann.text}</p>
+                    <p className="announcement-card-body">{ann.text}</p>
+                    <div className="announcement-card-footer">
+                      <div className="announcement-author-tag">
+                        <img 
+                          src={`https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(ann.author || 'Admin')}&backgroundColor=transparent`}
+                          alt="avatar"
+                        />
+                        <span>Posted by <strong>{ann.author || 'Administration'}</strong></span>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => handleDeleteAnnouncement(ann.id)}
+                        style={{ background: 'transparent', border: 'none', color: '#EF4444', cursor: 'pointer', opacity: 0.7, padding: '4px' }}
+                        title="Delete Broadcast"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </div>
-                )) : (
-                  <div style={{ color: 'var(--text-secondary)' }}>No announcements yet.</div>
-                )}
-              </div>
+                ))
+              ) : (
+                <div style={{ color: 'var(--text-secondary)', padding: '40px 20px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '12px' }}>
+                  No institutional announcements posted yet. Broadcast one using the form on the right!
+                </div>
+              )}
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--panel-border)', padding: '20px', borderRadius: '12px' }}>
-                <h3 style={{ marginBottom: '20px' }}>Broadcast New Announcement</h3>
-                <form onSubmit={handlePostAnnouncement}>
-                  <div className="form-group" style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '14px' }}>Title</label>
-                    <input type="text" value={announceTitle} onChange={e => setAnnounceTitle(e.target.value)} placeholder="Enter title" required
-                      style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--panel-border)', color: '#fff', borderRadius: '8px', outline: 'none' }} />
+
+            {/* Right Column: Broadcast Form */}
+            <div>
+              <div className="broadcast-form-card">
+                <h3>
+                  <PlusCircle size={18} color="#00F0FF" />
+                  Broadcast New Notice
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>
+                  Publish an institutional announcement visible instantly across Student, Teacher, and Admin portals.
+                </p>
+
+                {feedback && (
+                  <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.4)', color: '#34D399', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <CheckCircle size={16} /> {feedback}
                   </div>
-                  <div className="form-group" style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '14px' }}>Message Body</label>
-                    <textarea value={announceText} onChange={e => setAnnounceText(e.target.value)} rows="5" placeholder="Write your announcement..." required
-                      style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--panel-border)', color: '#fff', borderRadius: '8px', outline: 'none', resize: 'vertical' }}></textarea>
+                )}
+
+                <form onSubmit={handlePostAnnouncement} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div className="broadcast-field">
+                    <label>Notice Title</label>
+                    <input 
+                      type="text" 
+                      value={announceTitle} 
+                      onChange={e => setAnnounceTitle(e.target.value)} 
+                      placeholder="e.g. Science Fair Registration Open" 
+                      required 
+                    />
                   </div>
-                  <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Post Announcement</button>
+
+                  <div className="broadcast-field">
+                    <label>Category Tag</label>
+                    <select 
+                      value={announceCategory} 
+                      onChange={e => setAnnounceCategory(e.target.value)}
+                    >
+                      <option value="Academic">Academic</option>
+                      <option value="Examinations">Examinations</option>
+                      <option value="Events">Campus Events</option>
+                      <option value="Administrative">Administrative</option>
+                      <option value="Urgent">Urgent Notice</option>
+                    </select>
+                  </div>
+
+                  <div className="broadcast-field">
+                    <label>Notice Content</label>
+                    <textarea 
+                      value={announceText} 
+                      onChange={e => setAnnounceText(e.target.value)} 
+                      rows={5} 
+                      placeholder="Enter detailed notice message for all school members..." 
+                      required 
+                    />
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    className="broadcast-submit-btn"
+                    disabled={submitting}
+                  >
+                    <Send size={16} />
+                    <span>{submitting ? 'Broadcasting...' : 'Publish Broadcast Notice'}</span>
+                  </button>
                 </form>
               </div>
             </div>

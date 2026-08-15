@@ -19,11 +19,44 @@
 }
 
 .chat-sidebar-header {
-  padding: 15px;
+  padding: 15px 15px 10px 15px;
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+.chat-filter-chips {
+  display: flex;
+  gap: 6px;
+  padding: 0 15px 12px 15px;
   border-bottom: 1px solid var(--panel-border);
+  overflow-x: auto;
+}
+
+.chat-chip {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.chat-chip:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.chat-chip.active {
+  background: rgba(0, 240, 255, 0.15);
+  color: #00F0FF;
+  border-color: rgba(0, 240, 255, 0.4);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
 }
 
 .chat-search-wrapper {
@@ -147,12 +180,36 @@
 }
 
 .chat-contact-role {
-  font-size: 11px;
-  color: var(--accent-cyan);
-  background: rgba(0, 229, 255, 0.1);
-  padding: 2px 6px;
-  border-radius: 4px;
+  font-size: 10.5px;
+  padding: 2px 7px;
+  border-radius: 6px;
   text-transform: capitalize;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.chat-contact-role.role-student {
+  color: #38BDF8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.chat-contact-role.role-teacher {
+  color: #34D399;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+}
+
+.chat-contact-role.role-admin {
+  color: #C084FC;
+  background: rgba(192, 132, 252, 0.12);
+  border: 1px solid rgba(192, 132, 252, 0.25);
+}
+
+.chat-contact-role.role-group {
+  color: #FBBF24;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.25);
 }
 
 .chat-contact-email {

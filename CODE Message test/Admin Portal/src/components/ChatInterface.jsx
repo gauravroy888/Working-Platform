@@ -3,11 +3,26 @@ import { Search, Send, ArrowLeft, UserPlus, Trash2, MoreVertical, Users } from '
 import { supabase } from '../supabase';
 import './ChatInterface.css';
 
-export default function ChatInterface({ currentUser, activeTab, selectedClass, isManager, onUnreadCountChange }) {
+export default function ChatInterface({ currentUser: propUser, activeTab, selectedClass, isManager, onUnreadCountChange }) {
+  const [currentUser, setCurrentUser] = useState(() => {
+    if (propUser) return propUser;
+    try {
+      const stored = localStorage.getItem('edtech_user');
+      return stored ? JSON.parse(stored) : { email: 'immersionlabsindia@gmail.com', name: 'Immersion Labs', role: 'admin' };
+    } catch (e) {
+      return { email: 'immersionlabsindia@gmail.com', name: 'Immersion Labs', role: 'admin' };
+    }
+  });
+
+  useEffect(() => {
+    if (propUser) setCurrentUser(propUser);
+  }, [propUser]);
+
   const [profiles, setProfiles] = useState([]);
   const [filteredProfiles, setFilteredProfiles] = useState([]);
   const [groups, setGroups] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterRole, setFilterRole] = useState("all"); // 'all' | 'students' | 'teachers' | 'groups'
   
   const [activeContact, setActiveContact] = useState(null); // { isGroup, id, name, email, participants }
   const [currentConversation, setCurrentConversation] = useState(null);
@@ -32,17 +47,53 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
 
   // 1. Fetch Profiles & Groups
   const fetchProfiles = async () => {
-    const { data, error } = await supabase.from('profiles').select('id,name,email,role,avatar_url').order('name');
-    if (data) setProfiles(data);
+    try {
+      const { data: profData } = await supabase.from('profiles').select('*').order('name');
+      const { data: userData } = await supabase.from('users').select('*');
+      
+      const combinedMap = new Map();
+      
+      if (userData && userData.length > 0) {
+        userData.forEach(u => {
+          const name = `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email;
+          combinedMap.set(u.email, {
+            id: u.id,
+            name: name,
+            email: u.email,
+            role: u.role || 'student',
+            avatar_url: `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(u.email)}&backgroundColor=0a0f1d`
+          });
+        });
+      }
+
+      if (profData && profData.length > 0) {
+        profData.forEach(p => {
+          combinedMap.set(p.email, {
+            id: p.id,
+            name: p.name || p.email,
+            email: p.email,
+            role: p.role || 'student',
+            avatar_url: p.avatar_url || `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(p.email)}&backgroundColor=0a0f1d`
+          });
+        });
+      }
+
+      setProfiles(Array.from(combinedMap.values()));
+    } catch (err) {
+      console.error("Error fetching profiles:", err);
+    }
   };
   
   const fetchGroups = async () => {
-    if (!currentUser) return;
-    const { data } = await supabase.from('conversations')
-      .select('*')
-      .eq('type', 'group')
-      .contains('participants', [currentUser.email]);
-    if (data) setGroups(data);
+    if (!currentUser?.email) return;
+    try {
+      const { data } = await supabase.from('conversations')
+        .select('*')
+        .eq('type', 'group');
+      if (data) setGroups(data);
+    } catch (err) {
+      console.error("Error fetching groups:", err);
+    }
   };
 
   useEffect(() => {
@@ -137,38 +188,35 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
     }
   }, [unreadCounts, profiles, groups, onUnreadCountChange]);
 
-  // Filter contacts based on activeTab
+  // Filter contacts based on filterRole and searchQuery
   useEffect(() => {
-    if (!profiles || !currentUser) return;
+    if (!profiles) return;
     
-    let filtered = [];
-    
-    if (activeTab === 'group') {
-      filtered = groups.map(g => ({ ...g, isGroup: true }));
+    let baseList = profiles.filter(p => !currentUser?.email || p.email !== currentUser.email);
+    let groupList = groups.map(g => ({ ...g, isGroup: true }));
+
+    let result = [];
+    if (filterRole === 'students') {
+      result = baseList.filter(p => p.role === 'student');
+    } else if (filterRole === 'teachers') {
+      result = baseList.filter(p => p.role === 'teacher' || p.role === 'admin');
+    } else if (filterRole === 'groups') {
+      result = groupList;
     } else {
-      filtered = profiles.filter(p => p.email !== currentUser.email);
-      if (activeTab === 'students') {
-        filtered = filtered.filter(p => p.role === 'student');
-      } else if (activeTab === 'staff') {
-        filtered = filtered.filter(p => p.role === 'teacher' || p.role === 'admin');
-      } else if (activeTab === 'teachers') {
-        filtered = filtered.filter(p => p.role === 'teacher');
-      } else if (activeTab === 'class_view' || activeTab === 'classes') {
-        // Teacher portal: show both students and groups
-        const classStudents = filtered.filter(p => p.role === 'student');
-        const classGroups = groups
-          .filter(g => !selectedClass || g.class_name === selectedClass)
-          .map(g => ({ ...g, isGroup: true }));
-        filtered = [...classGroups, ...classStudents];
-      }
+      // 'all'
+      result = [...groupList, ...baseList];
     }
     
-    if (searchQuery) {
-      filtered = filtered.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()) || (p.email && p.email.toLowerCase().includes(searchQuery.toLowerCase())));
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(p => 
+        (p.name && p.name.toLowerCase().includes(q)) || 
+        (p.email && p.email.toLowerCase().includes(q))
+      );
     }
     
-    setFilteredProfiles(filtered);
-  }, [profiles, groups, activeTab, searchQuery, currentUser]);
+    setFilteredProfiles(result);
+  }, [profiles, groups, filterRole, searchQuery, currentUser]);
 
   // 2. Fetch or Create Conversation
   useEffect(() => {
@@ -328,9 +376,41 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
             <Search size={16} className="chat-search-icon" />
             <input type="text" placeholder="Search contacts..." className="chat-search-input" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
-          {isManager && (activeTab === 'class_view' || activeTab === 'classes') && (
-            <button className="chat-action-btn" onClick={() => setShowGroupModal(true)} title="Create Group">
-              <Users size={18} />
+          <button className="chat-action-btn" onClick={() => setShowGroupModal(true)} title="Create Group Activity">
+            <Users size={18} />
+          </button>
+        </div>
+
+        {/* Filter Category Chips */}
+        <div className="chat-filter-chips">
+          <button 
+            type="button"
+            className={`chat-chip ${filterRole === 'all' ? 'active' : ''}`}
+            onClick={() => setFilterRole('all')}
+          >
+            All ({profiles.length + groups.length})
+          </button>
+          <button 
+            type="button"
+            className={`chat-chip ${filterRole === 'students' ? 'active' : ''}`}
+            onClick={() => setFilterRole('students')}
+          >
+            Students
+          </button>
+          <button 
+            type="button"
+            className={`chat-chip ${filterRole === 'teachers' ? 'active' : ''}`}
+            onClick={() => setFilterRole('teachers')}
+          >
+            Faculty
+          </button>
+          {groups.length > 0 && (
+            <button 
+              type="button"
+              className={`chat-chip ${filterRole === 'groups' ? 'active' : ''}`}
+              onClick={() => setFilterRole('groups')}
+            >
+              Groups ({groups.length})
             </button>
           )}
         </div>
@@ -343,19 +423,24 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
               <div key={contact.id} className={`chat-contact-item ${activeContact?.id === contact.id ? 'active' : ''}`} onClick={() => setActiveContact(contact)}>
                 <div className="chat-contact-avatar">
                   {contact.isGroup ? (
-                    <div className="avatar-placeholder" style={{ background: 'var(--accent-purple)' }}><Users size={20} /></div>
-                  ) : contact.avatar_url ? (
-                    <img src={contact.avatar_url} alt={contact.name} />
+                    <div className="avatar-placeholder" style={{ background: 'rgba(147, 51, 234, 0.3)', border: '1px solid rgba(147, 51, 234, 0.5)' }}><Users size={20} color="#C084FC" /></div>
                   ) : (
-                    <div className="avatar-placeholder">{contact.name.charAt(0).toUpperCase()}</div>
+                    <img 
+                      src={contact.avatar_url || `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(contact.email || contact.name)}&backgroundColor=0a0f1d`} 
+                      alt={contact.name} 
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(contact.email || contact.name)}&backgroundColor=0a0f1d`;
+                      }}
+                    />
                   )}
                 </div>
                 <div className="chat-contact-info">
                   <div className="chat-contact-name-row">
                     <span className="chat-contact-name">{contact.name}</span>
                     {unread > 0 && <span className="unread-badge">{unread}</span>}
-                    {contact.isGroup && <span className="chat-contact-role">Group</span>}
-                    {!contact.isGroup && <span className="chat-contact-role">{contact.role}</span>}
+                    {contact.isGroup && <span className="chat-contact-role role-group">Group</span>}
+                    {!contact.isGroup && <span className={`chat-contact-role role-${contact.role || 'student'}`}>{contact.role || 'student'}</span>}
                   </div>
                   {!contact.isGroup && <span className="chat-contact-email">{contact.email}</span>}
                   {contact.isGroup && <span className="chat-contact-email">{contact.participants?.length || 0} members</span>}
@@ -376,11 +461,16 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
               <button className="chat-back-btn" onClick={() => setActiveContact(null)}><ArrowLeft size={20} /></button>
               <div className="chat-header-avatar">
                 {activeContact.isGroup ? (
-                   <div className="avatar-placeholder" style={{ background: 'var(--accent-purple)' }}><Users size={20} /></div>
-                ) : activeContact.avatar_url ? (
-                  <img src={activeContact.avatar_url} alt={activeContact.name} />
+                   <div className="avatar-placeholder" style={{ background: 'rgba(147, 51, 234, 0.3)', border: '1px solid rgba(147, 51, 234, 0.5)' }}><Users size={20} color="#C084FC" /></div>
                 ) : (
-                  <div className="avatar-placeholder">{activeContact.name.charAt(0).toUpperCase()}</div>
+                  <img 
+                    src={activeContact.avatar_url || `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(activeContact.email || activeContact.name)}&backgroundColor=0a0f1d`} 
+                    alt={activeContact.name} 
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(activeContact.email || activeContact.name)}&backgroundColor=0a0f1d`;
+                    }}
+                  />
                 )}
               </div>
               <div className="chat-header-info">
