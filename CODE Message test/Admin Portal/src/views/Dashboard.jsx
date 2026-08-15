@@ -40,10 +40,12 @@ export default function Dashboard() {
           .from('courses')
           .select('*', { count: 'exact', head: true });
 
-        // 5. Recent Announcements
+        // 5. Recent Announcements (strictly latest 2)
         const { data: dbAnnouncements } = await supabase
           .from('announcements')
-          .select('*');
+          .select('*')
+          .order('createdAt', { ascending: false })
+          .limit(2);
 
         setStats({
           studentsCount: studentCount || 0,
@@ -52,7 +54,7 @@ export default function Dashboard() {
           coursesCount: courseCount || 0
         });
 
-        setRecentAnnouncements(dbAnnouncements || []);
+        setRecentAnnouncements((dbAnnouncements || []).slice(0, 2));
 
         const mappedTeachers = (dbTeachers || []).map(t => ({
           name: t.full_name || t.name || t.email.split('@')[0],
@@ -135,19 +137,29 @@ export default function Dashboard() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {recentAnnouncements.length > 0 ? (
-              recentAnnouncements.map((a, idx) => (
-                <div key={a.id || idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div>
-                    <h4 style={{ margin: '0 0 4px 0', color: 'white', fontSize: '1rem' }}>{a.title}</h4>
-                    <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.85rem' }}>
-                      {a.text ? a.text.slice(0, 50) + (a.text.length > 50 ? '...' : '') : 'Official announcement.'}
-                    </p>
+              recentAnnouncements.map((a, idx) => {
+                const dateStr = a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Recent';
+                return (
+                  <div key={a.id || idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div style={{ maxWidth: '75%' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '6px', background: 'rgba(0, 240, 255, 0.12)', color: '#00F0FF', fontWeight: '700' }}>
+                          {dateStr}
+                        </span>
+                        <h4 style={{ margin: 0, color: 'white', fontSize: '0.95rem', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {a.title}
+                        </h4>
+                      </div>
+                      <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.8rem', lineHeight: '1.4', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>
+                        {a.text || 'Official announcement.'}
+                      </p>
+                    </div>
+                    <Link to="/events" style={{ background: 'rgba(0, 240, 255, 0.1)', border: '1px solid rgba(0, 240, 255, 0.3)', color: '#00F0FF', padding: '6px 14px', borderRadius: '8px', textDecoration: 'none', fontSize: '0.8rem', fontWeight: '700', flexShrink: 0 }}>
+                      View
+                    </Link>
                   </div>
-                  <Link to="/events" style={{ background: 'rgba(0, 240, 255, 0.1)', border: '1px solid rgba(0, 240, 255, 0.3)', color: '#00F0FF', padding: '6px 16px', borderRadius: '8px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '700' }}>
-                    View
-                  </Link>
-                </div>
-              ))
+                );
+              })
             ) : (
               <p style={{ color: '#64748b', textAlign: 'center', padding: '20px' }}>No notices published yet.</p>
             )}
