@@ -26,6 +26,33 @@ html {
     scroll-behavior: smooth;
 }
 
+/* Custom Cyber-Glass Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(3, 7, 18, 0.6);
+    border-radius: 8px;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 242, 254, 0.25);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 242, 254, 0.1);
+    transition: all 0.2s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 242, 254, 0.55);
+    box-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+}
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 242, 254, 0.3) rgba(3, 7, 18, 0.6);
+}
+
 body {
     font-family: var(--font-family);
     background-color: var(--bg-color);

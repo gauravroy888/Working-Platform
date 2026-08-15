@@ -28,23 +28,33 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
-  /* The background image will be set inline or via a specific class so we can dynamically load the generated artifact */
 }
 
-/* Custom Scrollbar */
+/* Custom Cyber-Glass Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(5, 8, 17, 0.4);
+  border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  background: rgba(0, 229, 255, 0.25);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 229, 255, 0.1);
+  transition: all 0.2s ease;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 229, 255, 0.55);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 229, 255, 0.3) rgba(5, 8, 17, 0.4);
 }
 
 /* Typography */

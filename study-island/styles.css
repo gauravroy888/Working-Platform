@@ -108,6 +108,33 @@
 }
 
 /* ─── LEGACY RESET (complements @layer reset above) ─── */
+
+/* Custom Cyber-Glass Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(64, 224, 208, 0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(64, 224, 208, 0.15);
+  transition: all 0.2s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(64, 224, 208, 0.6);
+  box-shadow: 0 0 10px rgba(64, 224, 208, 0.5);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(64, 224, 208, 0.35) rgba(0, 0, 0, 0.4);
+}
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
