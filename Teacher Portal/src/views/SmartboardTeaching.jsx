@@ -108,9 +108,9 @@ export default function SmartboardTeaching() {
         description: 'Ray propagation, convex/concave mirror reflections, shadow formation, and interactive laboratory simulations.',
         thumbnail: `${R2_PUBLIC_CDN_URL}/placeholders/optics.webp`,
         chapters: [
-          { id: 'ch-1', title: 'Chapter 1: Light Sources, Propagation & Shadows', type: '3D Simulation', duration: '45 mins' },
-          { id: 'ch-2', title: 'Chapter 2: Reflection, Lenses & Focal Points', type: 'Smartboard Lab', duration: '50 mins' },
-          { id: 'ch-3', title: 'Chapter 3: The Solar System & Planetary Orbits', type: 'VR / 3D Space', duration: '40 mins' }
+          { id: 'ch-1', chapterId: 'light-shadows', title: 'Chapter 1: Light Sources, Propagation & Shadows', type: '3D Simulation', duration: '45 mins' },
+          { id: 'ch-2', chapterId: 'light-shadows', title: 'Chapter 2: Reflection, Lenses & Focal Points', type: 'Smartboard Lab', duration: '50 mins' },
+          { id: 'ch-3', chapterId: 'space-solar', title: 'Chapter 3: The Solar System & Planetary Orbits', type: 'VR / 3D Space', duration: '40 mins' }
         ]
       },
       {
@@ -124,8 +124,8 @@ export default function SmartboardTeaching() {
         description: 'Interactive timeline explorations, 3D architectural ruins, Harappan cities, and ancient trade routes.',
         thumbnail: `${R2_PUBLIC_CDN_URL}/placeholders/history.webp`,
         chapters: [
-          { id: 'ch-4', title: 'Chapter 1: Indus Valley Architecture & Drainage 3D', type: '3D Walkthrough', duration: '35 mins' },
-          { id: 'ch-5', title: 'Chapter 2: Mesopotamian & Egyptian Empires', type: 'Interactive Map', duration: '40 mins' }
+          { id: 'ch-4', chapterId: null, title: 'Chapter 1: Indus Valley Architecture & Drainage 3D', type: '3D Walkthrough', duration: '35 mins' },
+          { id: 'ch-5', chapterId: null, title: 'Chapter 2: Mesopotamian & Egyptian Empires', type: 'Interactive Map', duration: '40 mins' }
         ]
       },
       {
@@ -139,8 +139,8 @@ export default function SmartboardTeaching() {
         description: 'Interactive globe rendering, continental plate tectonics, volcano cross-sections, and climate zones.',
         thumbnail: `${R2_PUBLIC_CDN_URL}/placeholders/geography.webp`,
         chapters: [
-          { id: 'ch-6', title: 'Chapter 1: Continental Drift & Plate Boundaries', type: '3D Simulation', duration: '45 mins' },
-          { id: 'ch-7', title: 'Chapter 2: Atmospheric Pressure & Weather Systems', type: 'Live Simulator', duration: '40 mins' }
+          { id: 'ch-6', chapterId: null, title: 'Chapter 1: Continental Drift & Plate Boundaries', type: '3D Simulation', duration: '45 mins' },
+          { id: 'ch-7', chapterId: null, title: 'Chapter 2: Atmospheric Pressure & Weather Systems', type: 'Live Simulator', duration: '40 mins' }
         ]
       },
       {
@@ -154,8 +154,8 @@ export default function SmartboardTeaching() {
         description: 'Visual geometric proofs, coordinate Cartesian planes, dynamic angle manipulation, and algebraic formulas.',
         thumbnail: `${R2_PUBLIC_CDN_URL}/placeholders/math.webp`,
         chapters: [
-          { id: 'ch-8', title: 'Chapter 1: Triangles, Angles & Congruence Theorems', type: 'Interactive Canvas', duration: '45 mins' },
-          { id: 'ch-9', title: 'Chapter 2: 3D Mensuration: Cones, Cylinders & Spheres', type: '3D Geometry', duration: '50 mins' }
+          { id: 'ch-8', chapterId: null, title: 'Chapter 1: Triangles, Angles & Congruence Theorems', type: 'Interactive Canvas', duration: '45 mins' },
+          { id: 'ch-9', chapterId: null, title: 'Chapter 2: 3D Mensuration: Cones, Cylinders & Spheres', type: '3D Geometry', duration: '50 mins' }
         ]
       },
       {
@@ -169,8 +169,8 @@ export default function SmartboardTeaching() {
         description: 'Interactive Shakespearean & classic prose stage visualizer, vocabulary flashboards, and syntax analyzers.',
         thumbnail: `${R2_PUBLIC_CDN_URL}/placeholders/english.webp`,
         chapters: [
-          { id: 'ch-10', title: 'Chapter 1: Narrative Story Arc & Character Perspectives', type: 'Visual Storyboard', duration: '35 mins' },
-          { id: 'ch-11', title: 'Chapter 2: Active vs Passive Voice Live Smartboard Drill', type: 'Class Quiz', duration: '30 mins' }
+          { id: 'ch-10', chapterId: null, title: 'Chapter 1: Narrative Story Arc & Character Perspectives', type: 'Visual Storyboard', duration: '35 mins' },
+          { id: 'ch-11', chapterId: null, title: 'Chapter 2: Active vs Passive Voice Live Smartboard Drill', type: 'Class Quiz', duration: '30 mins' }
         ]
       }
     ];
@@ -194,14 +194,7 @@ export default function SmartboardTeaching() {
 
   // Launch Fullscreen Smartboard Experience in a new window/tab
   function handleLaunchSmartboard(subject = null, chapter = null) {
-    let resolvedChapter = chapter;
-    if (!resolvedChapter && subject) {
-      const lowerSub = subject.toLowerCase();
-      if (lowerSub.includes('science') || lowerSub.includes('physic')) {
-        resolvedChapter = 'light-shadows';
-      }
-    }
-    const targetUrl = getStudyIslandUrl({ subject, chapter: resolvedChapter });
+    const targetUrl = getStudyIslandUrl({ subject, chapter });
     const win = window.open(targetUrl, '_blank');
     if (win) {
       win.focus();
@@ -571,7 +564,7 @@ export default function SmartboardTeaching() {
                   {(course.chapters || []).map((ch, idx) => (
                     <div 
                       key={ch.id || idx}
-                      onClick={() => handleLaunchSmartboard(course.subject, ch.title)}
+                      onClick={() => handleLaunchSmartboard(course.subject, ch.chapterId || ch.title)}
                       style={{
                         padding: '10px 14px',
                         background: 'rgba(255, 255, 255, 0.03)',
