@@ -1719,6 +1719,78 @@
     }
   }
 
+  function initUrlRouting() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var paramClass = urlParams.get('class');
+    var paramSubject = urlParams.get('subject');
+    var paramChapter = urlParams.get('chapter');
+    var paramScreen = urlParams.get('screen');
+    var paramMode = urlParams.get('mode');
+
+    // 1. Update Curriculum Badge if class is provided
+    if (paramClass) {
+      var badge = document.querySelector('.curriculum-badge');
+      if (badge) {
+        badge.textContent = (paramClass.toLowerCase().includes('cbse') || paramClass.toLowerCase().includes('icse')) 
+          ? paramClass 
+          : 'CBSE ' + paramClass;
+      }
+    }
+
+    // 2. If in smartboard mode, add smartboard indicator styling
+    if (paramMode === 'smartboard') {
+      document.body.classList.add('smartboard-mode');
+      var badge = document.querySelector('.curriculum-badge');
+      if (badge) {
+        badge.style.border = '1px solid #00F0FF';
+        badge.style.boxShadow = '0 0 15px rgba(0, 240, 255, 0.4)';
+        badge.title = 'Interactive Smartboard Mode';
+      }
+    }
+
+    // 3. Deep-link navigation
+    if (paramChapter) {
+      var targetChapterId = 'light-shadows';
+      var lowerCh = paramChapter.toLowerCase();
+      if (lowerCh.includes('space') || lowerCh.includes('solar') || lowerCh === 'ch-space-solar' || lowerCh === 'space-solar' || lowerCh.includes('orbit')) {
+        targetChapterId = 'space-solar';
+      } else if (lowerCh.includes('light') || lowerCh.includes('shadow') || lowerCh.includes('optic') || lowerCh === 'light-shadows' || lowerCh.includes('lens') || lowerCh.includes('reflection')) {
+        targetChapterId = 'light-shadows';
+      }
+      navigateTo('screen-chapter-detail', { chapterId: targetChapterId });
+    } else if (paramSubject) {
+      var lowerSubj = paramSubject.toLowerCase();
+      if (lowerSubj.includes('science') || lowerSubj.includes('physic') || lowerSubj.includes('bio') || lowerSubj.includes('chem')) {
+        navigateTo('screen-chapters');
+      } else {
+        navigateTo('screen-subjects');
+        // Highlight requested subject
+        var subjMap = {
+          'history': '#subj-history',
+          'geography': '#subj-geography',
+          'physical education': '#subj-pe',
+          'pe': '#subj-pe',
+          'arts': '#subj-arts',
+          'english': '#subj-english',
+          'mathematics': '#subj-math',
+          'math': '#subj-math',
+          'music': '#subj-music'
+        };
+        var targetId = subjMap[lowerSubj];
+        if (targetId) {
+          var card = document.querySelector(targetId);
+          if (card) {
+            card.style.borderColor = '#00F0FF';
+            card.style.boxShadow = '0 0 25px rgba(0, 240, 255, 0.5)';
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+      }
+    } else if (paramScreen) {
+      navigateTo(paramScreen);
+    }
+  }
+
   function init() {
     applySavedTheme();
     syncFullscreenButton();
@@ -1730,6 +1802,7 @@
     bindOverlayEvents();
     initSpringSlider();
     initSupabaseSync();
+    initUrlRouting();
 
     document.addEventListener('fullscreenchange', syncFullscreenButton);
     window.addEventListener('beforeunload', destroyChapterScene);

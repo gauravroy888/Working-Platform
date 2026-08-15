@@ -194,7 +194,14 @@ export default function SmartboardTeaching() {
 
   // Launch Fullscreen Smartboard Experience in a new window/tab
   function handleLaunchSmartboard(subject = null, chapter = null) {
-    const targetUrl = getStudyIslandUrl({ subject, chapter });
+    let resolvedChapter = chapter;
+    if (!resolvedChapter && subject) {
+      const lowerSub = subject.toLowerCase();
+      if (lowerSub.includes('science') || lowerSub.includes('physic')) {
+        resolvedChapter = 'light-shadows';
+      }
+    }
+    const targetUrl = getStudyIslandUrl({ subject, chapter: resolvedChapter });
     const win = window.open(targetUrl, '_blank');
     if (win) {
       win.focus();
@@ -476,7 +483,10 @@ export default function SmartboardTeaching() {
             background: '#000'
           }}>
             <iframe
-              src={getStudyIslandUrl({ subject: activePresentation.subject })}
+              src={getStudyIslandUrl({ 
+                subject: activePresentation.subject, 
+                chapter: (activePresentation.subject?.toLowerCase().includes('science') || activePresentation.subject?.toLowerCase().includes('physic')) ? 'light-shadows' : null 
+              })}
               title="Study Island Presentation"
               style={{ width: '100%', height: '100%', border: 'none' }}
               allow="fullscreen; accelerometer; gyroscope"
