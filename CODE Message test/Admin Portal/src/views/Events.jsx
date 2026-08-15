@@ -34,7 +34,7 @@ export default function Events() {
       const { data: dbLiveClasses } = await supabase
         .from('live_classes')
         .select('*')
-        .order('scheduled_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       let combined = [];
 
