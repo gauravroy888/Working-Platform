@@ -101,18 +101,21 @@ export default function Teachers() {
           .or('role.eq.teacher,role.eq.TEACHER');
 
         if (!error && Array.isArray(data) && data.length > 0) {
-          const mapped = data.map(u => ({
-            id: u.id,
-            name: u.name || u.email.split('@')[0],
-            email: u.email,
-            role: u.role === 'teacher' ? 'Subject Faculty' : u.role,
-            department: u.department || 'Academic Faculty',
-            classes: ['Class 6th A'],
-            avatar: `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(u.name || u.email)}&backgroundColor=060a14`,
-            rating: 4.9,
-            status: 'Active',
-            joined: (u.created_at || '').slice(0, 10) || '2026-08-01'
-          }));
+          const mapped = data.map(u => {
+            const displayName = u.full_name || u.name || u.email.split('@')[0];
+            return {
+              id: u.id,
+              name: displayName,
+              email: u.email,
+              role: u.role === 'teacher' ? 'Subject Faculty' : u.role,
+              department: u.department || 'Academic Faculty',
+              classes: ['Class 6th A', 'Class 8th A'],
+              avatar: `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(displayName)}&backgroundColor=060a14`,
+              rating: 4.9,
+              status: 'Active',
+              joined: (u.created_at || '').slice(0, 10) || '2026-08-01'
+            };
+          });
 
           // Merge unique by email
           const existingEmails = new Set(mapped.map(m => m.email.toLowerCase()));
