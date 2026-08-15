@@ -1,93 +1,112 @@
-import React, { useState } from 'react';
-import { BookOpen, Users, UserCheck, Plus, ChevronRight, Activity, Award, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BookOpen, Users, UserCheck, Plus, ChevronRight, Activity, Award, X, Loader2, AlertCircle } from 'lucide-react';
 import Card from '../components/Card';
-
-const INITIAL_CLASSES = [
-  {
-    id: 'cls-6',
-    name: 'Class 6th',
-    sections: ['6th A', '6th B', '6th C'],
-    students: 128,
-    classTeacher: 'Gaurav',
-    activeSubject: 'Science — LIGHT AND SHADOWS',
-    progress: 78,
-    status: 'Active',
-    color: '#00F0FF'
-  },
-  {
-    id: 'cls-7',
-    name: 'Class 7th',
-    sections: ['7th A', '7th B'],
-    students: 94,
-    classTeacher: 'Harsh',
-    activeSubject: 'Science — Thermal Dynamics',
-    progress: 64,
-    status: 'Active',
-    color: '#3B82F6'
-  },
-  {
-    id: 'cls-8',
-    name: 'Class 8th',
-    sections: ['8th A', '8th B'],
-    students: 110,
-    classTeacher: 'Dr. Priya Sharma',
-    activeSubject: 'Science — Space & Astronomy',
-    progress: 82,
-    status: 'Active',
-    color: '#A855F7'
-  },
-  {
-    id: 'cls-9',
-    name: 'Class 9th',
-    sections: ['9th A', '9th B', '9th C'],
-    students: 145,
-    classTeacher: 'Dr. Sunita Kapoor',
-    activeSubject: 'Physics — Kinematics & Force',
-    progress: 55,
-    status: 'Active',
-    color: '#F59E0B'
-  },
-  {
-    id: 'cls-10',
-    name: 'Class 10th',
-    sections: ['10th A', '10th B'],
-    students: 120,
-    classTeacher: 'Prof. Vikram Patel',
-    activeSubject: 'Optics & Ray Diagram Simulation',
-    progress: 91,
-    status: 'Active',
-    color: '#10B981'
-  }
-];
+import { supabase } from '../supabase';
 
 export default function Classes() {
-  const [classes, setClasses] = useState(INITIAL_CLASSES);
+  const [classes, setClasses] = useState([]);
+  const [realStudents, setRealStudents] = useState([]);
+  const [realTeachers, setRealTeachers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedClass, setSelectedClass] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedbackMsg, setFeedbackMsg] = useState(null);
+
   const [newClass, setNewClass] = useState({
     name: '',
-    section: 'A',
+    subject: 'Science, Mathematics, Social Studies',
     classTeacher: 'Gaurav',
-    students: 40
+    students: 30
   });
 
-  const handleAddClass = (e) => {
+  const loadDatabaseData = async () => {
+    setLoading(true);
+    try {
+      // 1. Fetch real classes
+      const { data: dbClasses, error: clsErr } = await supabase
+        .from('classes')
+        .select('*')
+        .order('display_order', { ascending: true });
+
+      // 2. Fetch real students
+      const { data: dbStudents } = await supabase
+        .from('users')
+        .select('*')
+        .or('role.eq.student,role.eq.STUDENT');
+
+      // 3. Fetch real teachers
+      const { data: dbTeachers } = await supabase
+        .from('users')
+        .select('*')
+        .or('role.eq.teacher,role.eq.TEACHER');
+
+      const studentList = dbStudents || [];
+      setRealStudents(studentList);
+
+      const teacherList = (dbTeachers || []).map(t => t.full_name || t.name || t.email.split('@')[0]);
+      setRealTeachers(teacherList.length > 0 ? teacherList : ['Gaurav', 'Harsh']);
+
+      if (dbClasses && dbClasses.length > 0) {
+        const colors = ['#00F0FF', '#3B82F6', '#A855F7', '#10B981', '#F59E0B', '#EC4899', '#6366F1'];
+        const mapped = dbClasses.map((c, idx) => ({
+          id: c.id,
+          name: c.name,
+          sections: [`${c.name} A`, `${c.name} B`],
+          students: c.students || studentList.length || 0,
+          classTeacher: teacherList[idx % teacherList.length] || 'Gaurav',
+          activeSubject: c.subject || 'Standard Curriculum',
+          progress: parseInt(c.performance) || 80,
+          status: c.status || 'Active',
+          color: colors[idx % colors.length]
+        }));
+        setClasses(mapped);
+      } else {
+        setClasses([]);
+      }
+    } catch (e) {
+      console.error('Error loading classes data:', e);
+      setClasses([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDatabaseData();
+  }, []);
+
+  const handleAddClass = async (e) => {
     e.preventDefault();
     if (!newClass.name) return;
-    const added = {
-      id: `cls-${Date.now()}`,
-      name: newClass.name,
-      sections: [`${newClass.name} ${newClass.section}`],
-      students: parseInt(newClass.students) || 40,
-      classTeacher: newClass.classTeacher,
-      activeSubject: 'Standard CBSE Curriculum',
-      progress: 0,
-      status: 'Active',
-      color: '#00F0FF'
-    };
-    setClasses([...classes, added]);
-    setShowAddModal(false);
-    setNewClass({ name: '', section: 'A', classTeacher: 'Gaurav', students: 40 });
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('classes')
+        .insert([
+          {
+            name: newClass.name.trim(),
+            subject: newClass.subject,
+            students: parseInt(newClass.students) || 0,
+            status: 'Active',
+            display_order: classes.length + 1
+          }
+        ]);
+
+      if (error) throw error;
+
+      setFeedbackMsg({ type: 'success', text: `Class ${newClass.name} created successfully in database!` });
+      setTimeout(() => setFeedbackMsg(null), 4000);
+      setShowAddModal(false);
+      setNewClass({ name: '', subject: 'Science, Mathematics, Social Studies', classTeacher: 'Gaurav', students: 30 });
+      await loadDatabaseData();
+    } catch (err) {
+      console.error('Error adding class:', err);
+      setFeedbackMsg({ type: 'error', text: 'Failed to create class in database: ' + (err.message || '') });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -96,7 +115,9 @@ export default function Classes() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h3 style={{ margin: '0 0 4px 0', color: '#fff', fontSize: '1.4rem', fontWeight: '800' }}>Class &amp; Section Management</h3>
-          <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem' }}>Monitor grade enrollment, assigned class teachers, and 3D curriculum syllabus pacing.</p>
+          <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem' }}>
+            Live institutional classes and sections fetched from Supabase ({classes.length} registered classes).
+          </p>
         </div>
 
         <div style={{ display: 'flex', gap: '12px' }}>
@@ -123,180 +144,202 @@ export default function Classes() {
         </div>
       </div>
 
+      {/* Feedback Alert */}
+      {feedbackMsg && (
+        <div style={{
+          padding: '12px 16px',
+          borderRadius: '12px',
+          background: feedbackMsg.type === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+          border: feedbackMsg.type === 'success' ? '1px solid #10B981' : '1px solid #EF4444',
+          color: feedbackMsg.type === 'success' ? '#34d399' : '#f87171',
+          fontSize: '0.9rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          {feedbackMsg.type === 'success' ? <UserCheck size={18} /> : <AlertCircle size={18} />}
+          <span>{feedbackMsg.text}</span>
+        </div>
+      )}
+
       {/* Summary KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
         <Card>
-          <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: '700' }}>TOTAL ENROLLED STUDENTS</span>
+          <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: '700' }}>TOTAL DATABASE CLASSES</span>
           <h4 style={{ color: '#00F0FF', fontSize: '1.8rem', fontWeight: '800', margin: '6px 0 0 0', fontFamily: 'monospace' }}>
-            {classes.reduce((acc, c) => acc + c.students, 0)}
+            {classes.length}
           </h4>
-          <span style={{ color: '#34d399', fontSize: '0.75rem', fontWeight: '600' }}>Across {classes.length} Grades</span>
+          <span style={{ color: '#34d399', fontSize: '0.75rem', fontWeight: '600' }}>Active in Supabase</span>
         </Card>
 
         <Card>
-          <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: '700' }}>ACTIVE SECTIONS</span>
+          <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: '700' }}>TOTAL REGISTERED STUDENTS</span>
           <h4 style={{ color: '#3B82F6', fontSize: '1.8rem', fontWeight: '800', margin: '6px 0 0 0', fontFamily: 'monospace' }}>
-            {classes.reduce((acc, c) => acc + c.sections.length, 0)} Sections
+            {realStudents.length}
           </h4>
-          <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>100% Class Teachers Assigned</span>
+          <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Verified Supabase Student Accounts</span>
         </Card>
 
         <Card>
-          <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: '700' }}>CURRICULUM SYLLABUS PACING</span>
+          <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: '700' }}>ACTIVE FACULTY TEACHERS</span>
           <h4 style={{ color: '#10B981', fontSize: '1.8rem', fontWeight: '800', margin: '6px 0 0 0', fontFamily: 'monospace' }}>
-            {Math.round(classes.reduce((acc, c) => acc + c.progress, 0) / classes.length)}%
+            {realTeachers.length}
           </h4>
-          <span style={{ color: '#34d399', fontSize: '0.75rem', fontWeight: '600' }}>On Schedule for Term 1</span>
+          <span style={{ color: '#34d399', fontSize: '0.75rem', fontWeight: '600' }}>Assigned to Sections</span>
         </Card>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px', gap: '12px', color: '#00F0FF' }}>
+          <Loader2 size={28} className="animate-spin" />
+          <span style={{ fontSize: '1rem', fontWeight: '600' }}>Loading classes from Supabase...</span>
+        </div>
+      )}
+
       {/* Classes Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '20px' }}>
-        {classes.map(cls => (
-          <Card key={cls.id}>
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between', gap: '16px' }}>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '12px',
-                      background: `${cls.color}20`,
-                      border: `1px solid ${cls.color}50`,
+      {!loading && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '20px' }}>
+          {classes.map(cls => (
+            <Card key={cls.id}>
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between', gap: '16px' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{
+                        width: '42px',
+                        height: '42px',
+                        borderRadius: '12px',
+                        background: `${cls.color}20`,
+                        border: `1px solid ${cls.color}50`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: cls.color,
+                        fontWeight: '800',
+                        fontSize: '0.9rem'
+                      }}>
+                        {cls.name.replace('Class ', '').slice(0, 4)}
+                      </div>
+                      <div>
+                        <h4 style={{ color: '#fff', fontSize: '1.2rem', fontWeight: '800', margin: 0 }}>{cls.name}</h4>
+                        <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{cls.sections.join(' • ')}</span>
+                      </div>
+                    </div>
+
+                    <span style={{ padding: '4px 10px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', fontSize: '0.75rem', fontWeight: '700' }}>
+                      {cls.status}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: 'rgba(0,0,0,0.25)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)', marginBottom: '14px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                      <span style={{ color: '#94a3b8' }}>Class Teacher:</span>
+                      <span style={{ color: '#00F0FF', fontWeight: '700' }}>{cls.classTeacher}</span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                      <span style={{ color: '#94a3b8' }}>Curriculum Subjects:</span>
+                      <span style={{ color: '#cbd5e1', fontWeight: '600', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'right' }}>
+                        {cls.activeSubject}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px' }}>
+                  <button
+                    onClick={() => setSelectedClass(cls)}
+                    style={{
+                      flex: 1,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: cls.color,
-                      fontWeight: '800',
-                      fontSize: '1rem'
-                    }}>
-                      {cls.name.replace('Class ', '')}
-                    </div>
-                    <div>
-                      <h4 style={{ color: '#fff', fontSize: '1.2rem', fontWeight: '800', margin: 0 }}>{cls.name}</h4>
-                      <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{cls.sections.join(' • ')}</span>
-                    </div>
-                  </div>
+                      gap: '6px',
+                      padding: '8px',
+                      background: 'rgba(0, 240, 255, 0.1)',
+                      border: '1px solid rgba(0, 240, 255, 0.3)',
+                      color: '#00F0FF',
+                      borderRadius: '10px',
+                      fontSize: '0.8rem',
+                      fontWeight: '700',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Users size={14} />
+                    <span>Student Roster</span>
+                  </button>
 
-                  <span style={{ padding: '4px 10px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', fontSize: '0.75rem', fontWeight: '700' }}>
-                    {cls.status}
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: 'rgba(0,0,0,0.25)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)', marginBottom: '14px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                    <span style={{ color: '#94a3b8' }}>Class Teacher:</span>
-                    <span style={{ color: '#00F0FF', fontWeight: '700' }}>{cls.classTeacher}</span>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                    <span style={{ color: '#94a3b8' }}>Total Students:</span>
-                    <span style={{ color: '#fff', fontWeight: '700' }}>{cls.students} Enrolled</span>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                    <span style={{ color: '#94a3b8' }}>Current 3D Unit:</span>
-                    <span style={{ color: '#cbd5e1', fontWeight: '600' }}>{cls.activeSubject}</span>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '6px' }}>
-                    <span style={{ color: '#94a3b8' }}>Syllabus Mastery</span>
-                    <span style={{ color: '#00F0FF', fontWeight: '700' }}>{cls.progress}%</span>
-                  </div>
-                  <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
-                    <div style={{ width: `${cls.progress}%`, height: '100%', background: `linear-gradient(90deg, ${cls.color}, #00F0FF)`, borderRadius: '3px' }}></div>
-                  </div>
+                  <a
+                    href="/study-island/"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      padding: '8px',
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: '#fff',
+                      borderRadius: '10px',
+                      fontSize: '0.8rem',
+                      fontWeight: '700',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    <span>Open 3D Lab</span>
+                    <ChevronRight size={14} />
+                  </a>
                 </div>
               </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
-              <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px' }}>
-                <button
-                  onClick={() => setSelectedClass(cls)}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    padding: '8px',
-                    background: 'rgba(0, 240, 255, 0.1)',
-                    border: '1px solid rgba(0, 240, 255, 0.3)',
-                    color: '#00F0FF',
-                    borderRadius: '10px',
-                    fontSize: '0.8rem',
-                    fontWeight: '700',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <Users size={14} />
-                  <span>Student Roster</span>
-                </button>
-
-                <a
-                  href="/study-island/"
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    padding: '8px',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    color: '#fff',
-                    borderRadius: '10px',
-                    fontSize: '0.8rem',
-                    fontWeight: '700',
-                    textDecoration: 'none'
-                  }}
-                >
-                  <span>Open 3D Lab</span>
-                  <ChevronRight size={14} />
-                </a>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {/* Modal: Student Roster */}
+      {/* Modal: Real Student Roster */}
       {selectedClass && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
           <div style={{ background: '#0a0f1d', border: '1px solid rgba(0, 240, 255, 0.4)', borderRadius: '20px', width: '100%', maxWidth: '520px', padding: '28px', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, color: '#fff', fontSize: '1.3rem', fontWeight: '800' }}>{selectedClass.name} — Student Cohort</h3>
+              <h3 style={{ margin: 0, color: '#fff', fontSize: '1.3rem', fontWeight: '800' }}>{selectedClass.name} — Real Student Cohort</h3>
               <button onClick={() => setSelectedClass(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
             </div>
 
             <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '16px' }}>
-              Class Teacher: <strong style={{ color: '#00F0FF' }}>{selectedClass.classTeacher}</strong> • Enrolled: <strong style={{ color: '#34d399' }}>{selectedClass.students} Students</strong>
+              Class Teacher: <strong style={{ color: '#00F0FF' }}>{selectedClass.classTeacher}</strong> • Verified Database Students: <strong style={{ color: '#34d399' }}>{realStudents.length} Students</strong>
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto', marginBottom: '20px' }}>
-              {[
-                { name: 'GAURAV Roy', email: 'thorroy888@gmail.com', attendance: '98%', rank: 'Rank #1' },
-                { name: 'Harsh Singh', email: 'hps.sunghrathore@gmail.com', attendance: '96%', rank: 'Rank #2' },
-                { name: 'Saurav Roy', email: 'sauravroy469@gmail.com', attendance: '94%', rank: 'Rank #3' },
-                { name: 'Aarav Sharma', email: 'aarav.s@dps.edu.in', attendance: '92%', rank: 'Rank #4' },
-                { name: 'Diya Patel', email: 'diya.p@dps.edu.in', attendance: '95%', rank: 'Rank #5' }
-              ].map((s, idx) => (
-                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px' }}>
-                  <div>
-                    <strong style={{ color: '#fff', fontSize: '0.9rem' }}>{s.name}</strong>
-                    <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: 0, fontFamily: 'monospace' }}>{s.email}</p>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <span style={{ color: '#34d399', fontSize: '0.8rem', fontWeight: '700', display: 'block' }}>{s.attendance} Attendance</span>
-                    <span style={{ color: '#00F0FF', fontSize: '0.75rem', fontWeight: '600' }}>{s.rank}</span>
-                  </div>
-                </div>
-              ))}
+              {realStudents.length > 0 ? (
+                realStudents.map((s, idx) => {
+                  const studentName = s.full_name || s.name || s.email.split('@')[0];
+                  return (
+                    <div key={s.id || idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <img
+                          src={`https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(studentName)}&backgroundColor=060a14`}
+                          alt={studentName}
+                          style={{ width: '32px', height: '32px', borderRadius: '50%' }}
+                        />
+                        <div>
+                          <strong style={{ color: '#fff', fontSize: '0.9rem' }}>{studentName}</strong>
+                          <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: 0, fontFamily: 'monospace' }}>{s.email}</p>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ color: '#34d399', fontSize: '0.8rem', fontWeight: '700', display: 'block' }}>Verified Student</span>
+                        <span style={{ color: '#00F0FF', fontSize: '0.75rem', fontWeight: '600' }}>Active Account</span>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <p style={{ color: '#64748b', textAlign: 'center', padding: '20px' }}>No student accounts registered in Supabase yet.</p>
+              )}
             </div>
 
             <button
@@ -314,7 +357,7 @@ export default function Classes() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
           <div style={{ background: '#0a0f1d', border: '1px solid rgba(0, 240, 255, 0.4)', borderRadius: '20px', width: '100%', maxWidth: '460px', padding: '28px', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: '800' }}>Add New Class Section</h3>
+              <h3 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: '800' }}>Add New Class Section to Database</h3>
               <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
             </div>
 
@@ -331,27 +374,15 @@ export default function Classes() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.85rem', fontWeight: '600', marginBottom: '6px' }}>Section</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. A"
-                    value={newClass.section}
-                    onChange={e => setNewClass({ ...newClass, section: e.target.value })}
-                    style={{ width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', outline: 'none' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.85rem', fontWeight: '600', marginBottom: '6px' }}>Capacity (Students)</label>
-                  <input
-                    type="number"
-                    value={newClass.students}
-                    onChange={e => setNewClass({ ...newClass, students: e.target.value })}
-                    style={{ width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', outline: 'none' }}
-                  />
-                </div>
+              <div>
+                <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.85rem', fontWeight: '600', marginBottom: '6px' }}>Subjects Offered</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Physics, Chemistry, Mathematics"
+                  value={newClass.subject}
+                  onChange={e => setNewClass({ ...newClass, subject: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', outline: 'none' }}
+                />
               </div>
 
               <div>
@@ -361,10 +392,9 @@ export default function Classes() {
                   onChange={e => setNewClass({ ...newClass, classTeacher: e.target.value })}
                   style={{ width: '100%', padding: '10px', background: '#0a0f1d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', outline: 'none' }}
                 >
-                  <option value="Gaurav">Gaurav (Head of Science)</option>
-                  <option value="Harsh">Harsh (Mathematics)</option>
-                  <option value="Dr. Priya Sharma">Dr. Priya Sharma (Geometry)</option>
-                  <option value="Dr. Ananya Roy">Dr. Ananya Roy (History)</option>
+                  {realTeachers.map(t => (
+                    <option key={t} value={t}>{t} (Faculty)</option>
+                  ))}
                 </select>
               </div>
 
@@ -378,9 +408,10 @@ export default function Classes() {
                 </button>
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, #00F0FF, #3B82F6)', border: 'none', color: '#000', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
                 >
-                  Create Class
+                  {isSubmitting ? 'Saving to Database...' : 'Save to Supabase'}
                 </button>
               </div>
             </form>

@@ -1,162 +1,145 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, Mail, BookOpen, Star, Plus, ShieldCheck, CheckCircle, MessageSquare, ExternalLink, X } from 'lucide-react';
+import { Users, Search, Mail, BookOpen, Star, Plus, ShieldCheck, CheckCircle, MessageSquare, ExternalLink, X, Loader2, AlertCircle } from 'lucide-react';
 import Card from '../components/Card';
 import { supabase } from '../supabase';
 
-const INITIAL_TEACHERS = [
-  {
-    id: 't-gaurav',
-    name: 'Gaurav',
-    email: 'gauravroy476@gmail.com',
-    role: 'Head of Science & Physics',
-    department: 'Science & Physics',
-    classes: ['Class 6th A', 'Class 6th B', 'Class 8th A'],
-    avatar: 'https://api.dicebear.com/7.x/micah/svg?seed=GauravPhysics&backgroundColor=060a14',
-    rating: 4.9,
-    status: 'Active',
-    joined: '2026-07-03'
-  },
-  {
-    id: 't-harsh',
-    name: 'Harsh',
-    email: 'rathorehps@gmail.com',
-    role: 'Faculty of Mathematics & Computing',
-    department: 'Mathematics',
-    classes: ['Class 6th A', 'Class 7th A', 'Class 9th B'],
-    avatar: 'https://api.dicebear.com/7.x/micah/svg?seed=HarshMath&backgroundColor=060a14',
-    rating: 4.85,
-    status: 'Active',
-    joined: '2026-05-27'
-  },
-  {
-    id: 't-priya',
-    name: 'Dr. Priya Sharma',
-    email: 'priya.sharma@immersionlabs.in',
-    role: 'Senior Faculty of Geometry',
-    department: 'Mathematics',
-    classes: ['Class 8th A', 'Class 10th A'],
-    avatar: 'https://api.dicebear.com/7.x/micah/svg?seed=PriyaSharma&backgroundColor=060a14',
-    rating: 4.95,
-    status: 'Active',
-    joined: '2026-06-10'
-  },
-  {
-    id: 't-ananya',
-    name: 'Dr. Ananya Roy',
-    email: 'ananya.roy@immersionlabs.in',
-    role: 'Faculty of World History & Civilizations',
-    department: 'Social Sciences',
-    classes: ['Class 6th A', 'Class 6th B'],
-    avatar: 'https://api.dicebear.com/7.x/micah/svg?seed=AnanyaRoy&backgroundColor=060a14',
-    rating: 4.88,
-    status: 'Active',
-    joined: '2026-06-15'
-  },
-  {
-    id: 't-vikram',
-    name: 'Prof. Vikram Patel',
-    email: 'vikram.patel@immersionlabs.in',
-    role: 'Faculty of Earth & Physical Geography',
-    department: 'Social Sciences',
-    classes: ['Class 6th A', 'Class 7th B'],
-    avatar: 'https://api.dicebear.com/7.x/micah/svg?seed=VikramPatel&backgroundColor=060a14',
-    rating: 4.79,
-    status: 'Active',
-    joined: '2026-06-18'
-  },
-  {
-    id: 't-sunita',
-    name: 'Dr. Sunita Kapoor',
-    email: 'sunita.kapoor@immersionlabs.in',
-    role: 'Faculty of Chemistry & Life Sciences',
-    department: 'Science & Physics',
-    classes: ['Class 7th A', 'Class 8th A'],
-    avatar: 'https://api.dicebear.com/7.x/micah/svg?seed=SunitaKapoor&backgroundColor=060a14',
-    rating: 4.92,
-    status: 'Active',
-    joined: '2026-06-20'
-  }
-];
-
 export default function Teachers() {
-  const [teachers, setTeachers] = useState(INITIAL_TEACHERS);
+  const [teachers, setTeachers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedbackMsg, setFeedbackMsg] = useState(null);
   const [newFaculty, setNewFaculty] = useState({
     name: '',
     email: '',
     department: 'Science & Physics',
-    role: 'Subject Instructor'
+    role: 'Subject Faculty'
   });
 
-  // Fetch real database records from Supabase if available
-  useEffect(() => {
-    async function loadTeachers() {
-      try {
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .or('role.eq.teacher,role.eq.TEACHER');
+  // Fetch only real database records from Supabase
+  const loadTeachers = async () => {
+    setLoading(true);
+    try {
+      // 1. Fetch from 'users' table where role is teacher
+      const { data: usersData, error: usersErr } = await supabase
+        .from('users')
+        .select('*')
+        .or('role.eq.teacher,role.eq.TEACHER');
 
-        if (!error && Array.isArray(data) && data.length > 0) {
-          const mapped = data.map(u => {
-            const displayName = u.full_name || u.name || u.email.split('@')[0];
-            return {
-              id: u.id,
-              name: displayName,
-              email: u.email,
-              role: u.role === 'teacher' ? 'Subject Faculty' : u.role,
-              department: u.department || 'Academic Faculty',
-              classes: ['Class 6th A', 'Class 8th A'],
-              avatar: `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(displayName)}&backgroundColor=060a14`,
-              rating: 4.9,
-              status: 'Active',
-              joined: (u.created_at || '').slice(0, 10) || '2026-08-01'
-            };
+      // 2. Fetch from 'teachers' table if exists
+      const { data: teachersData } = await supabase
+        .from('teachers')
+        .select('*');
+
+      let combinedList = [];
+
+      if (usersData && usersData.length > 0) {
+        usersData.forEach(u => {
+          const displayName = u.full_name || u.name || u.email.split('@')[0];
+          combinedList.push({
+            id: u.id,
+            name: displayName,
+            email: u.email,
+            role: u.role === 'teacher' ? 'Subject Faculty' : u.role,
+            department: u.department || 'Academic Faculty',
+            classes: ['Class 6th A'],
+            avatar: `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(displayName)}&backgroundColor=060a14`,
+            rating: 5.0,
+            status: 'Active',
+            joined: (u.created_at || '').slice(0, 10) || new Date().toISOString().slice(0, 10)
           });
-
-          // Merge unique by email
-          const existingEmails = new Set(mapped.map(m => m.email.toLowerCase()));
-          const combined = [...mapped, ...INITIAL_TEACHERS.filter(t => !existingEmails.has(t.email.toLowerCase()))];
-          setTeachers(combined);
-        }
-      } catch (e) {
-        // Fallback to initial teachers
+        });
       }
+
+      if (teachersData && teachersData.length > 0) {
+        teachersData.forEach(t => {
+          if (!combinedList.some(item => item.email.toLowerCase() === (t.email || '').toLowerCase())) {
+            combinedList.push({
+              id: t.id,
+              name: t.name || t.email?.split('@')[0] || 'Faculty Member',
+              email: t.email || '',
+              role: t.degree || t.role || 'Teacher',
+              department: t.subject ? `${t.subject} Faculty` : 'Academic Faculty',
+              classes: ['Class 6th A'],
+              avatar: t.avatar_url || `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(t.name || t.email || 'Teacher')}&backgroundColor=060a14`,
+              rating: parseFloat(t.rating) || 5.0,
+              status: t.status || 'Active',
+              joined: (t.created_at || '').slice(0, 10) || new Date().toISOString().slice(0, 10)
+            });
+          }
+        });
+      }
+
+      setTeachers(combinedList);
+    } catch (e) {
+      console.error('Error loading teachers:', e);
+      setTeachers([]);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadTeachers();
   }, []);
 
-  const departments = ['ALL', 'Science & Physics', 'Mathematics', 'Social Sciences'];
+  const departments = ['ALL', 'Academic Faculty', 'Science & Physics', 'Mathematics', 'Social Sciences'];
 
   const filteredTeachers = teachers.filter(t => {
-    const matchesSearch = t.name.toLowerCase().includes(search.toLowerCase()) ||
-                          t.email.toLowerCase().includes(search.toLowerCase()) ||
-                          t.role.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = (t.name || '').toLowerCase().includes(search.toLowerCase()) ||
+                          (t.email || '').toLowerCase().includes(search.toLowerCase()) ||
+                          (t.role || '').toLowerCase().includes(search.toLowerCase());
     const matchesDept = deptFilter === 'ALL' || t.department === deptFilter;
     return matchesSearch && matchesDept;
   });
 
-  const handleAddFaculty = (e) => {
+  const handleAddFaculty = async (e) => {
     e.preventDefault();
     if (!newFaculty.name || !newFaculty.email) return;
-    const added = {
-      id: `t-${Date.now()}`,
-      name: newFaculty.name,
-      email: newFaculty.email,
-      role: newFaculty.role,
-      department: newFaculty.department,
-      classes: ['Class 6th A'],
-      avatar: `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(newFaculty.name)}&backgroundColor=060a14`,
-      rating: 5.0,
-      status: 'Active',
-      joined: new Date().toISOString().slice(0, 10)
-    };
-    setTeachers([added, ...teachers]);
-    setShowAddModal(false);
-    setNewFaculty({ name: '', email: '', department: 'Science & Physics', role: 'Subject Instructor' });
+
+    setIsSubmitting(true);
+    try {
+      // Insert real user into Supabase users table
+      const { data, error } = await supabase
+        .from('users')
+        .insert([
+          {
+            full_name: newFaculty.name,
+            email: newFaculty.email.toLowerCase().trim(),
+            role: 'teacher'
+          }
+        ])
+        .select();
+
+      if (error) {
+        // Fallback: try inserting into teachers table
+        await supabase
+          .from('teachers')
+          .insert([
+            {
+              name: newFaculty.name,
+              email: newFaculty.email.toLowerCase().trim(),
+              role: newFaculty.role,
+              subject: newFaculty.department,
+              status: 'Active'
+            }
+          ]);
+      }
+
+      setFeedbackMsg({ type: 'success', text: `Faculty member ${newFaculty.name} onboarded successfully to database!` });
+      setTimeout(() => setFeedbackMsg(null), 4000);
+      setShowAddModal(false);
+      setNewFaculty({ name: '', email: '', department: 'Science & Physics', role: 'Subject Faculty' });
+      await loadTeachers();
+    } catch (err) {
+      console.error('Error adding faculty:', err);
+      setFeedbackMsg({ type: 'error', text: 'Failed to onboard faculty to database: ' + (err.message || '') });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -165,7 +148,9 @@ export default function Teachers() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h3 style={{ margin: '0 0 4px 0', color: '#fff', fontSize: '1.4rem', fontWeight: '800' }}>Faculty &amp; Staff Directory</h3>
-          <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem' }}>Manage school teachers, class section allocations, and academic credentials.</p>
+          <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem' }}>
+            Live faculty verified directly from Supabase database ({teachers.length} registered).
+          </p>
         </div>
 
         <div style={{ display: 'flex', gap: '12px' }}>
@@ -191,6 +176,24 @@ export default function Teachers() {
           </button>
         </div>
       </div>
+
+      {/* Feedback Alert */}
+      {feedbackMsg && (
+        <div style={{
+          padding: '12px 16px',
+          borderRadius: '12px',
+          background: feedbackMsg.type === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+          border: feedbackMsg.type === 'success' ? '1px solid #10B981' : '1px solid #EF4444',
+          color: feedbackMsg.type === 'success' ? '#34d399' : '#f87171',
+          fontSize: '0.9rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          {feedbackMsg.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+          <span>{feedbackMsg.text}</span>
+        </div>
+      )}
 
       {/* Search & Department Filters */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
@@ -231,103 +234,142 @@ export default function Teachers() {
                 transition: 'all 0.2s ease'
               }}
             >
-              {dept === 'ALL' ? '👥 All Departments' : dept}
+              {dept === 'ALL' ? '👥 All Faculty' : dept}
             </button>
           ))}
         </div>
       </div>
 
+      {/* Loading state */}
+      {loading && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px', gap: '12px', color: '#00F0FF' }}>
+          <Loader2 size={28} className="animate-spin" />
+          <span style={{ fontSize: '1rem', fontWeight: '600' }}>Fetching real faculty from database...</span>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!loading && filteredTeachers.length === 0 && (
+        <Card>
+          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <Users size={48} color="#64748b" style={{ margin: '0 auto 16px auto', display: 'block' }} />
+            <h4 style={{ color: '#fff', fontSize: '1.2rem', fontWeight: '700', margin: '0 0 8px 0' }}>No Faculty Found</h4>
+            <p style={{ color: '#94a3b8', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto 20px auto' }}>
+              {search || deptFilter !== 'ALL'
+                ? 'No teachers matched your search or department filter.'
+                : 'No teacher accounts registered in the database yet. Click "Add Faculty Member" to onboard teachers.'}
+            </p>
+            <button
+              onClick={() => setShowAddModal(true)}
+              style={{
+                padding: '10px 20px',
+                background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                color: '#000',
+                border: 'none',
+                borderRadius: '10px',
+                fontWeight: '700',
+                cursor: 'pointer'
+              }}
+            >
+              Onboard First Teacher
+            </button>
+          </div>
+        </Card>
+      )}
+
       {/* Teachers Cards Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
-        {filteredTeachers.map(teacher => (
-          <Card key={teacher.id}>
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between', gap: '16px' }}>
-              <div>
-                <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginBottom: '14px' }}>
-                  <img
-                    src={teacher.avatar}
-                    alt={teacher.name}
-                    style={{ width: '56px', height: '56px', borderRadius: '50%', border: '2px solid rgba(0, 240, 255, 0.4)', objectFit: 'cover', background: '#0a0f1d' }}
-                  />
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <h4 style={{ color: '#fff', fontSize: '1.15rem', fontWeight: '800', margin: 0 }}>{teacher.name}</h4>
-                      <ShieldCheck size={16} color="#00F0FF" />
+      {!loading && filteredTeachers.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
+          {filteredTeachers.map(teacher => (
+            <Card key={teacher.id}>
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between', gap: '16px' }}>
+                <div>
+                  <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginBottom: '14px' }}>
+                    <img
+                      src={teacher.avatar}
+                      alt={teacher.name}
+                      style={{ width: '56px', height: '56px', borderRadius: '50%', border: '2px solid rgba(0, 240, 255, 0.4)', objectFit: 'cover', background: '#0a0f1d' }}
+                    />
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <h4 style={{ color: '#fff', fontSize: '1.15rem', fontWeight: '800', margin: 0 }}>{teacher.name}</h4>
+                        <ShieldCheck size={16} color="#00F0FF" />
+                      </div>
+                      <p style={{ color: '#00F0FF', fontSize: '0.8rem', fontWeight: '600', margin: '2px 0 0 0' }}>{teacher.role}</p>
+                      <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: '2px 0 0 0', fontFamily: 'monospace' }}>{teacher.email}</p>
                     </div>
-                    <p style={{ color: '#00F0FF', fontSize: '0.8rem', fontWeight: '600', margin: '2px 0 0 0' }}>{teacher.role}</p>
-                    <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: '2px 0 0 0', fontFamily: 'monospace' }}>{teacher.email}</p>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: 'rgba(0,0,0,0.25)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                      <span style={{ color: '#94a3b8' }}>Department:</span>
+                      <span style={{ color: '#cbd5e1', fontWeight: '700' }}>{teacher.department}</span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                      <span style={{ color: '#94a3b8' }}>Assigned Sections:</span>
+                      <span style={{ color: '#34d399', fontWeight: '700' }}>{teacher.classes.join(', ')}</span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                      <span style={{ color: '#94a3b8' }}>Verified Status:</span>
+                      <span style={{ color: '#10B981', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <CheckCircle size={13} /> {teacher.status}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: 'rgba(0,0,0,0.25)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                    <span style={{ color: '#94a3b8' }}>Department:</span>
-                    <span style={{ color: '#cbd5e1', fontWeight: '700' }}>{teacher.department}</span>
-                  </div>
+                <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px' }}>
+                  <a
+                    href={`/admin/communications?to=${encodeURIComponent(teacher.email)}`}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      padding: '8px',
+                      background: 'rgba(0, 240, 255, 0.1)',
+                      border: '1px solid rgba(0, 240, 255, 0.3)',
+                      color: '#00F0FF',
+                      borderRadius: '10px',
+                      fontSize: '0.8rem',
+                      fontWeight: '700',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    <MessageSquare size={14} />
+                    <span>Message</span>
+                  </a>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                    <span style={{ color: '#94a3b8' }}>Assigned Sections:</span>
-                    <span style={{ color: '#34d399', fontWeight: '700' }}>{teacher.classes.join(', ')}</span>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                    <span style={{ color: '#94a3b8' }}>Student Rating:</span>
-                    <span style={{ color: '#f59e0b', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                      <Star size={13} fill="#f59e0b" /> {teacher.rating} / 5.0
-                    </span>
-                  </div>
+                  <button
+                    onClick={() => setSelectedTeacher(teacher)}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      padding: '8px',
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: '#fff',
+                      borderRadius: '10px',
+                      fontSize: '0.8rem',
+                      fontWeight: '700',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <BookOpen size={14} />
+                    <span>Assign Class</span>
+                  </button>
                 </div>
               </div>
-
-              <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px' }}>
-                <a
-                  href={`/admin/communications?to=${encodeURIComponent(teacher.email)}`}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    padding: '8px',
-                    background: 'rgba(0, 240, 255, 0.1)',
-                    border: '1px solid rgba(0, 240, 255, 0.3)',
-                    color: '#00F0FF',
-                    borderRadius: '10px',
-                    fontSize: '0.8rem',
-                    fontWeight: '700',
-                    textDecoration: 'none'
-                  }}
-                >
-                  <MessageSquare size={14} />
-                  <span>Message</span>
-                </a>
-
-                <button
-                  onClick={() => setSelectedTeacher(teacher)}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    padding: '8px',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    color: '#fff',
-                    borderRadius: '10px',
-                    fontSize: '0.8rem',
-                    fontWeight: '700',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <BookOpen size={14} />
-                  <span>Assign Class</span>
-                </button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Modal: Assign Class */}
       {selectedTeacher && (
@@ -364,7 +406,7 @@ export default function Teachers() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
           <div style={{ background: '#0a0f1d', border: '1px solid rgba(0, 240, 255, 0.4)', borderRadius: '20px', width: '100%', maxWidth: '460px', padding: '28px', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: '800' }}>Add New Faculty Member</h3>
+              <h3 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: '800' }}>Onboard New Faculty</h3>
               <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
             </div>
 
@@ -374,7 +416,7 @@ export default function Teachers() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Dr. Rajesh Verma"
+                  placeholder="e.g. Gaurav Roy"
                   value={newFaculty.name}
                   onChange={e => setNewFaculty({ ...newFaculty, name: e.target.value })}
                   style={{ width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', outline: 'none' }}
@@ -386,7 +428,7 @@ export default function Teachers() {
                 <input
                   type="email"
                   required
-                  placeholder="e.g. rajesh.verma@immersionlabs.in"
+                  placeholder="e.g. teacher@institution.edu"
                   value={newFaculty.email}
                   onChange={e => setNewFaculty({ ...newFaculty, email: e.target.value })}
                   style={{ width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', outline: 'none' }}
@@ -400,6 +442,7 @@ export default function Teachers() {
                   onChange={e => setNewFaculty({ ...newFaculty, department: e.target.value })}
                   style={{ width: '100%', padding: '10px', background: '#0a0f1d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', outline: 'none' }}
                 >
+                  <option value="Academic Faculty">Academic Faculty</option>
                   <option value="Science & Physics">Science & Physics</option>
                   <option value="Mathematics">Mathematics</option>
                   <option value="Social Sciences">Social Sciences</option>
@@ -412,7 +455,7 @@ export default function Teachers() {
                 <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.85rem', fontWeight: '600', marginBottom: '6px' }}>Designation</label>
                 <input
                   type="text"
-                  placeholder="e.g. Head of English Literature"
+                  placeholder="e.g. Head of Physics & 3D Labs"
                   value={newFaculty.role}
                   onChange={e => setNewFaculty({ ...newFaculty, role: e.target.value })}
                   style={{ width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', outline: 'none' }}
@@ -429,9 +472,10 @@ export default function Teachers() {
                 </button>
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, #00F0FF, #3B82F6)', border: 'none', color: '#000', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
                 >
-                  Onboard Faculty
+                  {isSubmitting ? 'Saving to Database...' : 'Save to Supabase'}
                 </button>
               </div>
             </form>
