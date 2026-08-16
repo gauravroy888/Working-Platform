@@ -3,8 +3,23 @@ import { Search, Send, ArrowLeft, UserPlus, Trash2, MoreVertical, Users } from '
 import { supabase } from '../supabase';
 import './ChatInterface.css';
 
-export default function ChatInterface({ currentUser, activeTab, selectedClass, isManager, onUnreadCountChange }) {
+export default function ChatInterface({ currentUser: propUser, activeTab, selectedClass, isManager, onUnreadCountChange }) {
+  const [currentUser, setCurrentUser] = useState(() => {
+    if (propUser) return propUser;
+    try {
+      const stored = localStorage.getItem('edtech_user');
+      return stored ? JSON.parse(stored) : { email: 'student@edtech.org', name: 'Student', role: 'student' };
+    } catch (e) {
+      return { email: 'student@edtech.org', name: 'Student', role: 'student' };
+    }
+  });
+
+  useEffect(() => {
+    if (propUser) setCurrentUser(propUser);
+  }, [propUser]);
+
   const [profiles, setProfiles] = useState([]);
+  const [filteredProfiles, setFilteredProfiles] = useState([]);
   const [groups, setGroups] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -176,18 +191,20 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
     
     let filtered = [];
     
-    if (activeTab === 'group') {
+    if (activeTab === 'group' || activeTab === 'groups') {
       filtered = groups.map(g => ({ ...g, isGroup: true }));
     } else {
       filtered = profiles.filter(p => p.email !== currentUser.email);
       if (activeTab === 'students') {
         filtered = filtered.filter(p => p.role === 'student');
       } else if (activeTab === 'staff') {
-        filtered = filtered.filter(p => p.role === 'teacher' || p.role === 'admin');
+        filtered = filtered.filter(p => p.role === 'teacher' || p.role === 'admin' || p.role === 'superadmin' || p.role === 'super_admin');
       } else if (activeTab === 'teachers') {
-        filtered = filtered.filter(p => p.role === 'teacher');
+        filtered = filtered.filter(p => p.role === 'teacher' || p.role === 'admin' || p.role === 'superadmin' || p.role === 'super_admin');
+      } else if (activeTab === 'direct' || activeTab === 'all') {
+        // Direct shows all contacts (teachers, mentors, fellow students)
+        filtered = filtered.filter(p => !p.isGroup);
       } else if (activeTab === 'class_view' || activeTab === 'classes') {
-        // Teacher portal: show both students and groups
         const classStudents = filtered.filter(p => p.role === 'student');
         const classGroups = groups
           .filter(g => !selectedClass || g.class_name === selectedClass)
@@ -197,31 +214,35 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
     }
     
     if (searchQuery) {
-      filtered = filtered.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()) || (p.email && p.email.toLowerCase().includes(searchQuery.toLowerCase())));
+      filtered = filtered.filter(p => (p.name && p.name.toLowerCase().includes(searchQuery.toLowerCase())) || (p.email && p.email.toLowerCase().includes(searchQuery.toLowerCase())));
     }
     
     setFilteredProfiles(filtered);
-  }, [profiles, groups, activeTab, searchQuery, currentUser]);
 
-  // Auto-select contact based on URL search query or default to Gaurav
-  useEffect(() => {
-    if (filteredProfiles.length > 0) {
+    // Auto-select contact
+    if (filtered.length > 0) {
       const params = new URLSearchParams(window.location.search);
       const targetEmail = params.get('email');
       const targetName = params.get('name');
 
       let target = null;
       if (targetEmail) {
-        target = filteredProfiles.find(p => p.email?.toLowerCase() === targetEmail.toLowerCase());
+        target = filtered.find(p => p.email?.toLowerCase() === targetEmail.toLowerCase());
       }
       if (!target && targetName) {
-        target = filteredProfiles.find(p => p.name?.toLowerCase().includes(targetName.toLowerCase()));
+        target = filtered.find(p => p.name?.toLowerCase().includes(targetName.toLowerCase()));
       }
-      if (target) {
-        setActiveContact(target);
-      }
+
+      setActiveContact(current => {
+        if (target) return target;
+        if (!current) return filtered[0];
+        const exists = filtered.find(p => p.isGroup ? p.id === current.id : p.email === current.email);
+        return exists ? current : filtered[0];
+      });
+    } else {
+      setActiveContact(null);
     }
-  }, [filteredProfiles]);
+  }, [profiles, groups, activeTab, searchQuery, currentUser, selectedClass]);
 
   // 2. Fetch or Create Conversation
   useEffect(() => {
@@ -365,23 +386,6 @@ export default function ChatInterface({ currentUser, activeTab, selectedClass, i
   const toggleMemberSelection = (email) => {
     setSelectedMembers(prev => prev.includes(email) ? prev.filter(e => e !== email) : [...prev, email]);
   };
-
-  const filteredProfiles = [
-    ...groups.map(g => ({ ...g, isGroup: true })),
-    ...profiles.filter(p => p.email !== currentUser?.email)
-  ].filter(item => {
-    const name = item.name || item.group_name || '';
-    const email = item.email || '';
-    const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          email.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    if (!matchesSearch) return false;
-    if (activeTab === 'all') return true;
-    if (activeTab === 'teachers') return item.role === 'teacher' && !item.isGroup;
-    if (activeTab === 'students') return item.role === 'student' && !item.isGroup;
-    if (activeTab === 'classes') return item.isGroup;
-    return true;
-  });
 
   return (
     <div className="chat-interface-container">

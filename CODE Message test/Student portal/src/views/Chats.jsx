@@ -6,8 +6,15 @@ import ChatInterface from '../components/ChatInterface';
 import { useLocation } from 'react-router-dom';
 
 export default function Chats() {
-  const [activeTab, setActiveTab] = useState('direct'); 
-  const [currentUser, setCurrentUser] = useState(null);
+  const [activeTab, setActiveTab] = useState('direct');
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const userStr = localStorage.getItem('edtech_user');
+      return userStr ? JSON.parse(userStr) : null;
+    } catch (e) {
+      return null;
+    }
+  });
   const [announcements, setAnnouncements] = useState([]);
   const [unreadCounts, setUnreadCounts] = useState({ direct: 0, teachers: 0 });
   const location = useLocation();
