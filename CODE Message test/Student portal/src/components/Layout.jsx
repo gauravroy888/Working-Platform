@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import './Layout.css';
 import Sidebar from './Sidebar';
+import GlobalBroadcastBanner from './GlobalBroadcastBanner';
 import { useTheme } from '../ThemeContext';
 
 export default function Layout({ children }) {
@@ -25,6 +26,8 @@ export default function Layout({ children }) {
       <Sidebar isOpen={isMobileMenuOpen} closeMenu={() => setIsMobileMenuOpen(false)} />
       
       <main className="main-content">
+        <GlobalBroadcastBanner />
+        
         <header className="top-header">
           <div className="header-left">
             <button className="mobile-menu-btn icon-btn" onClick={toggleMobileMenu}>

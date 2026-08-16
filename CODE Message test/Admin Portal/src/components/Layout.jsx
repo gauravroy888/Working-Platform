@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import GlobalBroadcastBanner from './GlobalBroadcastBanner';
 import { useTheme } from '../ThemeContext';
 import { ExternalLink, ShieldCheck } from 'lucide-react';
 import './Layout.css';
@@ -30,6 +31,8 @@ export default function Layout({ children }) {
       <Sidebar />
       
       <main className="main-content">
+        <GlobalBroadcastBanner />
+
         <header className="top-header">
           <div className="header-brand">
             <h2>{currentTitle}</h2>

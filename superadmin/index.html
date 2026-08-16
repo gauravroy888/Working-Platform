@@ -636,9 +636,22 @@
 
       const handleBroadcast = async (e) => {
         e.preventDefault();
-        if (!announcementText.trim()) return;
+        const trimmedMsg = announcementText.trim();
+        if (!trimmedMsg) return;
 
-        // Write real notification to Supabase — user_email='all' means every portal picks it up
+        const broadcastPayload = {
+          title: 'Platform Announcement',
+          text: trimmedMsg,
+          content: trimmedMsg,
+          message: trimmedMsg,
+          author: CURRENT_SUPER_ADMIN.name,
+          author_name: CURRENT_SUPER_ADMIN.name,
+          author_email: CURRENT_SUPER_ADMIN.email,
+          category: 'Urgent',
+          createdAt: new Date().toISOString()
+        };
+
+        // 1. Write real notification to Supabase (user_email='all')
         try {
           await fetch(`${SUPABASE_CONFIG.url}/rest/v1/notifications`, {
             method: 'POST',
@@ -652,12 +665,12 @@
               user_email: 'all',
               type: 'system',
               title: 'Platform Announcement',
-              message: announcementText.trim(),
+              message: trimmedMsg,
               is_read: false
             })
           });
 
-          // Also insert into announcements table so the Admin dashboard widget picks it up
+          // 2. Also insert into announcements table with complete fields matching all portals
           await fetch(`${SUPABASE_CONFIG.url}/rest/v1/announcements`, {
             method: 'POST',
             headers: {
@@ -666,19 +679,40 @@
               'Content-Type': 'application/json',
               'Prefer': 'return=minimal'
             },
-            body: JSON.stringify({
-              content: announcementText.trim(),
-              author_email: CURRENT_SUPER_ADMIN.email,
-              author_name: CURRENT_SUPER_ADMIN.name
-            })
+            body: JSON.stringify(broadcastPayload)
           });
+
+          // 3. Dispatch instant 0ms BroadcastChannel message across all open tabs/portals
+          if (typeof BroadcastChannel !== 'undefined') {
+            try {
+              const bc = new BroadcastChannel('edtech_platform_sync');
+              bc.postMessage({
+                type: 'BROADCAST_ALERT',
+                title: 'Platform Announcement',
+                message: trimmedMsg,
+                author: CURRENT_SUPER_ADMIN.name,
+                timestamp: Date.now()
+              });
+              bc.close();
+            } catch (bcErr) {}
+          }
+
+          // 4. Save active broadcast locally for instant display
+          localStorage.setItem('edtech_active_broadcast', JSON.stringify({
+            id: `bcast_${Date.now()}`,
+            title: 'Platform Announcement',
+            message: trimmedMsg,
+            author: CURRENT_SUPER_ADMIN.name,
+            timestamp: Date.now()
+          }));
+          window.dispatchEvent(new Event('storage'));
 
           logPlatformIncident({
             severity: 'INFO',
             category: 'COMMUNICATION',
             code: 200,
             title: `Platform Broadcast Sent`,
-            details: `SuperAdmin broadcast: "${announcementText.trim().slice(0, 80)}${announcementText.length > 80 ? '...' : ''}"`,
+            details: `SuperAdmin broadcast: "${trimmedMsg.slice(0, 80)}${trimmedMsg.length > 80 ? '...' : ''}"`,
             source: 'Broadcast Console',
             actor_email: CURRENT_SUPER_ADMIN.email,
             status: 'RESOLVED'
