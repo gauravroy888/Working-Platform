@@ -428,13 +428,30 @@
     camera.position.set(0, 2.5, 13);
     camera.lookAt(1, 0, 0);
 
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(window.IFP_PIXEL_RATIO || Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(window.IFP_PIXEL_RATIO || Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.4;
+
+    // WebGL Hardware crash protection & automatic context recovery
+    renderer.domElement.addEventListener('webglcontextlost', function (event) {
+      event.preventDefault();
+      console.warn('WebGL context lost on display hardware! Pausing loop.');
+      if (sceneAnimationId) {
+        window.cancelAnimationFrame(sceneAnimationId);
+        sceneAnimationId = 0;
+      }
+    }, false);
+
+    renderer.domElement.addEventListener('webglcontextrestored', function () {
+      console.info('WebGL context restored! Auto-rebooting 3D scene.');
+      destroyChapterScene();
+      scheduleChapterSceneBoot();
+    }, false);
+
     container.appendChild(renderer.domElement);
     sceneRenderer = renderer;
     sceneRoot = scene;
@@ -685,10 +702,27 @@
     camera.position.set(0, 30, 45);
     camera.lookAt(0, 0, 0);
 
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
     renderer.setSize(Math.max(container.clientWidth, 1), Math.max(container.clientHeight, 1));
-    renderer.setPixelRatio(window.IFP_PIXEL_RATIO || Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(window.IFP_PIXEL_RATIO || Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.setClearColor(0x050814);
+
+    // WebGL Hardware crash protection & automatic context recovery
+    renderer.domElement.addEventListener('webglcontextlost', function (event) {
+      event.preventDefault();
+      console.warn('Solar System WebGL context lost! Pausing loop.');
+      if (sceneAnimationId) {
+        window.cancelAnimationFrame(sceneAnimationId);
+        sceneAnimationId = 0;
+      }
+    }, false);
+
+    renderer.domElement.addEventListener('webglcontextrestored', function () {
+      console.info('Solar System WebGL context restored! Auto-rebooting scene.');
+      destroyChapterScene();
+      scheduleChapterSceneBoot();
+    }, false);
+
     container.appendChild(renderer.domElement);
     sceneRenderer = renderer;
     sceneRoot = scene;

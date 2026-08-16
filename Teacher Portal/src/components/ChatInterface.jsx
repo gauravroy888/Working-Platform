@@ -3,7 +3,21 @@ import { Search, Send, ArrowLeft, UserPlus, Trash2, MoreVertical, Users } from '
 import { supabase } from '../supabase';
 import './ChatInterface.css';
 
-export default function ChatInterface({ currentUser, activeTab, selectedClass, isManager, onUnreadCountChange }) {
+export default function ChatInterface({ currentUser: propUser, activeTab, selectedClass, isManager, onUnreadCountChange }) {
+  const [currentUser, setCurrentUser] = useState(() => {
+    if (propUser) return propUser;
+    try {
+      const stored = localStorage.getItem('edtech_user');
+      return stored ? JSON.parse(stored) : { email: 'gauravroy476@gmail.com', name: 'Gaurav', role: 'teacher' };
+    } catch (e) {
+      return { email: 'gauravroy476@gmail.com', name: 'Gaurav', role: 'teacher' };
+    }
+  });
+
+  useEffect(() => {
+    if (propUser) setCurrentUser(propUser);
+  }, [propUser]);
+
   const [profiles, setProfiles] = useState([]);
   const [filteredProfiles, setFilteredProfiles] = useState([]);
   const [groups, setGroups] = useState([]);

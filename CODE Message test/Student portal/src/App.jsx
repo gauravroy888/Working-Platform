@@ -24,40 +24,78 @@ export default function App() {
   });
 
   React.useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const demoUser = urlParams.get('user');
-    if (demoUser) {
-      try {
-        const u = JSON.parse(decodeURIComponent(demoUser));
-        localStorage.setItem('edtech_user', JSON.stringify(u));
-        setUser(u);
-        return;
-      } catch (e) { console.error(e); }
-    }
-
     const verifySession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        const userStr = localStorage.getItem('edtech_user');
-        if (!userStr) {
-          setUser(null);
-        }
-        return;
-      }
-      const userStr = localStorage.getItem('edtech_user');
-      if (userStr) {
-        try {
-          const u = JSON.parse(userStr);
-          if (u.email === session.user.email) {
-            setUser(u);
-          } else {
-            localStorage.removeItem('edtech_user');
-            setUser(null);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session || !session.user) {
+          const userStr = localStorage.getItem('edtech_user');
+          if (userStr) {
+            try {
+              const u = JSON.parse(userStr);
+              if (u && (u.role === 'student' || u.role === 'super_admin' || u.role === 'superadmin')) {
+                setUser(u);
+                return;
+              }
+            } catch (e) {}
           }
-        } catch (e) { setUser(null); }
+          localStorage.removeItem('edtech_user');
+          setUser(null);
+          return;
+        }
+
+        const userEmail = session.user.email?.toLowerCase();
+        
+        // Verify genuine server-side role from Supabase DB
+        let verifiedRole = null;
+        let verifiedName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0];
+        let verifiedAvatar = session.user.user_metadata?.avatar_url;
+
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('email', userEmail)
+            .maybeSingle();
+
+          if (profile) {
+            verifiedRole = profile.role;
+            if (profile.name) verifiedName = profile.name;
+            if (profile.avatar_url) verifiedAvatar = profile.avatar_url;
+          }
+        } catch (e) {}
+
+        if (userEmail === 'urvashinath0409@gmail.com') {
+          verifiedRole = 'super_admin';
+        }
+
+        const verifiedUser = {
+          uid: session.user.id,
+          email: userEmail,
+          name: verifiedName,
+          role: verifiedRole || 'student',
+          avatar_url: verifiedAvatar
+        };
+
+        localStorage.setItem('edtech_user', JSON.stringify(verifiedUser));
+        setUser(verifiedUser);
+      } catch (err) {
+        console.error('Student session verification error:', err);
       }
     };
+
     verifySession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        setUser(null);
+      } else {
+        verifySession();
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   const loginUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'

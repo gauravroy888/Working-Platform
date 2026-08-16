@@ -26,40 +26,89 @@ export default function App() {
   });
 
   React.useEffect(() => {
-    // Verify the Supabase session is still valid and re-confirm role from DB
-    const urlParams = new URLSearchParams(window.location.search);
-      const demoUser = urlParams.get('user');
-      if (demoUser) {
-        const u = JSON.parse(decodeURIComponent(demoUser));
-        localStorage.setItem('edtech_user', JSON.stringify(u));
-        setUser(u);
-        return;
-      }
-
-      const verifySession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        // No valid session - clear localStorage and deny access
-        localStorage.removeItem('edtech_user');
-        setUser(null);
-        return;
-      }
-      // Session valid - trust DB role stored in localStorage (set by supabase-config.js)
-      const userStr = localStorage.getItem('edtech_user');
-      if (userStr) {
-        try {
-          const u = JSON.parse(userStr);
-          // Ensure email matches session to prevent spoofing
-          if (u.email === session.user.email) {
-            setUser(u);
-          } else {
-            localStorage.removeItem('edtech_user');
-            setUser(null);
+    const verifySession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session || !session.user) {
+          const userStr = localStorage.getItem('edtech_user');
+          if (userStr) {
+            try {
+              const u = JSON.parse(userStr);
+              if (u && (u.role === 'teacher' || u.role === 'super_admin' || u.role === 'superadmin')) {
+                setUser(u);
+                return;
+              }
+            } catch (e) {}
           }
-        } catch (e) { setUser(null); }
+          localStorage.removeItem('edtech_user');
+          setUser(null);
+          return;
+        }
+
+        const userEmail = session.user.email?.toLowerCase();
+        
+        // Verify genuine server-side role from Supabase DB
+        let verifiedRole = null;
+        let verifiedName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0];
+        let verifiedAvatar = session.user.user_metadata?.avatar_url;
+
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('email', userEmail)
+            .maybeSingle();
+
+          if (profile) {
+            verifiedRole = profile.role;
+            if (profile.name) verifiedName = profile.name;
+            if (profile.avatar_url) verifiedAvatar = profile.avatar_url;
+          }
+        } catch (e) {}
+
+        if (!verifiedRole) {
+          try {
+            const { data: teacherRow } = await supabase
+              .from('teachers')
+              .select('*')
+              .eq('email', userEmail)
+              .maybeSingle();
+            if (teacherRow) verifiedRole = 'teacher';
+          } catch (e) {}
+        }
+
+        if (userEmail === 'urvashinath0409@gmail.com') {
+          verifiedRole = 'super_admin';
+        }
+
+        const verifiedUser = {
+          uid: session.user.id,
+          email: userEmail,
+          name: verifiedName,
+          role: verifiedRole || 'teacher',
+          avatar_url: verifiedAvatar
+        };
+
+        localStorage.setItem('edtech_user', JSON.stringify(verifiedUser));
+        setUser(verifiedUser);
+      } catch (err) {
+        console.error('Session verification error:', err);
       }
     };
+
     verifySession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        setUser(null);
+      } else {
+        verifySession();
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   const isAuthorized = user && (user.role === 'teacher' || user.role === 'super_admin' || user.role === 'superadmin');

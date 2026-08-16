@@ -176,6 +176,18 @@ export default function App() {
     };
 
     verifySession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        setUser(null);
+      } else {
+        verifySession();
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   const loginUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
