@@ -1190,8 +1190,15 @@
           localStorage.setItem('portal_avatar', previewAvatarUrl);
           localStorage.setItem('admin_portal_avatar', previewAvatarUrl);
           localStorage.setItem('student_portal_avatar', previewAvatarUrl);
-          localStorage.setItem('teacher_portal_avatar', previewAvatarUrl);
           if (setCurrentUser) setCurrentUser(updatedUser);
+
+          if (typeof BroadcastChannel !== 'undefined') {
+            try {
+              const bc = new BroadcastChannel('edtech_platform_sync');
+              bc.postMessage({ type: 'AVATAR_UPDATE', avatar_url: previewAvatarUrl, name: adminName });
+              bc.close();
+            } catch (bcErr) {}
+          }
 
           window.dispatchEvent(new Event('storage'));
           onClose();
@@ -1325,6 +1332,14 @@
           localStorage.setItem('student_portal_avatar', finalUrl);
           localStorage.setItem('teacher_portal_avatar', finalUrl);
           if (setCurrentUser) setCurrentUser(updatedUser);
+
+          if (typeof BroadcastChannel !== 'undefined') {
+            try {
+              const bc = new BroadcastChannel('edtech_platform_sync');
+              bc.postMessage({ type: 'AVATAR_UPDATE', avatar_url: finalUrl, name: adminName });
+              bc.close();
+            } catch (bcErr) {}
+          }
 
           window.dispatchEvent(new Event('storage'));
           onClose();

@@ -242,7 +242,15 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
         } catch (e) {}
       }
 
-      // Notify other tabs and components
+      // Notify other tabs and components via Native BroadcastChannel
+      if (typeof BroadcastChannel !== 'undefined') {
+        try {
+          const bc = new BroadcastChannel('edtech_platform_sync');
+          bc.postMessage({ type: 'AVATAR_UPDATE', avatar_url: finalUrl });
+          bc.close();
+        } catch (bcErr) {}
+      }
+
       window.dispatchEvent(new Event('storage'));
       onClose();
     } catch (err) {

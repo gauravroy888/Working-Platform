@@ -35,7 +35,25 @@ export function ThemeProvider({ children }) {
       }
     };
     window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+
+    let channel = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        channel = new BroadcastChannel('edtech_platform_sync');
+        channel.onmessage = (e) => {
+          if (e.data && (e.data.type === 'AVATAR_UPDATE' || e.data.type === 'PROFILE_UPDATE')) {
+            if (e.data.avatar_url) setProfileImage(e.data.avatar_url);
+            if (e.data.name) setProfileName(e.data.name);
+            handleStorage();
+          }
+        };
+      } catch (err) {}
+    }
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      if (channel) channel.close();
+    };
   }, []);
 
   return (

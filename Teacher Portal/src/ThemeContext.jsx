@@ -40,7 +40,7 @@ export function ThemeProvider({ children }) {
     return localStorage.getItem('portal_designation') || 'Faculty / Teacher';
   });
 
-  // Keep name/avatar in sync if edtech_user is updated (e.g. after login redirect)
+  // Keep name/avatar in sync across tabs and portals
   useEffect(() => {
     const sync = () => {
       try {
@@ -49,12 +49,34 @@ export function ThemeProvider({ children }) {
           const u = JSON.parse(userStr);
           if (u.name) setProfileName(u.name);
           if (u.avatar_url) setProfileImage(u.avatar_url);
+        } else {
+          const avatar = localStorage.getItem('portal_avatar');
+          if (avatar) setProfileImage(avatar);
         }
       } catch (e) {}
     };
+
     sync();
     window.addEventListener('storage', sync);
-    return () => window.removeEventListener('storage', sync);
+
+    let channel = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        channel = new BroadcastChannel('edtech_platform_sync');
+        channel.onmessage = (e) => {
+          if (e.data && (e.data.type === 'AVATAR_UPDATE' || e.data.type === 'PROFILE_UPDATE')) {
+            if (e.data.avatar_url) setProfileImage(e.data.avatar_url);
+            if (e.data.name) setProfileName(e.data.name);
+            sync();
+          }
+        };
+      } catch (err) {}
+    }
+
+    return () => {
+      window.removeEventListener('storage', sync);
+      if (channel) channel.close();
+    };
   }, []);
 
   // Persist to localStorage
