@@ -185,16 +185,16 @@ export default function Courses() {
         
         {loading ? (
           <div style={{ padding: '40px', textAlig: 'center', color: '#94a3b8' }}>
-            <Sparkles className="spin" size={24} style={{ marginBottom: '12px', color: '#00F0FF' }} />
+            <Sparkles className="spin" size={24} style={{ marginBottom: '12px', color: 'var(--brand-primary, #00F0FF)' }} />
             <p>Loading assigned courses from Supabase & Cloudflare R2...</p>
           </div>
         ) : (
           <div className="courses-grid">
             {filteredCourses.map(course => (
-              <div key={course.id} className="course-card" style={{ border: '1px solid rgba(0, 240, 255, 0.2)' }}>
+              <div key={course.id} className="course-card" style={{ border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.2))' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span className="course-category" style={{ color: '#00F0FF', fontWeight: '700' }}>{course.subject || 'Science'}</span>
-                  <span style={{ fontSize: '0.75rem', background: 'rgba(0,240,255,0.1)', color: '#00F0FF', padding: '2px 8px', borderRadius: '12px', border: '1px solid rgba(0,240,255,0.3)' }}>
+                  <span className="course-category" style={{ color: 'var(--brand-primary, #00F0FF)', fontWeight: '700' }}>{course.subject || 'Science'}</span>
+                  <span style={{ fontSize: '0.75rem', background: 'var(--brand-glow, rgba(0, 240, 255, 0.1))', color: 'var(--brand-primary, #00F0FF)', padding: '2px 8px', borderRadius: '12px', border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.3))' }}>
                     {course.class_name || 'Class 6th'}
                   </span>
                 </div>
@@ -206,7 +206,7 @@ export default function Courses() {
                 
                 <button 
                   className="btn btn-primary w-100 mt-auto" 
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'linear-gradient(135deg, #00F0FF, #3B82F6)', color: '#000', fontWeight: '700' }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))', color: '#000', fontWeight: '700' }}
                   onClick={() => handleLaunchCourse(course)}
                 >
                   <PlayCircle size={18} /> Launch 3D Experience <ExternalLink size={14} />

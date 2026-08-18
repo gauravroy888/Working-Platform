@@ -97,8 +97,8 @@ export default function LiveClass() {
             padding: '12px 24px',
             borderRadius: '12px',
             border: activeTab === 'active' ? '1px solid rgba(0,240,255,0.4)' : '1px solid rgba(255,255,255,0.1)',
-            background: activeTab === 'active' ? 'linear-gradient(135deg, rgba(0,240,255,0.15), rgba(59,130,246,0.15))' : 'rgba(255,255,255,0.03)',
-            color: activeTab === 'active' ? '#00F0FF' : '#94a3b8',
+            background: activeTab === 'active' ? 'linear-gradient(135deg, var(--brand-glow, rgba(0, 240, 255, 0.15)), var(--brand-secondary, rgba(59, 130, 246, 0.15)))' : 'rgba(255,255,255,0.03)',
+            color: activeTab === 'active' ? 'var(--brand-primary, #00F0FF)' : '#94a3b8',
             fontWeight: '700',
             cursor: 'pointer',
             display: 'flex',
@@ -115,8 +115,8 @@ export default function LiveClass() {
             padding: '12px 24px',
             borderRadius: '12px',
             border: activeTab === 'tests' ? '1px solid rgba(0,240,255,0.4)' : '1px solid rgba(255,255,255,0.1)',
-            background: activeTab === 'tests' ? 'linear-gradient(135deg, rgba(0,240,255,0.15), rgba(59,130,246,0.15))' : 'rgba(255,255,255,0.03)',
-            color: activeTab === 'tests' ? '#00F0FF' : '#94a3b8',
+            background: activeTab === 'tests' ? 'linear-gradient(135deg, var(--brand-glow, rgba(0, 240, 255, 0.15)), var(--brand-secondary, rgba(59, 130, 246, 0.15)))' : 'rgba(255,255,255,0.03)',
+            color: activeTab === 'tests' ? 'var(--brand-primary, #00F0FF)' : '#94a3b8',
             fontWeight: '700',
             cursor: 'pointer',
             display: 'flex',
@@ -140,7 +140,7 @@ export default function LiveClass() {
                 </span>
               </div>
               {activeLiveClass && (
-                <span style={{ color: '#00F0FF', fontWeight: '600', fontSize: '0.85rem' }}>{activeLiveClass.class_name}</span>
+                <span style={{ color: 'var(--brand-primary, #00F0FF)', fontWeight: '600', fontSize: '0.85rem' }}>{activeLiveClass.class_name}</span>
               )}
             </div>
 
@@ -157,7 +157,7 @@ export default function LiveClass() {
                   target="_blank"
                   rel="noreferrer"
                   style={{
-                    background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                    background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
                     color: '#000',
                     fontWeight: '700',
                     padding: '14px 28px',
@@ -166,7 +166,7 @@ export default function LiveClass() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
-                    boxShadow: '0 0 25px rgba(0, 240, 255, 0.4)'
+                    boxShadow: '0 0 25px var(--brand-glow, rgba(0, 240, 255, 0.4))'
                   }}
                 >
                   <Video size={20} /> Join Live Class
@@ -192,7 +192,7 @@ export default function LiveClass() {
                         {c.class_name} • {new Date(c.start_time).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
                       </p>
                     </div>
-                    <span style={{ color: '#00F0FF', fontSize: '0.85rem', fontWeight: '600' }}>Scheduled</span>
+                    <span style={{ color: 'var(--brand-primary, #00F0FF)', fontSize: '0.85rem', fontWeight: '600' }}>Scheduled</span>
                   </div>
                 ))}
               </div>
@@ -208,7 +208,7 @@ export default function LiveClass() {
               <h3 style={{ margin: '0 0 4px 0', color: 'white', fontSize: '1.3rem', fontWeight: '800' }}>Assigned Tests & Assessments</h3>
               <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem' }}>Complete quizzes and exams to earn XP and build subject mastery.</p>
             </div>
-            <span style={{ padding: '6px 16px', borderRadius: '12px', background: 'rgba(0, 240, 255, 0.1)', color: '#00F0FF', fontWeight: '700', fontSize: '0.85rem' }}>
+            <span style={{ padding: '6px 16px', borderRadius: '12px', background: 'var(--brand-glow, rgba(0, 240, 255, 0.1))', color: 'var(--brand-primary, #00F0FF)', fontWeight: '700', fontSize: '0.85rem' }}>
               {testsList.length} Active Tests
             </span>
           </div>
@@ -233,7 +233,7 @@ export default function LiveClass() {
                   }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                        <span style={{ padding: '2px 8px', borderRadius: '6px', background: 'rgba(0,240,255,0.15)', color: '#00F0FF', fontSize: '0.75rem', fontWeight: '700' }}>
+                        <span style={{ padding: '2px 8px', borderRadius: '6px', background: 'var(--brand-glow, rgba(0, 240, 255, 0.15))', color: 'var(--brand-primary, #00F0FF)', fontSize: '0.75rem', fontWeight: '700' }}>
                           {test.type ? test.type.toUpperCase() : 'QUIZ'}
                         </span>
                         <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
@@ -271,7 +271,7 @@ export default function LiveClass() {
                         <button
                           onClick={() => setRunningTest(test)}
                           style={{
-                            background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                            background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
                             color: '#000',
                             fontWeight: '700',
                             border: 'none',
@@ -281,7 +281,7 @@ export default function LiveClass() {
                             display: 'flex',
                             alignItems: 'center',
                             gap: '6px',
-                            boxShadow: '0 0 15px rgba(0, 240, 255, 0.3)'
+                            boxShadow: '0 0 15px var(--brand-glow, rgba(0, 240, 255, 0.3))'
                           }}
                         >
                           <Play size={16} /> Start Test

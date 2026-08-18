@@ -115,9 +115,9 @@ export default function Analytics() {
               style={{
                 padding: '8px 16px',
                 borderRadius: '10px',
-                border: timeRange === r ? '1px solid #00F0FF' : '1px solid rgba(255,255,255,0.08)',
-                background: timeRange === r ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255,255,255,0.03)',
-                color: timeRange === r ? '#00F0FF' : '#94a3b8',
+                border: timeRange === r ? '1px solid var(--brand-primary, #00F0FF)' : '1px solid rgba(255,255,255,0.08)',
+                background: timeRange === r ? 'var(--brand-glow, rgba(0, 240, 255, 0.15))' : 'rgba(255,255,255,0.03)',
+                color: timeRange === r ? 'var(--brand-primary, #00F0FF)' : '#94a3b8',
                 fontWeight: '700',
                 fontSize: '0.85rem',
                 cursor: 'pointer',
@@ -146,9 +146,9 @@ export default function Analytics() {
         <Card>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: '700' }}>VERIFIED FACULTY</span>
-            <span style={{ color: '#00F0FF', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center' }}>Database <ArrowUpRight size={14} /></span>
+            <span style={{ color: 'var(--brand-primary, #00F0FF)', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center' }}>Database <ArrowUpRight size={14} /></span>
           </div>
-          <h4 style={{ color: '#00F0FF', fontSize: '1.8rem', fontWeight: '800', margin: '6px 0 0 0', fontFamily: 'monospace' }}>
+          <h4 style={{ color: 'var(--brand-primary, #00F0FF)', fontSize: '1.8rem', fontWeight: '800', margin: '6px 0 0 0', fontFamily: 'monospace' }}>
             {loading ? '-' : counts.faculty}
           </h4>
           <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Active teacher user records</span>
@@ -170,7 +170,7 @@ export default function Analytics() {
             <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: '700' }}>INSTITUTIONAL GRADES</span>
             <span style={{ color: '#34d399', fontSize: '0.75rem', fontWeight: '700' }}>Configured</span>
           </div>
-          <h4 style={{ color: '#3B82F6', fontSize: '1.8rem', fontWeight: '800', margin: '6px 0 0 0', fontFamily: 'monospace' }}>
+          <h4 style={{ color: 'var(--brand-secondary, #3B82F6)', fontSize: '1.8rem', fontWeight: '800', margin: '6px 0 0 0', fontFamily: 'monospace' }}>
             {loading ? '-' : counts.classes}
           </h4>
           <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Classes in Database</span>
@@ -179,7 +179,7 @@ export default function Analytics() {
 
       {/* Loading state */}
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px', gap: '12px', color: '#00F0FF' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px', gap: '12px', color: 'var(--brand-primary, #00F0FF)' }}>
           <Loader2 size={28} className="animate-spin" />
           <span style={{ fontSize: '1rem', fontWeight: '600' }}>Aggregating analytics from database...</span>
         </div>
@@ -194,7 +194,7 @@ export default function Analytics() {
                   <h4 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>Attendance Trajectory (% Over Time)</h4>
                   <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: '2px 0 0 0' }}>Students vs Faculty presence</p>
                 </div>
-                <span style={{ padding: '4px 10px', borderRadius: '8px', background: 'rgba(0, 240, 255, 0.1)', color: '#00F0FF', fontSize: '0.75rem', fontWeight: '700' }}>Live</span>
+                <span style={{ padding: '4px 10px', borderRadius: '8px', background: 'var(--brand-glow, rgba(0, 240, 255, 0.1))', color: 'var(--brand-primary, #00F0FF)', fontSize: '0.75rem', fontWeight: '700' }}>Live</span>
               </div>
 
               <div style={{ width: '100%', height: '240px' }}>
@@ -202,8 +202,8 @@ export default function Analytics() {
                   <AreaChart data={attendanceTrend}>
                     <defs>
                       <linearGradient id="studentGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#00F0FF" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="#00F0FF" stopOpacity={0}/>
+                        <stop offset="5%" stopcolor="var(--brand-primary, #00F0FF)" stopOpacity={0.4}/>
+                        <stop offset="95%" stopcolor="var(--brand-primary, #00F0FF)" stopOpacity={0}/>
                       </linearGradient>
                       <linearGradient id="facultyGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#10B981" stopOpacity={0.4}/>
@@ -213,8 +213,8 @@ export default function Analytics() {
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                     <XAxis dataKey="month" stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 12 }} />
                     <YAxis domain={[80, 100]} stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                    <Tooltip contentStyle={{ background: '#0a0f1d', border: '1px solid rgba(0, 240, 255, 0.4)', borderRadius: '8px', color: '#fff' }} />
-                    <Area type="monotone" dataKey="students" stroke="#00F0FF" strokeWidth={2} fillOpacity={1} fill="url(#studentGrad)" name="Students (%)" />
+                    <Tooltip contentStyle={{ background: '#0a0f1d', border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.4))', borderRadius: '8px', color: '#fff' }} />
+                    <Area type="monotone" dataKey="students" stroke="var(--brand-primary, #00F0FF)" strokeWidth={2} fillOpacity={1} fill="url(#studentGrad)" name="Students (%)" />
                     <Area type="monotone" dataKey="faculty" stroke="#10B981" strokeWidth={2} fillOpacity={1} fill="url(#facultyGrad)" name="Faculty (%)" />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -228,7 +228,7 @@ export default function Analytics() {
                   <h4 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>Grade Benchmark &amp; Syllabus Completion</h4>
                   <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: '2px 0 0 0' }}>Real class benchmarks from database</p>
                 </div>
-                <span style={{ padding: '4px 10px', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6', fontSize: '0.75rem', fontWeight: '700' }}>Database</span>
+                <span style={{ padding: '4px 10px', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--brand-secondary, #3B82F6)', fontSize: '0.75rem', fontWeight: '700' }}>Database</span>
               </div>
 
               <div style={{ width: '100%', height: '240px' }}>
@@ -238,8 +238,8 @@ export default function Analytics() {
                     <XAxis dataKey="grade" stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 11 }} />
                     <YAxis domain={[0, 100]} stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 12 }} />
                     <Tooltip contentStyle={{ background: '#0a0f1d', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '8px', color: '#fff' }} />
-                    <Bar dataKey="avgScore" fill="#00F0FF" radius={[6, 6, 0, 0]} name="Avg Score (%)" />
-                    <Bar dataKey="completion" fill="#3B82F6" radius={[6, 6, 0, 0]} name="Syllabus %" />
+                    <Bar dataKey="avgScore" fill="var(--brand-primary, #00F0FF)" radius={[6, 6, 0, 0]} name="Avg Score (%)" />
+                    <Bar dataKey="completion" fill="var(--brand-secondary, #3B82F6)" radius={[6, 6, 0, 0]} name="Syllabus %" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -261,7 +261,7 @@ export default function Analytics() {
                 <div key={idx}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '6px' }}>
                     <span style={{ color: '#fff', fontWeight: '600' }}>{subj.subject}</span>
-                    <span style={{ color: '#00F0FF', fontWeight: '700', fontFamily: 'monospace' }}>
+                    <span style={{ color: 'var(--brand-primary, #00F0FF)', fontWeight: '700', fontFamily: 'monospace' }}>
                       {subj.score}% <span style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 'normal' }}>(Benchmark: {subj.benchmark}%)</span>
                     </span>
                   </div>

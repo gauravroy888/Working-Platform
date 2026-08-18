@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Megaphone, X, BellRing } from 'lucide-react';
+import { Megaphone, X, BellRing, Sparkles } from 'lucide-react';
 import { supabase } from '../supabase';
 
 export default function GlobalBroadcastBanner() {
@@ -14,16 +14,18 @@ export default function GlobalBroadcastBanner() {
         if (stored) {
           const parsed = JSON.parse(stored);
           const dismissedId = localStorage.getItem('edtech_dismissed_broadcast');
-          const isFresh = parsed.timestamp && (Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000);
+          const isFresh = parsed.timestamp && (Date.now() - parsed.timestamp < 48 * 60 * 60 * 1000);
           if (isFresh && dismissedId !== (parsed.id || parsed.timestamp?.toString())) {
             setBroadcast(parsed);
             setVisible(true);
+            return true;
           }
         }
       } catch (e) {}
+      return false;
     };
 
-    checkLocalBroadcast();
+    const hasLocal = checkLocalBroadcast();
 
     // 2. Fetch latest announcement from Supabase
     const fetchLatestAnnouncement = async () => {
@@ -37,15 +39,14 @@ export default function GlobalBroadcastBanner() {
         if (data && data.length > 0) {
           const latest = data[0];
           const latestTime = new Date(latest.createdAt || latest.created_at || Date.now()).getTime();
-          const isFresh = Date.now() - latestTime < 24 * 60 * 60 * 1000;
           const dismissedId = localStorage.getItem('edtech_dismissed_broadcast');
           const broadcastId = latest.id?.toString() || latestTime.toString();
 
-          if (isFresh && dismissedId !== broadcastId) {
+          if (dismissedId !== broadcastId) {
             setBroadcast({
               id: broadcastId,
               title: latest.title || 'Platform Announcement',
-              message: latest.text || latest.content || latest.message || 'Important update from administration.',
+              message: latest.text || latest.content || latest.message || 'Important platform broadcast from administration.',
               author: latest.author || latest.author_name || 'SuperAdmin'
             });
             setVisible(true);
@@ -56,7 +57,9 @@ export default function GlobalBroadcastBanner() {
       }
     };
 
-    fetchLatestAnnouncement();
+    if (!hasLocal) {
+      fetchLatestAnnouncement();
+    }
 
     // 3. Listen on native BroadcastChannel for instant 0ms cross-tab notification
     let bc = null;
@@ -78,8 +81,8 @@ export default function GlobalBroadcastBanner() {
       } catch (e) {}
     }
 
-    // 4. Supabase Realtime subscription
-    const subscription = supabase.channel('portal_broadcast_listener')
+    // 4. Supabase Realtime subscription on announcements
+    const subscription = supabase.channel('teacher_global_broadcast_listener')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements' }, (payload) => {
         if (payload.new) {
           setBroadcast({
@@ -91,11 +94,26 @@ export default function GlobalBroadcastBanner() {
           setVisible(true);
         }
       })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
+        if (payload.new && (payload.new.user_email === 'all' || payload.new.type === 'system')) {
+          setBroadcast({
+            id: payload.new.id?.toString() || Date.now().toString(),
+            title: payload.new.title || 'Platform Announcement',
+            message: payload.new.message || '',
+            author: 'SuperAdmin'
+          });
+          setVisible(true);
+        }
+      })
       .subscribe();
+
+    const handleStorageChange = () => checkLocalBroadcast();
+    window.addEventListener('storage', handleStorageChange);
 
     return () => {
       if (bc) bc.close();
       supabase.removeChannel(subscription);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
@@ -111,50 +129,61 @@ export default function GlobalBroadcastBanner() {
   return (
     <div 
       style={{
-        background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(59, 130, 246, 0.25), rgba(0, 240, 255, 0.25))',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid rgba(168, 85, 247, 0.5)',
-        boxShadow: '0 4px 20px rgba(168, 85, 247, 0.3)',
-        borderRadius: '14px',
-        margin: '12px 16px 0 16px',
-        padding: '12px 18px',
+        background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(239, 68, 68, 0.25), rgba(13, 20, 36, 0.98))',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '2px solid rgba(168, 85, 247, 0.8)',
+        boxShadow: '0 0 35px rgba(168, 85, 247, 0.5), inset 0 0 15px rgba(239, 68, 68, 0.2)',
+        borderRadius: '16px',
+        margin: '0 0 20px 0',
+        padding: '14px 22px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '14px',
+        gap: '16px',
         color: '#fff',
-        zIndex: 9999,
-        animation: 'slideDown 0.3s ease-out'
+        zIndex: 99999,
+        animation: 'slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0 }}>
         <div 
           style={{ 
-            width: '36px', 
-            height: '36px', 
-            borderRadius: '10px', 
-            background: 'rgba(168, 85, 247, 0.35)', 
-            border: '1px solid rgba(168, 85, 247, 0.6)',
+            width: '44px', 
+            height: '44px', 
+            borderRadius: '12px', 
+            background: 'linear-gradient(135deg, #a855f7, #ef4444)', 
+            border: '2px solid #ffffff',
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
-            color: '#c084fc',
-            flexShrink: 0
+            color: '#fff',
+            flexShrink: 0,
+            boxShadow: '0 0 18px rgba(239, 68, 68, 0.6)'
           }}
         >
-          <Megaphone size={20} />
+          <Megaphone size={24} />
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', background: '#a855f7', color: '#000', padding: '2px 8px', borderRadius: '6px' }}>
-              OFFICIAL BROADCAST
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <span style={{ 
+              fontSize: '11px', 
+              fontWeight: '900', 
+              textTransform: 'uppercase', 
+              letterSpacing: '0.8px', 
+              background: '#ef4444', 
+              color: '#ffffff', 
+              padding: '3px 10px', 
+              borderRadius: '6px',
+              boxShadow: '0 0 12px rgba(239, 68, 68, 0.7)'
+            }}>
+              🔴 OFFICIAL BROADCAST ALERT
             </span>
-            <span style={{ fontSize: '12px', color: '#cbd5e1', fontWeight: '600' }}>
+            <span style={{ fontSize: '13px', color: '#e9d5ff', fontWeight: '700' }}>
               From: {broadcast.author}
             </span>
           </div>
-          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#f8fafc', fontWeight: '500', lineHeight: '1.4', wordBreak: 'break-word' }}>
+          <p style={{ margin: '6px 0 0 0', fontSize: '14px', color: '#ffffff', fontWeight: '600', lineHeight: '1.45', wordBreak: 'break-word' }}>
             {broadcast.message}
           </p>
         </div>
@@ -163,20 +192,21 @@ export default function GlobalBroadcastBanner() {
       <button
         onClick={handleDismiss}
         style={{
-          background: 'rgba(255, 255, 255, 0.1)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          borderRadius: '8px',
-          color: '#cbd5e1',
+          background: 'rgba(255, 255, 255, 0.15)',
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+          borderRadius: '10px',
+          color: '#ffffff',
           cursor: 'pointer',
-          padding: '6px',
+          padding: '8px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          transition: 'all 0.2s'
+          transition: 'all 0.2s',
+          flexShrink: 0
         }}
         title="Dismiss Alert"
       >
-        <X size={18} />
+        <X size={20} />
       </button>
     </div>
   );

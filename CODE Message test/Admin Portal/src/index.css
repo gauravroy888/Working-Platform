@@ -1,13 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
+  --brand-primary: #00F0FF;
+  --brand-secondary: #3B82F6;
+  --brand-glow: rgba(0, 240, 255, 0.4);
+  --brand-border: rgba(0, 240, 255, 0.35);
+
   --bg-dark: #060a14;
   --panel-bg: rgba(13, 20, 36, 0.75);
-  --panel-border: rgba(0, 240, 255, 0.15);
+  --panel-border: var(--brand-border);
   --text-primary: #FFFFFF;
   --text-secondary: #94A3B8;
-  --accent-cyan: #00F0FF;
-  --accent-blue: #3B82F6;
+  --accent-cyan: var(--brand-primary);
+  --accent-blue: var(--brand-secondary);
   --font-main: 'Inter', sans-serif;
 }
 
@@ -52,15 +57,15 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #00F0FF, #3B82F6);
-  color: #050B14;
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.35);
-  font-weight: 700;
+  background: linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6)) !important;
+  color: #000 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 20px var(--brand-glow, rgba(0, 240, 255, 0.4)) !important;
 }
 
 .btn-primary:hover {
+  box-shadow: 0 0 30px var(--brand-glow, rgba(0, 240, 255, 0.6)) !important;
   transform: translateY(-1px);
-  box-shadow: 0 0 28px rgba(0, 240, 255, 0.6);
 }
 
 .btn-ghost {

@@ -193,7 +193,7 @@ export default function TestRunnerModal({ test, onClose, onComplete }) {
 
             <div className="test-nav-stepper">
               <span style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '600' }}>
-                Question <strong style={{ color: '#00F0FF' }}>{currentIdx + 1}</strong> of {questions.length}
+                Question <strong style={{ color: 'var(--brand-primary, #00F0FF)' }}>{currentIdx + 1}</strong> of {questions.length}
               </span>
               <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
                 Answered: <strong style={{ color: '#10B981' }}>{answeredCount}</strong> / {questions.length}
@@ -278,7 +278,7 @@ export default function TestRunnerModal({ test, onClose, onComplete }) {
           /* Completion & Score Screen */
           <div className="test-results-view animate-fade-in">
             <div className="results-badge-icon">
-              <Award size={64} color="#00F0FF" />
+              <Award size={64} color="var(--brand-primary, #00F0FF)" />
             </div>
 
             <h2 style={{ fontSize: '2rem', fontWeight: '800', margin: '0 0 8px 0', color: 'white' }}>
@@ -301,7 +301,7 @@ export default function TestRunnerModal({ test, onClose, onComplete }) {
                 </div>
                 <div className="breakdown-row">
                   <span style={{ color: '#94a3b8' }}>Time Taken:</span>
-                  <strong style={{ color: '#00F0FF' }}>{formatTime((parseInt(test.duration) || 15) * 60 - timeLeft)}</strong>
+                  <strong style={{ color: 'var(--brand-primary, #00F0FF)' }}>{formatTime((parseInt(test.duration) || 15) * 60 - timeLeft)}</strong>
                 </div>
                 <div className="breakdown-row">
                   <span style={{ color: '#94a3b8' }}>Status:</span>

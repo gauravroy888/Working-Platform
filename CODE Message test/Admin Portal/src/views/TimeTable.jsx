@@ -72,7 +72,7 @@ export default function TimeTable() {
     ];
 
     const dayIndex = DAYS.indexOf(selectedDay);
-    const colors = ['#00F0FF', '#3B82F6', '#A855F7', '#10B981', '#F59E0B', '#EC4899'];
+    const colors = ['var(--brand-primary, #00F0FF)', 'var(--brand-secondary, #3B82F6)', '#A855F7', '#10B981', '#F59E0B', '#EC4899'];
 
     return timeSlots.map((time, idx) => {
       const subjectIndex = (dayIndex * 2 + idx) % (realSubjects.length || 1);
@@ -134,7 +134,7 @@ export default function TimeTable() {
 
       {/* Loading state */}
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px', gap: '12px', color: '#00F0FF' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px', gap: '12px', color: 'var(--brand-primary, #00F0FF)' }}>
           <Loader2 size={28} className="animate-spin" />
           <span style={{ fontSize: '1rem', fontWeight: '600' }}>Syncing timetable from database...</span>
         </div>
@@ -151,8 +151,8 @@ export default function TimeTable() {
                   padding: '8px 14px',
                   borderRadius: '10px',
                   background: '#0a0f1d',
-                  border: '1px solid rgba(0, 240, 255, 0.4)',
-                  color: '#00F0FF',
+                  border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.4))',
+                  color: 'var(--brand-primary, #00F0FF)',
                   fontWeight: '700',
                   fontSize: '0.9rem',
                   outline: 'none',
@@ -173,9 +173,9 @@ export default function TimeTable() {
                   style={{
                     padding: '8px 16px',
                     borderRadius: '10px',
-                    border: selectedDay === day ? '1px solid #00F0FF' : '1px solid rgba(255,255,255,0.08)',
-                    background: selectedDay === day ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255,255,255,0.03)',
-                    color: selectedDay === day ? '#00F0FF' : '#94a3b8',
+                    border: selectedDay === day ? '1px solid var(--brand-primary, #00F0FF)' : '1px solid rgba(255,255,255,0.08)',
+                    background: selectedDay === day ? 'var(--brand-glow, rgba(0, 240, 255, 0.15))' : 'rgba(255,255,255,0.03)',
+                    color: selectedDay === day ? 'var(--brand-primary, #00F0FF)' : '#94a3b8',
                     fontWeight: '700',
                     fontSize: '0.85rem',
                     cursor: 'pointer',
@@ -224,7 +224,7 @@ export default function TimeTable() {
                     <h4 style={{ color: '#fff', fontSize: '1.15rem', fontWeight: '700', margin: '0 0 6px 0' }}>
                       {slot.subject}
                     </h4>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#00F0FF', fontSize: '0.85rem', fontWeight: '600' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--brand-primary, #00F0FF)', fontSize: '0.85rem', fontWeight: '600' }}>
                       <Clock size={14} />
                       <span>{slot.time}</span>
                     </div>

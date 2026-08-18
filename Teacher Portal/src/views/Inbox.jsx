@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Card from '../components/Card';
 import { Search, Users, Shield, Megaphone, BookOpen, Settings } from 'lucide-react';
 import { supabase } from '../supabase';
@@ -11,6 +11,10 @@ export default function Inbox() {
   const [currentUser, setCurrentUser] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
   const [unreadCounts, setUnreadCounts] = useState({ students: 0, staff: 0 });
+  // Bug 3 fix: stable callback reference so ChatInterface's effect dep doesn't re-fire on every render
+  const handleUnreadCountChange = useCallback((counts) => {
+    setUnreadCounts(counts);
+  }, []);
   const [lastViewedAnnouncements, setLastViewedAnnouncements] = useState(() => {
     return parseInt(localStorage.getItem('teacher_last_announcements_view') || '0', 10);
   });
@@ -91,7 +95,7 @@ export default function Inbox() {
               style={{
                 display: 'flex', alignItems: 'center', gap: '8px',
                 padding: '8px 20px', borderRadius: '25px', border: 'none',
-                background: activeTab === 'groups' ? 'var(--accent-purple)' : 'transparent',
+                background: activeTab === 'groups' ? '#0EA5E9' : 'transparent',
                 color: activeTab === 'groups' ? '#fff' : 'var(--text-secondary)',
                 cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s', position: 'relative'
               }}
@@ -159,8 +163,12 @@ export default function Inbox() {
                     {ann.createdAt ? new Date(ann.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'Just now'}
                   </span>
                 </div>
-                <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '14px', lineHeight: '1.5' }}>{ann.text}</p>
-                <div style={{ marginTop: '10px', fontSize: '12px', color: 'var(--text-secondary)' }}>Posted by: {ann.author}</div>
+                <p style={{ color: '#f1f5f9', margin: 0, fontSize: '14px', lineHeight: '1.5', fontWeight: '500' }}>
+                  {ann.text || ann.content || ann.message || 'Platform announcement.'}
+                </p>
+                <div style={{ marginTop: '10px', fontSize: '12px', color: '#c084fc', fontWeight: '600' }}>
+                  Posted by: {ann.author || ann.author_name || 'SuperAdmin'}
+                </div>
               </div>
             )) : (
               <div style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '40px' }}>No announcements yet.</div>
@@ -195,7 +203,7 @@ export default function Inbox() {
                   activeTab="class_view" 
                   selectedClass={selectedClass}
                   isManager={true}
-                  onUnreadCountChange={setUnreadCounts}
+                  onUnreadCountChange={handleUnreadCountChange}
                 />
               ) : (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
@@ -212,7 +220,7 @@ export default function Inbox() {
             activeTab={activeTab}
             selectedClass={selectedClass}
             isManager={true}
-            onUnreadCountChange={setUnreadCounts} 
+            onUnreadCountChange={handleUnreadCountChange} 
           />
         )}
       </Card>

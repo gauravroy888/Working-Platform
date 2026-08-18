@@ -60,8 +60,8 @@
 
 .comm-tab-pill.active {
   background: linear-gradient(135deg, rgba(0, 240, 255, 0.18), rgba(59, 130, 246, 0.18));
-  color: #00F0FF;
-  border-color: rgba(0, 240, 255, 0.4);
+  color: var(--brand-primary, #00F0FF);
+  border-color: var(--brand-border, rgba(0, 240, 255, 0.4));
   box-shadow: 0 0 16px rgba(0, 240, 255, 0.25);
 }
 
@@ -138,7 +138,7 @@
   padding: 3px 8px;
   border-radius: 6px;
   background: rgba(0, 240, 255, 0.1);
-  color: #00F0FF;
+  color: var(--brand-primary, #00F0FF);
   border: 1px solid rgba(0, 240, 255, 0.2);
   font-weight: 600;
 }
@@ -146,7 +146,7 @@
 .announcement-card {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-left: 4px solid #00F0FF;
+  border-left: 4px solid var(--brand-primary, #00F0FF);
   padding: 18px 20px;
   border-radius: 12px;
   transition: all 0.2s ease;
@@ -155,7 +155,7 @@
 
 .announcement-card:hover {
   background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(0, 240, 255, 0.3);
+  border-color: var(--brand-border, rgba(0, 240, 255, 0.3));
   transform: translateX(2px);
 }
 
@@ -262,7 +262,7 @@
 .broadcast-field input:focus,
 .broadcast-field textarea:focus,
 .broadcast-field select:focus {
-  border-color: #00F0FF;
+  border-color: var(--brand-primary, #00F0FF);
   box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
 }
 
@@ -272,7 +272,7 @@
 }
 
 .broadcast-submit-btn {
-  background: linear-gradient(135deg, #00F0FF, #3B82F6);
+  background: linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6));
   color: #050B14;
   border: none;
   padding: 12px 20px;

@@ -96,7 +96,7 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
     // Draw border
     ctx.beginPath();
     ctx.arc(size / 2, size / 2, size / 2 - 4, 0, Math.PI * 2);
-    ctx.strokeStyle = '#00F0FF';
+    ctx.strokeStyle = 'var(--brand-primary, #00F0FF)';
     ctx.lineWidth = 3;
     ctx.stroke();
   };
@@ -309,7 +309,7 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
     padding: '8px 12px',
     borderRadius: '8px',
     background: 'rgba(255, 255, 255, 0.05)',
-    border: '1px solid rgba(0, 240, 255, 0.2)',
+    border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.2))',
     color: 'white',
     outline: 'none',
     cursor: 'pointer',
@@ -330,7 +330,7 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
     }}>
       <div style={{
         background: '#0a0f1d',
-        border: '1px solid rgba(0, 240, 255, 0.25)',
+        border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.25))',
         borderRadius: '20px',
         width: '100%',
         maxWidth: '620px',
@@ -384,9 +384,9 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
               flex: 1,
               padding: '10px 16px',
               borderRadius: '10px',
-              border: activeTab === 'avatar' ? '1px solid #00F0FF' : '1px solid rgba(255,255,255,0.08)',
-              background: activeTab === 'avatar' ? 'rgba(0, 240, 255, 0.15)' : 'transparent',
-              color: activeTab === 'avatar' ? '#00F0FF' : '#94a3b8',
+              border: activeTab === 'avatar' ? '1px solid var(--brand-primary, #00F0FF)' : '1px solid rgba(255,255,255,0.08)',
+              background: activeTab === 'avatar' ? 'var(--brand-glow, rgba(0, 240, 255, 0.15))' : 'transparent',
+              color: activeTab === 'avatar' ? 'var(--brand-primary, #00F0FF)' : '#94a3b8',
               cursor: 'pointer',
               fontWeight: '700',
               fontSize: '13px',
@@ -432,8 +432,8 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
                   height: '130px',
                   borderRadius: '50%',
                   overflow: 'hidden',
-                  border: '3px solid #00F0FF',
-                  boxShadow: '0 0 25px rgba(0, 240, 255, 0.35)',
+                  border: '3px solid var(--brand-primary, #00F0FF)',
+                  boxShadow: '0 0 25px var(--brand-glow, rgba(0, 240, 255, 0.35))',
                   background: '#fff'
                 }}>
                   <img src={previewAvatarUrl} alt="Avatar Preview" style={{ width: '100%', height: '100%' }} />
@@ -455,7 +455,7 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
                       padding: '5px 0',
                       borderRadius: '16px',
                       border: 'none',
-                      background: gender === 'male' ? '#00F0FF' : 'transparent',
+                      background: gender === 'male' ? 'var(--brand-primary, #00F0FF)' : 'transparent',
                       color: gender === 'male' ? '#000' : '#94a3b8',
                       cursor: 'pointer',
                       fontSize: '11px',
@@ -489,13 +489,13 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
                     width: '100%',
                     padding: '10px 14px',
                     borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                    background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
                     color: '#000',
                     fontWeight: '800',
                     border: 'none',
                     cursor: isSaving ? 'wait' : 'pointer',
                     fontSize: '13px',
-                    boxShadow: '0 0 20px rgba(0, 240, 255, 0.4)'
+                    boxShadow: '0 0 20px var(--brand-glow, rgba(0, 240, 255, 0.4))'
                   }}
                 >
                   {isSaving ? 'Saving...' : 'Apply Avatar'}
@@ -652,7 +652,7 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
                   textAlign: 'center',
                   background: 'rgba(255, 255, 255, 0.02)'
                 }}>
-                  <Upload size={40} color="#00F0FF" style={{ marginBottom: '12px' }} />
+                  <Upload size={40} color="var(--brand-primary, #00F0FF)" style={{ marginBottom: '12px' }} />
                   <h4 style={{ margin: '0 0 6px 0', color: '#fff', fontSize: '1rem' }}>Select Profile Photo</h4>
                   <p style={{ margin: '0 0 16px 0', color: '#94a3b8', fontSize: '13px' }}>Supports JPG, PNG, WebP up to 8MB.</p>
                   <label style={{
@@ -662,7 +662,7 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
                     gap: '8px',
                     padding: '10px 24px',
                     borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                    background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
                     color: '#000',
                     fontWeight: '700',
                     fontSize: '13px'
@@ -691,7 +691,7 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      boxShadow: '0 0 30px rgba(0, 240, 255, 0.3)',
+                      boxShadow: '0 0 30px var(--brand-glow, rgba(0, 240, 255, 0.3))',
                       background: '#000'
                     }}
                   >
@@ -700,7 +700,7 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
 
                   {/* Zoom Slider */}
                   <div style={{ width: '100%', maxWidth: '300px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <ZoomIn size={16} color="#00F0FF" />
+                    <ZoomIn size={16} color="var(--brand-primary, #00F0FF)" />
                     <input 
                       type="range" 
                       min="1" 
@@ -708,7 +708,7 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
                       step="0.02" 
                       value={zoom} 
                       onChange={(e) => setZoom(parseFloat(e.target.value))} 
-                      style={{ flex: 1, accentColor: '#00F0FF' }} 
+                      style={{ flex: 1, accentcolor: 'var(--brand-primary, #00F0FF)' }} 
                     />
                     <button 
                       onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
@@ -743,12 +743,12 @@ export default function ProfilePhotoModal({ isOpen, onClose }) {
                         flex: 1,
                         padding: '10px',
                         borderRadius: '12px',
-                        background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                        background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
                         border: 'none',
                         color: '#000',
                         fontWeight: '800',
                         cursor: isSaving ? 'wait' : 'pointer',
-                        boxShadow: '0 0 20px rgba(0, 240, 255, 0.4)'
+                        boxShadow: '0 0 20px var(--brand-glow, rgba(0, 240, 255, 0.4))'
                       }}
                     >
                       {isSaving ? 'Saving...' : 'Apply Photo'}

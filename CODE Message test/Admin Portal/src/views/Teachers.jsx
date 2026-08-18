@@ -186,14 +186,14 @@ export default function Teachers() {
               alignItems: 'center',
               gap: '8px',
               padding: '10px 20px',
-              background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+              background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
               color: '#000',
               border: 'none',
               borderRadius: '12px',
               fontWeight: '700',
               fontSize: '0.9rem',
               cursor: 'pointer',
-              boxShadow: '0 0 20px rgba(0, 240, 255, 0.35)'
+              boxShadow: '0 0 20px var(--brand-glow, rgba(0, 240, 255, 0.35))'
             }}
           >
             <Plus size={18} />
@@ -250,9 +250,9 @@ export default function Teachers() {
               style={{
                 padding: '8px 16px',
                 borderRadius: '10px',
-                border: deptFilter === dept ? '1px solid #00F0FF' : '1px solid rgba(255,255,255,0.08)',
-                background: deptFilter === dept ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255,255,255,0.03)',
-                color: deptFilter === dept ? '#00F0FF' : '#94a3b8',
+                border: deptFilter === dept ? '1px solid var(--brand-primary, #00F0FF)' : '1px solid rgba(255,255,255,0.08)',
+                background: deptFilter === dept ? 'var(--brand-glow, rgba(0, 240, 255, 0.15))' : 'rgba(255,255,255,0.03)',
+                color: deptFilter === dept ? 'var(--brand-primary, #00F0FF)' : '#94a3b8',
                 fontWeight: '700',
                 fontSize: '0.85rem',
                 cursor: 'pointer',
@@ -267,7 +267,7 @@ export default function Teachers() {
 
       {/* Loading state */}
       {loading && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px', gap: '12px', color: '#00F0FF' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px', gap: '12px', color: 'var(--brand-primary, #00F0FF)' }}>
           <Loader2 size={28} className="animate-spin" />
           <span style={{ fontSize: '1rem', fontWeight: '600' }}>Fetching real faculty from database...</span>
         </div>
@@ -288,7 +288,7 @@ export default function Teachers() {
               onClick={() => setShowAddModal(true)}
               style={{
                 padding: '10px 20px',
-                background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
                 color: '#000',
                 border: 'none',
                 borderRadius: '10px',
@@ -313,14 +313,14 @@ export default function Teachers() {
                     <img
                       src={teacher.avatar}
                       alt={teacher.name}
-                      style={{ width: '56px', height: '56px', borderRadius: '50%', border: '2px solid rgba(0, 240, 255, 0.4)', objectFit: 'cover', background: '#0a0f1d' }}
+                      style={{ width: '56px', height: '56px', borderRadius: '50%', border: '2px solid var(--brand-border, rgba(0, 240, 255, 0.4))', objectFit: 'cover', background: '#0a0f1d' }}
                     />
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <h4 style={{ color: '#fff', fontSize: '1.15rem', fontWeight: '800', margin: 0 }}>{teacher.name}</h4>
-                        <ShieldCheck size={16} color="#00F0FF" />
+                        <ShieldCheck size={16} color="var(--brand-primary, #00F0FF)" />
                       </div>
-                      <p style={{ color: '#00F0FF', fontSize: '0.8rem', fontWeight: '600', margin: '2px 0 0 0' }}>{teacher.role}</p>
+                      <p style={{ color: 'var(--brand-primary, #00F0FF)', fontSize: '0.8rem', fontWeight: '600', margin: '2px 0 0 0' }}>{teacher.role}</p>
                       <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: '2px 0 0 0', fontFamily: 'monospace' }}>{teacher.email}</p>
                     </div>
                   </div>
@@ -355,9 +355,9 @@ export default function Teachers() {
                       justifyContent: 'center',
                       gap: '6px',
                       padding: '8px',
-                      background: 'rgba(0, 240, 255, 0.1)',
-                      border: '1px solid rgba(0, 240, 255, 0.3)',
-                      color: '#00F0FF',
+                      background: 'var(--brand-glow, rgba(0, 240, 255, 0.1))',
+                      border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.3))',
+                      color: 'var(--brand-primary, #00F0FF)',
                       borderRadius: '10px',
                       fontSize: '0.8rem',
                       fontWeight: '700',
@@ -399,7 +399,7 @@ export default function Teachers() {
       {/* Modal: Assign Class */}
       {selectedTeacher && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-          <div style={{ background: '#0a0f1d', border: '1px solid rgba(0, 240, 255, 0.4)', borderRadius: '20px', width: '100%', maxWidth: '460px', padding: '28px', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}>
+          <div style={{ background: '#0a0f1d', border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.4))', borderRadius: '20px', width: '100%', maxWidth: '460px', padding: '28px', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: '800' }}>Assign Classes to {selectedTeacher.name}</h3>
               <button onClick={() => setSelectedTeacher(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
@@ -410,7 +410,7 @@ export default function Teachers() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
               {['Class 6th A', 'Class 6th B', 'Class 7th A', 'Class 8th A', 'Class 9th A', 'Class 10th A'].map(cls => (
                 <label key={cls} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', cursor: 'pointer' }}>
-                  <input type="checkbox" defaultChecked={selectedTeacher.classes.includes(cls)} style={{ accentColor: '#00F0FF' }} />
+                  <input type="checkbox" defaultChecked={selectedTeacher.classes.includes(cls)} style={{ accentcolor: 'var(--brand-primary, #00F0FF)' }} />
                   <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: '600' }}>{cls}</span>
                 </label>
               ))}
@@ -418,7 +418,7 @@ export default function Teachers() {
 
             <button
               onClick={() => setSelectedTeacher(null)}
-              style={{ width: '100%', padding: '12px', background: 'linear-gradient(135deg, #00F0FF, #3B82F6)', border: 'none', color: '#000', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
+              style={{ width: '100%', padding: '12px', background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))', border: 'none', color: '#000', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
             >
               Save Section Assignments
             </button>
@@ -429,7 +429,7 @@ export default function Teachers() {
       {/* Modal: Add Faculty */}
       {showAddModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-          <div style={{ background: '#0a0f1d', border: '1px solid rgba(0, 240, 255, 0.4)', borderRadius: '20px', width: '100%', maxWidth: '460px', padding: '28px', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}>
+          <div style={{ background: '#0a0f1d', border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.4))', borderRadius: '20px', width: '100%', maxWidth: '460px', padding: '28px', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: '800' }}>Onboard New Faculty</h3>
               <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
@@ -498,7 +498,7 @@ export default function Teachers() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, #00F0FF, #3B82F6)', border: 'none', color: '#000', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))', border: 'none', color: '#000', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
                 >
                   {isSubmitting ? 'Saving to Database...' : 'Save to Supabase'}
                 </button>

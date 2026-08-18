@@ -19,7 +19,7 @@ const PAGE_TITLES = {
 };
 
 export default function Layout({ children }) {
-  const { backgroundImage, profileName, profileDesignation } = useTheme();
+  const { backgroundImage, profileName, profileDesignation, schoolName, primaryColor } = useTheme();
   const location = useLocation();
   const currentTitle = PAGE_TITLES[location.pathname] || 'Admin Portal';
 
@@ -31,12 +31,10 @@ export default function Layout({ children }) {
       <Sidebar />
       
       <main className="main-content">
-        <GlobalBroadcastBanner />
-
         <header className="top-header">
           <div className="header-brand">
             <h2>{currentTitle}</h2>
-            <p className="header-sub">{profileDesignation} • Operational Deck</p>
+            <p className="header-sub">{schoolName || 'Institution'} • {profileDesignation}</p>
           </div>
 
           <div className="header-right-actions">
@@ -59,6 +57,7 @@ export default function Layout({ children }) {
         </header>
         
         <div className="page-content">
+          <GlobalBroadcastBanner />
           {children}
         </div>
       </main>

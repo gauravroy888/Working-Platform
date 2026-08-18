@@ -40,7 +40,7 @@ export default function Events() {
 
       if (dbAnnouncements && dbAnnouncements.length > 0) {
         dbAnnouncements.forEach((a, idx) => {
-          const colors = ['#00F0FF', '#3B82F6', '#A855F7', '#10B981', '#F59E0B'];
+          const colors = ['var(--brand-primary, #00F0FF)', 'var(--brand-secondary, #3B82F6)', '#A855F7', '#10B981', '#F59E0B'];
           const dateStr = a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Today';
           const timeStr = a.createdAt ? new Date(a.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '10:00 AM';
 
@@ -272,14 +272,14 @@ export default function Events() {
               alignItems: 'center',
               gap: '8px',
               padding: '10px 20px',
-              background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+              background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
               color: '#050B14',
               border: 'none',
               borderRadius: '12px',
               fontWeight: '700',
               fontSize: '0.9rem',
               cursor: 'pointer',
-              boxShadow: '0 0 20px rgba(0, 240, 255, 0.35)',
+              boxShadow: '0 0 20px var(--brand-glow, rgba(0, 240, 255, 0.35))',
               transition: 'all 0.2s ease'
             }}
           >
@@ -316,9 +316,9 @@ export default function Events() {
             style={{
               padding: '8px 16px',
               borderRadius: '10px',
-              border: filter === cat ? '1px solid #00F0FF' : '1px solid rgba(255,255,255,0.08)',
-              background: filter === cat ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255,255,255,0.03)',
-              color: filter === cat ? '#00F0FF' : '#94a3b8',
+              border: filter === cat ? '1px solid var(--brand-primary, #00F0FF)' : '1px solid rgba(255,255,255,0.08)',
+              background: filter === cat ? 'var(--brand-glow, rgba(0, 240, 255, 0.15))' : 'rgba(255,255,255,0.03)',
+              color: filter === cat ? 'var(--brand-primary, #00F0FF)' : '#94a3b8',
               fontWeight: '600',
               fontSize: '0.85rem',
               cursor: 'pointer',
@@ -332,7 +332,7 @@ export default function Events() {
 
       {/* Loading State */}
       {loading && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px', gap: '12px', color: '#00F0FF' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px', gap: '12px', color: 'var(--brand-primary, #00F0FF)' }}>
           <Loader2 size={28} className="animate-spin" />
           <span style={{ fontSize: '1rem', fontWeight: '600' }}>Fetching real events from database...</span>
         </div>
@@ -351,7 +351,7 @@ export default function Events() {
               onClick={() => setShowAddModal(true)}
               style={{
                 padding: '10px 20px',
-                background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
                 color: '#000',
                 border: 'none',
                 borderRadius: '10px',
@@ -408,10 +408,10 @@ export default function Events() {
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: 'rgba(0,0,0,0.25)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1', fontSize: '0.8rem' }}>
-                      <Calendar size={15} color="#00F0FF" />
+                      <Calendar size={15} color="var(--brand-primary, #00F0FF)" />
                       <span>{evt.date}</span>
                       <span style={{ color: '#64748b' }}>•</span>
-                      <Clock size={15} color="#00F0FF" />
+                      <Clock size={15} color="var(--brand-primary, #00F0FF)" />
                       <span>{evt.time}</span>
                     </div>
 
@@ -425,7 +425,7 @@ export default function Events() {
                 {/* Footer with Edit, Delete & Details Actions */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8', fontSize: '0.8rem' }}>
-                    <Volume2 size={15} color="#00F0FF" />
+                    <Volume2 size={15} color="var(--brand-primary, #00F0FF)" />
                     <span>Author: <strong>{evt.organizer}</strong></span>
                   </div>
 
@@ -478,9 +478,9 @@ export default function Events() {
                         gap: '4px',
                         padding: '6px 12px',
                         borderRadius: '8px',
-                        background: 'rgba(0, 240, 255, 0.1)',
-                        border: '1px solid rgba(0, 240, 255, 0.3)',
-                        color: '#00F0FF',
+                        background: 'var(--brand-glow, rgba(0, 240, 255, 0.1))',
+                        border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.3))',
+                        color: 'var(--brand-primary, #00F0FF)',
                         fontSize: '0.8rem',
                         fontWeight: '700',
                         cursor: 'pointer'
@@ -500,7 +500,7 @@ export default function Events() {
       {/* Modal: Create Notice / Event */}
       {showAddModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-          <div style={{ background: '#0a0f1d', border: '1px solid rgba(0, 240, 255, 0.4)', borderRadius: '20px', width: '100%', maxWidth: '500px', padding: '28px', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}>
+          <div style={{ background: '#0a0f1d', border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.4))', borderRadius: '20px', width: '100%', maxWidth: '500px', padding: '28px', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
               <h3 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: '800' }}>Publish Real Notice / Event</h3>
               <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
@@ -553,7 +553,7 @@ export default function Events() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, #00F0FF, #3B82F6)', border: 'none', color: '#000', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))', border: 'none', color: '#000', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
                 >
                   {isSubmitting ? 'Saving to Database...' : 'Publish to Supabase'}
                 </button>
@@ -566,10 +566,10 @@ export default function Events() {
       {/* Modal: Edit Notice / Event */}
       {editingEvent && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-          <div style={{ background: '#0a0f1d', border: '1px solid rgba(0, 240, 255, 0.4)', borderRadius: '20px', width: '100%', maxWidth: '500px', padding: '28px', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}>
+          <div style={{ background: '#0a0f1d', border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.4))', borderRadius: '20px', width: '100%', maxWidth: '500px', padding: '28px', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Edit3 size={18} color="#00F0FF" />
+                <Edit3 size={18} color="var(--brand-primary, #00F0FF)" />
                 <h3 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: '800' }}>Edit Notice</h3>
               </div>
               <button onClick={() => setEditingEvent(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
@@ -619,7 +619,7 @@ export default function Events() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, #00F0FF, #3B82F6)', border: 'none', color: '#000', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))', border: 'none', color: '#000', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
                 >
                   {isSubmitting ? 'Updating Database...' : 'Save Changes'}
                 </button>
@@ -687,7 +687,7 @@ export default function Events() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
                 <span style={{ color: '#94a3b8' }}>Channel:</span>
-                <span style={{ color: '#00F0FF', fontWeight: '700' }}>{selectedEvent.location}</span>
+                <span style={{ color: 'var(--brand-primary, #00F0FF)', fontWeight: '700' }}>{selectedEvent.location}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
                 <span style={{ color: '#94a3b8' }}>Publisher:</span>

@@ -47,8 +47,8 @@ export default function Progress() {
   };
 
   const subjectMastery = [
-    { subject: 'Science & Physics', icon: '💡', progress: Math.min(100, 75 + completedCount * 5), color: '#00F0FF', grade: 'A+' },
-    { subject: 'Mathematics & Geometry', icon: '📐', progress: 85, color: '#3B82F6', grade: 'A' },
+    { subject: 'Science & Physics', icon: '💡', progress: Math.min(100, 75 + completedCount * 5), color: 'var(--brand-primary, #00F0FF)', grade: 'A+' },
+    { subject: 'Mathematics & Geometry', icon: '📐', progress: 85, color: 'var(--brand-secondary, #3B82F6)', grade: 'A' },
     { subject: 'Ancient & World History', icon: '🏛️', progress: 68, color: '#8A2BE2', grade: 'B+' },
     { subject: 'World Geography', icon: '🌍', progress: 74, color: '#10B981', grade: 'A-' },
     { subject: 'Visual Arts & 3D Design', icon: '🎨', progress: 90, color: '#EC4899', grade: 'A+' },
@@ -85,7 +85,7 @@ export default function Progress() {
                   borderRadius: '10px',
                   border: activeTab === tab ? '1px solid rgba(0, 240, 255, 0.4)' : '1px solid transparent',
                   background: activeTab === tab ? 'linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(59, 130, 246, 0.2))' : 'rgba(255, 255, 255, 0.04)',
-                  color: activeTab === tab ? '#00F0FF' : '#94a3b8',
+                  color: activeTab === tab ? 'var(--brand-primary, #00F0FF)' : '#94a3b8',
                   fontWeight: '700',
                   cursor: 'pointer'
                 }}
@@ -102,8 +102,8 @@ export default function Progress() {
               onChange={(e) => setTimeRange(e.target.value)}
               style={{
                 background: 'rgba(255, 255, 255, 0.05)',
-                color: '#00F0FF',
-                border: '1px solid rgba(0, 240, 255, 0.3)',
+                color: 'var(--brand-primary, #00F0FF)',
+                border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.3))',
                 padding: '8px 16px',
                 borderRadius: '10px',
                 fontWeight: '700',
@@ -120,7 +120,7 @@ export default function Progress() {
         {/* 4 Stat Metric Cards */}
         <div className="stats-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '28px' }}>
           <div className="stat-card" style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(0, 240, 255, 0.1)', color: '#00F0FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--brand-glow, rgba(0, 240, 255, 0.1))', color: 'var(--brand-primary, #00F0FF)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <TrendingUp size={24} />
             </div>
             <div>
@@ -130,7 +130,7 @@ export default function Progress() {
           </div>
 
           <div className="stat-card" style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--brand-secondary, #3B82F6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <BookOpen size={24} />
             </div>
             <div>
@@ -166,7 +166,7 @@ export default function Progress() {
             <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px', padding: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h4 style={{ margin: 0, color: 'white', fontSize: '1.15rem', fontWeight: '700' }}>Assessment Score Trajectory</h4>
-                <span style={{ color: '#00F0FF', fontSize: '0.85rem', fontWeight: '600' }}>{timeRange}</span>
+                <span style={{ color: 'var(--brand-primary, #00F0FF)', fontSize: '0.85rem', fontWeight: '600' }}>{timeRange}</span>
               </div>
               <div style={{ width: '100%', height: '260px' }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -175,10 +175,10 @@ export default function Progress() {
                     <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
                     <YAxis stroke="#94a3b8" domain={[50, 100]} tick={{ fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={(val) => `${val}%`} />
                     <Tooltip
-                      contentStyle={{ backgroundColor: 'rgba(10, 15, 29, 0.95)', borderColor: 'rgba(0, 240, 255, 0.3)', borderRadius: '12px', color: '#fff' }}
-                      itemStyle={{ color: '#00F0FF' }}
+                      contentStyle={{ backgroundColor: 'rgba(10, 15, 29, 0.95)', borderColor: 'var(--brand-glow, rgba(0, 240, 255, 0.3))', borderRadius: '12px', color: '#fff' }}
+                      itemStyle={{ color: 'var(--brand-primary, #00F0FF)' }}
                     />
-                    <Line type="monotone" dataKey="score" stroke="#00F0FF" strokeWidth={3} dot={{ r: 5, fill: '#00F0FF' }} activeDot={{ r: 7 }} />
+                    <Line type="monotone" dataKey="score" stroke="var(--brand-primary, #00F0FF)" strokeWidth={3} dot={{ r: 5, fill: 'var(--brand-primary, #00F0FF)' }} activeDot={{ r: 7 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -214,7 +214,7 @@ export default function Progress() {
                       <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Class 6th Curriculum</span>
                     </div>
                   </div>
-                  <span style={{ padding: '4px 10px', borderRadius: '8px', background: 'rgba(0,240,255,0.1)', color: '#00F0FF', fontWeight: '800', fontSize: '0.8rem' }}>
+                  <span style={{ padding: '4px 10px', borderRadius: '8px', background: 'var(--brand-glow, rgba(0, 240, 255, 0.1))', color: 'var(--brand-primary, #00F0FF)', fontWeight: '800', fontSize: '0.8rem' }}>
                     {sub.grade}
                   </span>
                 </div>
@@ -233,7 +233,7 @@ export default function Progress() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
             {achievementsList.map((ach) => (
               <div key={ach.id} style={{
-                background: ach.unlocked ? 'rgba(0, 240, 255, 0.05)' : 'rgba(255,255,255,0.01)',
+                background: ach.unlocked ? 'var(--brand-glow, rgba(0, 240, 255, 0.05))' : 'rgba(255,255,255,0.01)',
                 border: ach.unlocked ? '1px solid rgba(0, 240, 255, 0.3)' : '1px solid rgba(255,255,255,0.05)',
                 borderRadius: '18px',
                 padding: '24px',

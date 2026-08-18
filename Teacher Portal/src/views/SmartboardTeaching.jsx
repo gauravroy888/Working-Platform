@@ -215,13 +215,13 @@ export default function SmartboardTeaching() {
       
       {/* Smartboard Hero Presentation Banner */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(168, 85, 247, 0.15), rgba(59, 130, 246, 0.15))',
-        border: '1px solid rgba(0, 240, 255, 0.35)',
+        background: 'linear-gradient(135deg, var(--brand-glow, rgba(0, 240, 255, 0.15)), rgba(168, 85, 247, 0.15), var(--brand-secondary, rgba(59, 130, 246, 0.15)))',
+        border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.35))',
         borderRadius: '24px',
         padding: '32px 36px',
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: '0 0 35px rgba(0, 240, 255, 0.15)'
+        boxShadow: '0 0 35px var(--brand-glow, rgba(0, 240, 255, 0.15))'
       }}>
         {/* Background glow orb */}
         <div style={{
@@ -239,9 +239,9 @@ export default function SmartboardTeaching() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
               <span style={{
-                background: 'rgba(0, 240, 255, 0.2)',
-                border: '1px solid #00F0FF',
-                color: '#00F0FF',
+                background: 'var(--brand-glow, rgba(0, 240, 255, 0.2))',
+                border: '1px solid var(--brand-primary, #00F0FF)',
+                color: 'var(--brand-primary, #00F0FF)',
                 padding: '4px 12px',
                 borderRadius: '20px',
                 fontSize: '0.8rem',
@@ -265,7 +265,7 @@ export default function SmartboardTeaching() {
               </span>
             </div>
             <h1 style={{ fontSize: '2.2rem', fontWeight: '900', margin: '0 0 8px 0', color: '#fff', letterSpacing: '-0.5px' }}>
-              Teach on Smartboard: <span style={{ color: '#00F0FF' }}>{selectedClass}</span>
+              Teach on Smartboard: <span style={{ color: 'var(--brand-primary, #00F0FF)' }}>{selectedClass}</span>
             </h1>
             <p style={{ margin: 0, color: '#94a3b8', fontSize: '1.05rem', maxWidth: '700px', lineHeight: '1.5' }}>
               Access 3D interactive simulations, optics labs, interactive world history, and planetary engines designed for school interactive smartboards and flat panels.
@@ -277,7 +277,7 @@ export default function SmartboardTeaching() {
             <button
               onClick={() => handleLaunchSmartboard()}
               style={{
-                background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
                 color: '#000',
                 border: 'none',
                 fontWeight: '900',
@@ -288,7 +288,7 @@ export default function SmartboardTeaching() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
-                boxShadow: '0 0 30px rgba(0, 240, 255, 0.5)',
+                boxShadow: '0 0 30px var(--brand-glow, rgba(0, 240, 255, 0.5))',
                 transition: 'transform 0.2s, box-shadow 0.2s'
               }}
               onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
@@ -323,9 +323,9 @@ export default function SmartboardTeaching() {
                   style={{
                     padding: '8px 16px',
                     borderRadius: '12px',
-                    border: isActive ? '2px solid #00F0FF' : '1px solid rgba(255, 255, 255, 0.12)',
-                    background: isActive ? 'rgba(0, 240, 255, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-                    color: isActive ? '#00F0FF' : '#cbd5e1',
+                    border: isActive ? '2px solid var(--brand-primary, #00F0FF)' : '1px solid rgba(255, 255, 255, 0.12)',
+                    background: isActive ? 'var(--brand-glow, rgba(0, 240, 255, 0.2))' : 'rgba(255, 255, 255, 0.04)',
+                    color: isActive ? 'var(--brand-primary, #00F0FF)' : '#cbd5e1',
                     cursor: 'pointer',
                     fontWeight: '800',
                     fontSize: '0.9rem',
@@ -384,12 +384,12 @@ export default function SmartboardTeaching() {
           alignItems: 'center',
           gap: '10px',
           background: 'rgba(13, 20, 36, 0.7)',
-          border: '1px solid rgba(0, 240, 255, 0.2)',
+          border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.2))',
           borderRadius: '12px',
           padding: '8px 16px',
           minWidth: '260px'
         }}>
-          <Search size={16} color="#00F0FF" />
+          <Search size={16} color="var(--brand-primary, #00F0FF)" />
           <input
             type="text"
             placeholder="Search topic, chapter or simulation..."
@@ -411,14 +411,14 @@ export default function SmartboardTeaching() {
       {activePresentation && (
         <Card style={{
           padding: '24px',
-          border: '2px solid #00F0FF',
-          boxShadow: '0 0 40px rgba(0, 240, 255, 0.25)',
+          border: '2px solid var(--brand-primary, #00F0FF)',
+          boxShadow: '0 0 40px var(--brand-glow, rgba(0, 240, 255, 0.25))',
           background: '#040714',
           borderRadius: '20px'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ padding: '8px', borderRadius: '10px', background: 'rgba(0,240,255,0.15)', color: '#00F0FF' }}>
+              <span style={{ padding: '8px', borderRadius: '10px', background: 'var(--brand-glow, rgba(0, 240, 255, 0.15))', color: 'var(--brand-primary, #00F0FF)' }}>
                 <Presentation size={22} />
               </span>
               <div>
@@ -436,7 +436,7 @@ export default function SmartboardTeaching() {
                 onClick={() => handleLaunchSmartboard(activePresentation.subject)}
                 style={{
                   padding: '8px 16px',
-                  background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                  background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
                   border: 'none',
                   borderRadius: '10px',
                   color: '#000',
@@ -472,7 +472,7 @@ export default function SmartboardTeaching() {
             height: '560px',
             borderRadius: '16px',
             overflow: 'hidden',
-            border: '1px solid rgba(0, 240, 255, 0.3)',
+            border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.3))',
             background: '#000'
           }}>
             <iframe
@@ -509,11 +509,11 @@ export default function SmartboardTeaching() {
                 position: 'absolute',
                 top: '14px',
                 right: '14px',
-                background: 'rgba(0, 240, 255, 0.15)',
-                border: '1px solid rgba(0, 240, 255, 0.4)',
+                background: 'var(--brand-glow, rgba(0, 240, 255, 0.15))',
+                border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.4))',
                 borderRadius: '8px',
                 padding: '3px 8px',
-                color: '#00F0FF',
+                color: 'var(--brand-primary, #00F0FF)',
                 fontSize: '0.75rem',
                 fontWeight: '800',
                 display: 'flex',
@@ -541,7 +541,7 @@ export default function SmartboardTeaching() {
                   {course.icon || '📚'}
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.8rem', color: '#00F0FF', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--brand-primary, #00F0FF)', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     {course.subject} • {selectedClass}
                   </span>
                   <h3 style={{ margin: '4px 0 0 0', color: '#fff', fontSize: '1.25rem', fontWeight: '800', lineHeight: '1.3' }}>
@@ -558,7 +558,7 @@ export default function SmartboardTeaching() {
               {/* Chapters & Simulation Modules */}
               <div style={{ marginBottom: '20px' }}>
                 <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Layers size={14} color="#00F0FF" /> Smartboard Curriculum Modules ({course.chapters?.length || 3})
+                  <Layers size={14} color="var(--brand-primary, #00F0FF)" /> Smartboard Curriculum Modules ({course.chapters?.length || 3})
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {(course.chapters || []).map((ch, idx) => (
@@ -577,8 +577,8 @@ export default function SmartboardTeaching() {
                         transition: 'background 0.2s ease, border-color 0.2s ease'
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(0, 240, 255, 0.08)';
-                        e.currentTarget.style.borderColor = 'rgba(0, 240, 255, 0.3)';
+                        e.currentTarget.style.background = 'var(--brand-glow, rgba(0, 240, 255, 0.08))';
+                        e.currentTarget.style.borderColor = 'var(--brand-glow, rgba(0, 240, 255, 0.3))';
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
@@ -586,7 +586,7 @@ export default function SmartboardTeaching() {
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <Play size={14} color="#00F0FF" />
+                        <Play size={14} color="var(--brand-primary, #00F0FF)" />
                         <span style={{ fontSize: '0.88rem', color: '#f1f5f9', fontWeight: '600' }}>
                           {ch.title}
                         </span>
@@ -614,9 +614,9 @@ export default function SmartboardTeaching() {
                   flex: 1,
                   padding: '12px',
                   borderRadius: '12px',
-                  background: 'rgba(0, 240, 255, 0.1)',
-                  border: '1px solid rgba(0, 240, 255, 0.3)',
-                  color: '#00F0FF',
+                  background: 'var(--brand-glow, rgba(0, 240, 255, 0.1))',
+                  border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.3))',
+                  color: 'var(--brand-primary, #00F0FF)',
                   fontWeight: '800',
                   fontSize: '0.9rem',
                   cursor: 'pointer',
@@ -635,7 +635,7 @@ export default function SmartboardTeaching() {
                   flex: 1.2,
                   padding: '12px',
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                  background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
                   border: 'none',
                   color: '#000',
                   fontWeight: '900',
@@ -645,7 +645,7 @@ export default function SmartboardTeaching() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  boxShadow: '0 0 20px rgba(0, 240, 255, 0.35)'
+                  boxShadow: '0 0 20px var(--brand-glow, rgba(0, 240, 255, 0.35))'
                 }}
               >
                 <Tv size={16} /> Teach on Smartboard

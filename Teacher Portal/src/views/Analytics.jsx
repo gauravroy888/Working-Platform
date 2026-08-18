@@ -119,8 +119,8 @@ export default function Analytics() {
               onChange={(e) => { setSelectedClass(e.target.value); setSelectedStudent('All'); }}
               style={{
                 background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(0, 240, 255, 0.3)',
-                color: '#00F0FF',
+                border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.3))',
+                color: 'var(--brand-primary, #00F0FF)',
                 padding: '8px 16px',
                 borderRadius: '10px',
                 fontWeight: '700',
@@ -138,8 +138,8 @@ export default function Analytics() {
               onChange={(e) => setSelectedStudent(e.target.value)}
               style={{
                 background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(0, 240, 255, 0.3)',
-                color: '#00F0FF',
+                border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.3))',
+                color: 'var(--brand-primary, #00F0FF)',
                 padding: '8px 16px',
                 borderRadius: '10px',
                 fontWeight: '700',
@@ -158,7 +158,7 @@ export default function Analytics() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
           <Card style={{ padding: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div style={{ padding: '12px', borderRadius: '12px', background: 'rgba(0,240,255,0.1)', color: '#00F0FF' }}>
+              <div style={{ padding: '12px', borderRadius: '12px', background: 'var(--brand-glow, rgba(0, 240, 255, 0.1))', color: 'var(--brand-primary, #00F0FF)' }}>
                 <TrendingUp size={24} />
               </div>
               <div>
@@ -205,13 +205,13 @@ export default function Analytics() {
                 <XAxis dataKey="subject" stroke="#94a3b8" tick={{ fontSize: 12 }} />
                 <YAxis stroke="#94a3b8" domain={[50, 100]} tick={{ fontSize: 12 }} tickFormatter={(v) => `${v}%`} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: 'rgba(10, 15, 29, 0.95)', borderColor: 'rgba(0, 240, 255, 0.3)', borderRadius: '12px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'rgba(10, 15, 29, 0.95)', borderColor: 'var(--brand-glow, rgba(0, 240, 255, 0.3))', borderRadius: '12px', color: '#fff' }}
                 />
                 <Bar dataKey="average" fill="url(#barGradient)" radius={[8, 8, 0, 0]} />
                 <defs>
                   <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#00F0FF" stopOpacity={0.9} />
-                    <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.5} />
+                    <stop offset="0%" stopcolor="var(--brand-primary, #00F0FF)" stopOpacity={0.9} />
+                    <stop offset="100%" stopcolor="var(--brand-secondary, #3B82F6)" stopOpacity={0.5} />
                   </linearGradient>
                 </defs>
               </BarChart>
@@ -232,7 +232,7 @@ export default function Analytics() {
                   alignItems: 'center',
                   padding: '14px 18px',
                   borderRadius: '12px',
-                  background: idx === 0 ? 'linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(59, 130, 246, 0.15))' : 'rgba(255, 255, 255, 0.02)',
+                  background: idx === 0 ? 'linear-gradient(135deg, var(--brand-glow, rgba(0, 240, 255, 0.15)), var(--brand-secondary, rgba(59, 130, 246, 0.15)))' : 'rgba(255, 255, 255, 0.02)',
                   border: idx === 0 ? '1px solid rgba(0, 240, 255, 0.4)' : '1px solid rgba(255, 255, 255, 0.06)'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -242,7 +242,7 @@ export default function Analytics() {
                       <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.75rem' }}>{s.class}</p>
                     </div>
                   </div>
-                  <span style={{ color: '#00F0FF', fontWeight: '800', fontSize: '1rem' }}>{avg}%</span>
+                  <span style={{ color: 'var(--brand-primary, #00F0FF)', fontWeight: '800', fontSize: '1rem' }}>{avg}%</span>
                 </div>
               );
             })}

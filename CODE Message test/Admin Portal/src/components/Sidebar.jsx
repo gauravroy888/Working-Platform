@@ -17,16 +17,58 @@ const navItems = [
 ];
 
 export default function Sidebar() {
-  const { profileImage, profileName, profileDesignation } = useTheme();
+  const { profileImage, profileName, profileDesignation, schoolLogo, schoolName, primaryColor } = useTheme();
   const [showPhotoModal, setShowPhotoModal] = useState(false);
 
   const fallbackAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileName || 'Admin')}&backgroundColor=b6e3f4`;
 
   return (
     <aside className="portal-sidebar">
-      <div className="brand-logo">
-        <span className="brand-icon">🎓</span>
-        <span className="brand-title">Study Island</span>
+      <div className="brand-logo" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{
+          width: '42px',
+          height: '42px',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          border: `1.5px solid ${primaryColor || 'var(--brand-primary, #00F0FF)'}`,
+          boxShadow: `0 0 12px var(--brand-glow, rgba(0, 240, 255, 0.3))`,
+          background: '#ffffff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          padding: '4px'
+        }}>
+          {schoolLogo ? (
+            <img src={schoolLogo} alt="School Logo" style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain', display: 'block' }} />
+          ) : (
+            <span style={{ fontSize: '1.3rem' }}>🏛️</span>
+          )}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1, justifyContent: 'center' }}>
+          <span 
+            className="brand-title" 
+            title={schoolName || 'Admin Portal'}
+            style={{ 
+              fontSize: '0.78rem', 
+              fontWeight: '800', 
+              color: '#fff', 
+              lineHeight: '1.25',
+              whiteSpace: 'normal',
+              display: '-webkit-box',
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              wordBreak: 'break-word',
+              letterSpacing: '-0.2px'
+            }}
+          >
+            {schoolName || 'Admin Portal'}
+          </span>
+          <span style={{ fontSize: '0.68rem', color: primaryColor || 'var(--brand-primary, #00F0FF)', fontWeight: '700', letterSpacing: '0.5px', marginTop: '2px' }}>
+            OPERATIONAL DECK
+          </span>
+        </div>
       </div>
 
       <div className="profile-section">
@@ -53,9 +95,9 @@ export default function Sidebar() {
           onClick={() => setShowPhotoModal(true)}
           style={{
             marginTop: '8px',
-            background: 'rgba(0, 240, 255, 0.1)',
-            border: '1px solid rgba(0, 240, 255, 0.3)',
-            color: '#00F0FF',
+            background: 'var(--brand-glow, rgba(0, 240, 255, 0.1))',
+            border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.3))',
+            color: 'var(--brand-primary, #00F0FF)',
             borderRadius: '8px',
             padding: '4px 10px',
             fontSize: '0.75rem',

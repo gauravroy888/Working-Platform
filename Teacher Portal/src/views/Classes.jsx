@@ -196,7 +196,7 @@ export default function Classes() {
                   width: '100%',
                   padding: '10px',
                   borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                  background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
                   border: 'none',
                   color: '#000',
                   fontWeight: '800',
@@ -206,7 +206,7 @@ export default function Classes() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  boxShadow: '0 0 15px rgba(0, 240, 255, 0.3)'
+                  boxShadow: '0 0 15px var(--brand-glow, rgba(0, 240, 255, 0.3))'
                 }}
               >
                 <Tv size={16} /> Teach on Smartboard <ArrowUpRight size={14} />

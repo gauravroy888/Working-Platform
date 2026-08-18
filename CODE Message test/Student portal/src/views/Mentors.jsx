@@ -124,9 +124,9 @@ export default function Mentors() {
               style={{
                 padding: '10px 20px',
                 borderRadius: '10px',
-                border: activeTab === 'all' ? '1px solid #00F0FF' : '1px solid rgba(255,255,255,0.1)',
-                background: activeTab === 'all' ? 'rgba(0, 240, 255, 0.15)' : 'transparent',
-                color: activeTab === 'all' ? '#00F0FF' : '#94a3b8',
+                border: activeTab === 'all' ? '1px solid var(--brand-primary, #00F0FF)' : '1px solid rgba(255,255,255,0.1)',
+                background: activeTab === 'all' ? 'var(--brand-glow, rgba(0, 240, 255, 0.15))' : 'transparent',
+                color: activeTab === 'all' ? 'var(--brand-primary, #00F0FF)' : '#94a3b8',
                 fontWeight: '700',
                 cursor: 'pointer'
               }}
@@ -164,8 +164,8 @@ export default function Mentors() {
                         width: '100%',
                         height: '100%',
                         borderRadius: '50%',
-                        border: '2px solid #00F0FF',
-                        boxShadow: '0 0 12px rgba(0, 240, 255, 0.3)',
+                        border: '2px solid var(--brand-primary, #00F0FF)',
+                        boxShadow: '0 0 12px var(--brand-glow, rgba(0, 240, 255, 0.3))',
                         objectFit: 'cover'
                       }}
                     />
@@ -188,7 +188,7 @@ export default function Mentors() {
                 </div>
                 
                 <div className="mentor-subject">
-                  <span className="subject-badge" style={{ background: 'rgba(0,240,255,0.1)', color: '#00F0FF', border: '1px solid rgba(0,240,255,0.3)', padding: '6px 16px', borderRadius: '20px', fontWeight: '700', fontSize: '0.85rem' }}>
+                  <span className="subject-badge" style={{ background: 'var(--brand-glow, rgba(0, 240, 255, 0.1))', color: 'var(--brand-primary, #00F0FF)', border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.3))', padding: '6px 16px', borderRadius: '20px', fontWeight: '700', fontSize: '0.85rem' }}>
                     {mentor.subject}
                   </span>
                 </div>
@@ -209,7 +209,7 @@ export default function Mentors() {
                   <button 
                     onClick={() => openDirectChat(mentor)}
                     style={{
-                      background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                      background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
                       color: '#000',
                       fontWeight: '700',
                       border: 'none',
@@ -219,7 +219,7 @@ export default function Mentors() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
-                      boxShadow: '0 0 15px rgba(0, 240, 255, 0.4)'
+                      boxShadow: '0 0 15px var(--brand-glow, rgba(0, 240, 255, 0.4))'
                     }}
                   >
                     <MessageCircle size={16} /> Chat
@@ -249,7 +249,7 @@ export default function Mentors() {
             width: '100%',
             maxWidth: '560px',
             background: 'rgba(13, 20, 36, 0.98)',
-            border: '1px solid rgba(0, 240, 255, 0.35)',
+            border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.35))',
             boxShadow: '0 25px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(0, 240, 255, 0.15)',
             borderRadius: '24px',
             padding: '32px',
@@ -287,8 +287,8 @@ export default function Mentors() {
                     width: '100%',
                     height: '100%',
                     borderRadius: '50%',
-                    border: '2px solid #00F0FF',
-                    boxShadow: '0 0 20px rgba(0, 240, 255, 0.3)',
+                    border: '2px solid var(--brand-primary, #00F0FF)',
+                    boxShadow: '0 0 20px var(--brand-glow, rgba(0, 240, 255, 0.3))',
                     objectFit: 'cover'
                   }}
                 />
@@ -307,7 +307,7 @@ export default function Mentors() {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: '800', color: 'white' }}>{selectedTeacher.name}</h3>
-                  <span style={{ padding: '2px 8px', borderRadius: '6px', background: 'rgba(0,240,255,0.15)', color: '#00F0FF', fontSize: '0.75rem', fontWeight: '800' }}>
+                  <span style={{ padding: '2px 8px', borderRadius: '6px', background: 'var(--brand-glow, rgba(0, 240, 255, 0.15))', color: 'var(--brand-primary, #00F0FF)', fontSize: '0.75rem', fontWeight: '800' }}>
                     REGISTERED FACULTY
                   </span>
                 </div>
@@ -332,19 +332,19 @@ export default function Mentors() {
             {/* Quick Details List */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#cbd5e1', fontSize: '0.9rem' }}>
-                <Mail size={16} color="#00F0FF" />
+                <Mail size={16} color="var(--brand-primary, #00F0FF)" />
                 <span>Email: <strong style={{ color: 'white' }}>{selectedTeacher.email}</strong></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#cbd5e1', fontSize: '0.9rem' }}>
-                <BookOpen size={16} color="#00F0FF" />
+                <BookOpen size={16} color="var(--brand-primary, #00F0FF)" />
                 <span>Assigned Classes: <strong style={{ color: 'white' }}>{selectedTeacher.classes}</strong></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#cbd5e1', fontSize: '0.9rem' }}>
-                <Clock size={16} color="#00F0FF" />
+                <Clock size={16} color="var(--brand-primary, #00F0FF)" />
                 <span>Office Hours: <strong style={{ color: 'white' }}>{selectedTeacher.office_hours}</strong></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#cbd5e1', fontSize: '0.9rem' }}>
-                <MapPin size={16} color="#00F0FF" />
+                <MapPin size={16} color="var(--brand-primary, #00F0FF)" />
                 <span>Room / Lab: <strong style={{ color: 'white' }}>{selectedTeacher.location}</strong></span>
               </div>
             </div>
@@ -376,7 +376,7 @@ export default function Mentors() {
                   flex: 1.5,
                   padding: '12px',
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                  background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
                   color: '#000',
                   fontWeight: '800',
                   border: 'none',
@@ -386,7 +386,7 @@ export default function Mentors() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  boxShadow: '0 0 20px rgba(0, 240, 255, 0.4)'
+                  boxShadow: '0 0 20px var(--brand-glow, rgba(0, 240, 255, 0.4))'
                 }}
               >
                 <MessageCircle size={18} /> Send Direct Message

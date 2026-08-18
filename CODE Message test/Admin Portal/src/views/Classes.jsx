@@ -48,7 +48,7 @@ export default function Classes() {
       setRealTeachers(teacherList.length > 0 ? teacherList : ['Gaurav', 'Harsh']);
 
       if (dbClasses && dbClasses.length > 0) {
-        const colors = ['#00F0FF', '#3B82F6', '#A855F7', '#10B981', '#F59E0B', '#EC4899', '#6366F1'];
+        const colors = ['var(--brand-primary, #00F0FF)', 'var(--brand-secondary, #3B82F6)', '#A855F7', '#10B981', '#F59E0B', '#EC4899', '#6366F1'];
         const mapped = dbClasses.map((c, idx) => ({
           id: c.id,
           name: c.name,
@@ -128,14 +128,14 @@ export default function Classes() {
               alignItems: 'center',
               gap: '8px',
               padding: '10px 20px',
-              background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+              background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
               color: '#000',
               border: 'none',
               borderRadius: '12px',
               fontWeight: '700',
               fontSize: '0.9rem',
               cursor: 'pointer',
-              boxShadow: '0 0 20px rgba(0, 240, 255, 0.35)'
+              boxShadow: '0 0 20px var(--brand-glow, rgba(0, 240, 255, 0.35))'
             }}
           >
             <Plus size={18} />
@@ -166,7 +166,7 @@ export default function Classes() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
         <Card>
           <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: '700' }}>TOTAL DATABASE CLASSES</span>
-          <h4 style={{ color: '#00F0FF', fontSize: '1.8rem', fontWeight: '800', margin: '6px 0 0 0', fontFamily: 'monospace' }}>
+          <h4 style={{ color: 'var(--brand-primary, #00F0FF)', fontSize: '1.8rem', fontWeight: '800', margin: '6px 0 0 0', fontFamily: 'monospace' }}>
             {classes.length}
           </h4>
           <span style={{ color: '#34d399', fontSize: '0.75rem', fontWeight: '600' }}>Active in Supabase</span>
@@ -174,7 +174,7 @@ export default function Classes() {
 
         <Card>
           <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: '700' }}>TOTAL REGISTERED STUDENTS</span>
-          <h4 style={{ color: '#3B82F6', fontSize: '1.8rem', fontWeight: '800', margin: '6px 0 0 0', fontFamily: 'monospace' }}>
+          <h4 style={{ color: 'var(--brand-secondary, #3B82F6)', fontSize: '1.8rem', fontWeight: '800', margin: '6px 0 0 0', fontFamily: 'monospace' }}>
             {realStudents.length}
           </h4>
           <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Verified Supabase Student Accounts</span>
@@ -191,7 +191,7 @@ export default function Classes() {
 
       {/* Loading State */}
       {loading && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px', gap: '12px', color: '#00F0FF' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px', gap: '12px', color: 'var(--brand-primary, #00F0FF)' }}>
           <Loader2 size={28} className="animate-spin" />
           <span style={{ fontSize: '1rem', fontWeight: '600' }}>Loading classes from Supabase...</span>
         </div>
@@ -235,7 +235,7 @@ export default function Classes() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: 'rgba(0,0,0,0.25)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)', marginBottom: '14px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
                       <span style={{ color: '#94a3b8' }}>Class Teacher:</span>
-                      <span style={{ color: '#00F0FF', fontWeight: '700' }}>{cls.classTeacher}</span>
+                      <span style={{ color: 'var(--brand-primary, #00F0FF)', fontWeight: '700' }}>{cls.classTeacher}</span>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
@@ -257,9 +257,9 @@ export default function Classes() {
                       justifyContent: 'center',
                       gap: '6px',
                       padding: '8px',
-                      background: 'rgba(0, 240, 255, 0.1)',
-                      border: '1px solid rgba(0, 240, 255, 0.3)',
-                      color: '#00F0FF',
+                      background: 'var(--brand-glow, rgba(0, 240, 255, 0.1))',
+                      border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.3))',
+                      color: 'var(--brand-primary, #00F0FF)',
                       borderRadius: '10px',
                       fontSize: '0.8rem',
                       fontWeight: '700',
@@ -303,14 +303,14 @@ export default function Classes() {
       {/* Modal: Real Student Roster */}
       {selectedClass && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-          <div style={{ background: '#0a0f1d', border: '1px solid rgba(0, 240, 255, 0.4)', borderRadius: '20px', width: '100%', maxWidth: '520px', padding: '28px', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}>
+          <div style={{ background: '#0a0f1d', border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.4))', borderRadius: '20px', width: '100%', maxWidth: '520px', padding: '28px', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ margin: 0, color: '#fff', fontSize: '1.3rem', fontWeight: '800' }}>{selectedClass.name} — Real Student Cohort</h3>
               <button onClick={() => setSelectedClass(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
             </div>
 
             <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '16px' }}>
-              Class Teacher: <strong style={{ color: '#00F0FF' }}>{selectedClass.classTeacher}</strong> • Verified Database Students: <strong style={{ color: '#34d399' }}>{realStudents.length} Students</strong>
+              Class Teacher: <strong style={{ color: 'var(--brand-primary, #00F0FF)' }}>{selectedClass.classTeacher}</strong> • Verified Database Students: <strong style={{ color: '#34d399' }}>{realStudents.length} Students</strong>
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto', marginBottom: '20px' }}>
@@ -332,7 +332,7 @@ export default function Classes() {
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <span style={{ color: '#34d399', fontSize: '0.8rem', fontWeight: '700', display: 'block' }}>Verified Student</span>
-                        <span style={{ color: '#00F0FF', fontSize: '0.75rem', fontWeight: '600' }}>Active Account</span>
+                        <span style={{ color: 'var(--brand-primary, #00F0FF)', fontSize: '0.75rem', fontWeight: '600' }}>Active Account</span>
                       </div>
                     </div>
                   );
@@ -355,7 +355,7 @@ export default function Classes() {
       {/* Modal: Add Class */}
       {showAddModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-          <div style={{ background: '#0a0f1d', border: '1px solid rgba(0, 240, 255, 0.4)', borderRadius: '20px', width: '100%', maxWidth: '460px', padding: '28px', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}>
+          <div style={{ background: '#0a0f1d', border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.4))', borderRadius: '20px', width: '100%', maxWidth: '460px', padding: '28px', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: '800' }}>Add New Class Section to Database</h3>
               <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
@@ -409,7 +409,7 @@ export default function Classes() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, #00F0FF, #3B82F6)', border: 'none', color: '#000', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))', border: 'none', color: '#000', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
                 >
                   {isSubmitting ? 'Saving to Database...' : 'Save to Supabase'}
                 </button>

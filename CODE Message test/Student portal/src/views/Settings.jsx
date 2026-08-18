@@ -49,12 +49,12 @@ export default function Settings() {
       <div style={{
         background: 'rgba(13, 20, 36, 0.75)',
         backdropFilter: 'blur(16px)',
-        border: '1px solid rgba(0, 240, 255, 0.15)',
+        border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.15))',
         borderRadius: '20px',
         padding: '24px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
-          <User size={20} color="#00F0FF" />
+          <User size={20} color="var(--brand-primary, #00F0FF)" />
           <h3 style={{ margin: 0, color: 'white', fontSize: '1.2rem', fontWeight: '700' }}>Profile Photo</h3>
         </div>
 
@@ -64,8 +64,8 @@ export default function Settings() {
             height: '90px',
             borderRadius: '50%',
             overflow: 'hidden',
-            border: '2px solid #00F0FF',
-            boxShadow: '0 0 15px rgba(0, 240, 255, 0.3)',
+            border: '2px solid var(--brand-primary, #00F0FF)',
+            boxShadow: '0 0 15px var(--brand-glow, rgba(0, 240, 255, 0.3))',
             background: '#0D1424',
             flexShrink: 0
           }}>
@@ -83,14 +83,14 @@ export default function Settings() {
             <button 
               onClick={() => setIsPhotoModalOpen(true)}
               style={{
-                background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
                 color: '#000',
                 fontWeight: '700',
                 border: 'none',
                 padding: '10px 20px',
                 borderRadius: '10px',
                 cursor: 'pointer',
-                boxShadow: '0 0 15px rgba(0, 240, 255, 0.4)'
+                boxShadow: '0 0 15px var(--brand-glow, rgba(0, 240, 255, 0.4))'
               }}
             >
               Edit Profile Photo
@@ -103,7 +103,7 @@ export default function Settings() {
       <div style={{
         background: 'rgba(13, 20, 36, 0.75)',
         backdropFilter: 'blur(16px)',
-        border: '1px solid rgba(0, 240, 255, 0.15)',
+        border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.15))',
         borderRadius: '20px',
         padding: '24px'
       }}>

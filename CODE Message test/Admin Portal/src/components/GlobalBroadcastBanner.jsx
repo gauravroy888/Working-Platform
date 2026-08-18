@@ -7,23 +7,46 @@ export default function GlobalBroadcastBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // 1. Check local storage for active broadcast
-    const checkLocalBroadcast = () => {
-      try {
-        const stored = localStorage.getItem('edtech_active_broadcast');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          const dismissedId = localStorage.getItem('edtech_dismissed_broadcast');
-          const isFresh = parsed.timestamp && (Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000);
-          if (isFresh && dismissedId !== (parsed.id || parsed.timestamp?.toString())) {
-            setBroadcast(parsed);
-            setVisible(true);
-          }
-        }
-      } catch (e) {}
+    // Resolve the current logged-in user so we can suppress the banner for the author
+    let currentUserEmail = null;
+    try {
+      const stored = localStorage.getItem('edtech_user');
+      if (stored) currentUserEmail = JSON.parse(stored)?.email || null;
+    } catch (e) {}
+
+    // Helper: show a broadcast only if the user hasn't dismissed it AND is not the author
+    const tryShowBroadcast = (id, title, message, author) => {
+      const dismissedId = localStorage.getItem('edtech_dismissed_broadcast');
+      if (dismissedId === id) return; // already dismissed
+
+      // Bug 10 fix: don't show the banner to the person who posted it
+      if (
+        currentUserEmail &&
+        author &&
+        typeof author === 'string' &&
+        author.toLowerCase() === (currentUserEmail.split('@')[0] || '').toLowerCase()
+      ) return;
+
+      setBroadcast({ id, title, message, author });
+      setVisible(true);
     };
 
-    checkLocalBroadcast();
+    // 1. Check local storage for active broadcast
+    try {
+      const stored = localStorage.getItem('edtech_active_broadcast');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const isFresh = parsed.timestamp && (Date.now() - parsed.timestamp < 48 * 60 * 60 * 1000);
+        if (isFresh) {
+          tryShowBroadcast(
+            parsed.id || parsed.timestamp?.toString(),
+            parsed.title,
+            parsed.message || parsed.text || '',
+            parsed.author
+          );
+        }
+      }
+    } catch (e) {}
 
     // 2. Fetch latest announcement from Supabase
     const fetchLatestAnnouncement = async () => {
@@ -36,20 +59,14 @@ export default function GlobalBroadcastBanner() {
 
         if (data && data.length > 0) {
           const latest = data[0];
-          const latestTime = new Date(latest.createdAt || latest.created_at || Date.now()).getTime();
-          const isFresh = Date.now() - latestTime < 24 * 60 * 60 * 1000;
-          const dismissedId = localStorage.getItem('edtech_dismissed_broadcast');
-          const broadcastId = latest.id?.toString() || latestTime.toString();
-
-          if (isFresh && dismissedId !== broadcastId) {
-            setBroadcast({
-              id: broadcastId,
-              title: latest.title || 'Platform Announcement',
-              message: latest.text || latest.content || latest.message || 'Important update from administration.',
-              author: latest.author || latest.author_name || 'SuperAdmin'
-            });
-            setVisible(true);
-          }
+          const broadcastId = latest.id?.toString() || new Date(latest.createdAt || latest.created_at || Date.now()).getTime().toString();
+          // Bug 11 fix: pass title separately so it's always rendered
+          tryShowBroadcast(
+            broadcastId,
+            latest.title || 'Platform Announcement',
+            latest.text || latest.content || latest.message || 'Important platform broadcast from administration.',
+            latest.author || latest.author_name || 'SuperAdmin'
+          );
         }
       } catch (err) {
         console.warn('Could not fetch latest announcement:', err);
@@ -58,44 +75,74 @@ export default function GlobalBroadcastBanner() {
 
     fetchLatestAnnouncement();
 
-    // 3. Listen on native BroadcastChannel for instant 0ms cross-tab notification
+    // 3. Listen on native BroadcastChannel for instant cross-tab notification
     let bc = null;
     if (typeof BroadcastChannel !== 'undefined') {
       try {
         bc = new BroadcastChannel('edtech_platform_sync');
         bc.onmessage = (event) => {
           if (event.data?.type === 'BROADCAST_ALERT') {
-            const newBcast = {
-              id: `bcast_${event.data.timestamp || Date.now()}`,
-              title: event.data.title || 'Platform Announcement',
-              message: event.data.message || event.data.text || '',
-              author: event.data.author || 'SuperAdmin'
-            };
-            setBroadcast(newBcast);
-            setVisible(true);
+            const id = `bcast_${event.data.timestamp || Date.now()}`;
+            tryShowBroadcast(
+              id,
+              event.data.title || 'Platform Announcement',
+              event.data.message || event.data.text || '',
+              event.data.author || 'SuperAdmin'
+            );
           }
         };
       } catch (e) {}
     }
 
-    // 4. Supabase Realtime subscription
-    const subscription = supabase.channel('portal_admin_broadcast_listener')
+    // 4. Supabase Realtime — new announcements and global notifications
+    const subscription = supabase.channel('admin_global_broadcast_listener_v2')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements' }, (payload) => {
         if (payload.new) {
-          setBroadcast({
-            id: payload.new.id?.toString() || Date.now().toString(),
-            title: payload.new.title || 'Platform Announcement',
-            message: payload.new.text || payload.new.content || payload.new.message || '',
-            author: payload.new.author || payload.new.author_name || 'SuperAdmin'
-          });
-          setVisible(true);
+          const id = payload.new.id?.toString() || Date.now().toString();
+          tryShowBroadcast(
+            id,
+            payload.new.title || 'Platform Announcement',
+            payload.new.text || payload.new.content || payload.new.message || '',
+            payload.new.author || payload.new.author_name || 'SuperAdmin'
+          );
+        }
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
+        if (payload.new && (payload.new.user_email === 'all' || payload.new.type === 'system')) {
+          const id = payload.new.id?.toString() || Date.now().toString();
+          tryShowBroadcast(
+            id,
+            payload.new.title || 'Platform Announcement',
+            payload.new.message || '',
+            'SuperAdmin'
+          );
         }
       })
       .subscribe();
 
+    const handleStorageChange = () => {
+      try {
+        const stored = localStorage.getItem('edtech_active_broadcast');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const isFresh = parsed.timestamp && (Date.now() - parsed.timestamp < 48 * 60 * 60 * 1000);
+          if (isFresh) {
+            tryShowBroadcast(
+              parsed.id || parsed.timestamp?.toString(),
+              parsed.title,
+              parsed.message || parsed.text || '',
+              parsed.author
+            );
+          }
+        }
+      } catch (e) {}
+    };
+    window.addEventListener('storage', handleStorageChange);
+
     return () => {
       if (bc) bc.close();
       supabase.removeChannel(subscription);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
@@ -109,52 +156,69 @@ export default function GlobalBroadcastBanner() {
   if (!visible || !broadcast || !broadcast.message) return null;
 
   return (
-    <div 
+    <div
       style={{
-        background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(59, 130, 246, 0.25), rgba(0, 240, 255, 0.25))',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid rgba(168, 85, 247, 0.5)',
-        boxShadow: '0 4px 20px rgba(168, 85, 247, 0.3)',
-        borderRadius: '14px',
-        margin: '12px 16px 0 16px',
-        padding: '12px 18px',
+        background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(239, 68, 68, 0.25), rgba(13, 20, 36, 0.98))',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '2px solid rgba(168, 85, 247, 0.8)',
+        boxShadow: '0 0 35px rgba(168, 85, 247, 0.5), inset 0 0 15px rgba(239, 68, 68, 0.2)',
+        borderRadius: '16px',
+        margin: '0 0 20px 0',
+        padding: '14px 22px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '14px',
+        gap: '16px',
         color: '#fff',
-        zIndex: 9999,
-        animation: 'slideDown 0.3s ease-out'
+        zIndex: 99999,
+        animation: 'slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
-        <div 
-          style={{ 
-            width: '36px', 
-            height: '36px', 
-            borderRadius: '10px', 
-            background: 'rgba(168, 85, 247, 0.35)', 
-            border: '1px solid rgba(168, 85, 247, 0.6)',
-            display: 'flex', 
-            alignItems: 'center', 
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #a855f7, #ef4444)',
+            border: '2px solid #ffffff',
+            display: 'flex',
+            alignItems: 'center',
             justifyContent: 'center',
-            color: '#c084fc',
-            flexShrink: 0
+            color: '#fff',
+            flexShrink: 0,
+            boxShadow: '0 0 18px rgba(239, 68, 68, 0.6)'
           }}
         >
-          <Megaphone size={20} />
+          <Megaphone size={24} />
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', background: '#a855f7', color: '#000', padding: '2px 8px', borderRadius: '6px' }}>
-              OFFICIAL BROADCAST
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <span style={{
+              fontSize: '11px',
+              fontWeight: '900',
+              textTransform: 'uppercase',
+              letterSpacing: '0.8px',
+              background: '#ef4444',
+              color: '#ffffff',
+              padding: '3px 10px',
+              borderRadius: '6px',
+              boxShadow: '0 0 12px rgba(239, 68, 68, 0.7)'
+            }}>
+              🔴 OFFICIAL BROADCAST ALERT
             </span>
-            <span style={{ fontSize: '12px', color: '#cbd5e1', fontWeight: '600' }}>
+            <span style={{ fontSize: '13px', color: '#e9d5ff', fontWeight: '700' }}>
               From: {broadcast.author}
             </span>
           </div>
-          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#f8fafc', fontWeight: '500', lineHeight: '1.4', wordBreak: 'break-word' }}>
+          {/* Bug 11 fix: title is now always rendered above the message */}
+          {broadcast.title && (
+            <p style={{ margin: '5px 0 2px 0', fontSize: '13px', color: '#e9d5ff', fontWeight: '800' }}>
+              {broadcast.title}
+            </p>
+          )}
+          <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#ffffff', fontWeight: '600', lineHeight: '1.45', wordBreak: 'break-word' }}>
             {broadcast.message}
           </p>
         </div>
@@ -163,20 +227,21 @@ export default function GlobalBroadcastBanner() {
       <button
         onClick={handleDismiss}
         style={{
-          background: 'rgba(255, 255, 255, 0.1)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          borderRadius: '8px',
-          color: '#cbd5e1',
+          background: 'rgba(255, 255, 255, 0.15)',
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+          borderRadius: '10px',
+          color: '#ffffff',
           cursor: 'pointer',
-          padding: '6px',
+          padding: '8px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          transition: 'all 0.2s'
+          transition: 'all 0.2s',
+          flexShrink: 0
         }}
         title="Dismiss Alert"
       >
-        <X size={18} />
+        <X size={20} />
       </button>
     </div>
   );

@@ -6,7 +6,7 @@ import GlobalBroadcastBanner from './GlobalBroadcastBanner';
 import { useTheme } from '../ThemeContext';
 
 export default function Layout({ children }) {
-  const { backgroundImage, profileName } = useTheme();
+  const { backgroundImage, profileName, schoolName, primaryColor } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
@@ -26,16 +26,14 @@ export default function Layout({ children }) {
       <Sidebar isOpen={isMobileMenuOpen} closeMenu={() => setIsMobileMenuOpen(false)} />
       
       <main className="main-content">
-        <GlobalBroadcastBanner />
-        
         <header className="top-header">
           <div className="header-left">
             <button className="mobile-menu-btn icon-btn" onClick={toggleMobileMenu}>
               <Menu size={24} />
             </button>
             <div className="header-brand">
-              <h2>STUDENT PORTAL</h2>
-              <p>Welcome back, {profileName.split(' ')[0]}!</p>
+              <h2 style={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>{schoolName || 'STUDENT PORTAL'}</h2>
+              <p>Student Deck • Welcome back, {profileName.split(' ')[0]}!</p>
             </div>
           </div>
           <div className="header-actions">
@@ -44,6 +42,7 @@ export default function Layout({ children }) {
         </header>
         
         <div className="page-content">
+          <GlobalBroadcastBanner />
           {children}
         </div>
       </main>

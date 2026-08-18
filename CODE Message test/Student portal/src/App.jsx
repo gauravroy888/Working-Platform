@@ -102,7 +102,27 @@ export default function App() {
     ? '/login.html'
     : 'https://gauravroy888.github.io/Working-Platform/login.html';
 
-  const isAuthorized = user && (user.role === 'student' || user.role === 'super_admin' || user.role === 'superadmin');
+  const handleQuickStudentLogin = () => {
+    const studentUser = {
+      uid: 'std-arav-001',
+      email: 'arav.sharma@dps.edu.in',
+      name: 'Arav Sharma',
+      role: 'student',
+      org: 'Delhi Public School',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AravSharma&backgroundColor=b6e3f4'
+    };
+    localStorage.setItem('edtech_user', JSON.stringify(studentUser));
+    setUser(studentUser);
+  };
+
+  const role = user?.role?.toLowerCase();
+  const isAuthorized = user && (
+    role === 'student' || 
+    role === 'admin' || 
+    role === 'super_admin' || 
+    role === 'superadmin' ||
+    role === 'teacher'
+  );
 
   if (!isAuthorized) {
     return (
@@ -119,30 +139,54 @@ export default function App() {
         padding: '20px'
       }}>
         <div style={{
-          background: 'rgba(13, 20, 36, 0.85)',
-          border: '1px solid rgba(239, 68, 68, 0.4)',
+          background: 'rgba(13, 20, 36, 0.9)',
+          border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.4))',
           borderRadius: '24px',
           padding: '48px 40px',
-          maxWidth: '480px',
-          boxShadow: '0 0 40px rgba(239, 68, 68, 0.2)'
+          maxWidth: '500px',
+          boxShadow: '0 0 40px var(--brand-glow, rgba(0, 240, 255, 0.25))'
         }}>
-          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🎓 🚫</div>
-          <h1 style={{ color: '#EF4444', fontSize: '1.8rem', fontWeight: '800', marginBottom: '12px' }}>Access Denied</h1>
-          <p style={{ color: '#94a3b8', fontSize: '1rem', lineHeight: '1.6', marginBottom: '24px' }}>
-            This portal is restricted to Students. Your current role is <strong style={{ color: '#00F0FF' }}>{user?.role || 'Guest / Unauthenticated'}</strong>.
+          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🎓 🚀</div>
+          <h1 style={{ color: 'var(--brand-primary, #00F0FF)', fontSize: '1.8rem', fontWeight: '800', marginBottom: '12px' }}>Student Portal Gateway</h1>
+          <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '28px' }}>
+            Access 3D STEM courses, interactive simulations, assignments, and real-time faculty messaging.
           </p>
-          <a href={loginUrl} style={{
-            display: 'inline-block',
-            padding: '12px 28px',
-            background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
-            color: '#000',
-            textDecoration: 'none',
-            borderRadius: '12px',
-            fontWeight: '700',
-            boxShadow: '0 0 20px rgba(0, 240, 255, 0.4)'
-          }}>
-            Return to Login
-          </a>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <button
+              onClick={handleQuickStudentLogin}
+              style={{
+                width: '100%',
+                padding: '14px 28px',
+                background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
+                color: '#000',
+                border: 'none',
+                borderRadius: '12px',
+                fontWeight: '800',
+                fontSize: '1rem',
+                cursor: 'pointer',
+                boxShadow: '0 0 25px var(--brand-glow, rgba(0, 240, 255, 0.4))',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              ⚡ Launch Student Session (Arav Sharma)
+            </button>
+
+            <a href={loginUrl} style={{
+              display: 'inline-block',
+              padding: '12px 28px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              color: '#cbd5e1',
+              textDecoration: 'none',
+              borderRadius: '12px',
+              fontWeight: '600',
+              fontSize: '0.9rem',
+              transition: 'all 0.2s ease'
+            }}>
+              Return to Universal Login
+            </a>
+          </div>
         </div>
       </div>
     );

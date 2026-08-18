@@ -531,10 +531,33 @@
               };
               setUsers([superAdmin, ...mapped]);
 
-              // Update DPS org card counts from real data
+              // Update DPS org card counts and branding from real data
               const realStudents = mapped.filter(u => u.role === 'STUDENT').length;
               const realTeachers = mapped.filter(u => u.role === 'TEACHER').length;
-              setOrgs([{ ...DPS_INSTITUTION, students: realStudents, teachers: realTeachers }]);
+              
+              try {
+                const brandRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/school_branding?institution_id=eq.inst-dps-001&limit=1`, {
+                  headers: { 'apikey': SUPABASE_CONFIG.key, 'Authorization': `Bearer ${SUPABASE_CONFIG.key}` }
+                });
+                const brandData = await brandRes.json();
+                if (brandData && brandData[0]) {
+                  const b = brandData[0];
+                  setOrgs([{
+                    ...DPS_INSTITUTION,
+                    name: b.school_name || DPS_INSTITUTION.name,
+                    tagline: b.school_tagline || DPS_INSTITUTION.tagline,
+                    logo_url: b.logo_url,
+                    primary_color: b.primary_color,
+                    theme_preset: b.theme_preset,
+                    students: realStudents,
+                    teachers: realTeachers
+                  }]);
+                } else {
+                  setOrgs([{ ...DPS_INSTITUTION, students: realStudents, teachers: realTeachers }]);
+                }
+              } catch (be) {
+                setOrgs([{ ...DPS_INSTITUTION, students: realStudents, teachers: realTeachers }]);
+              }
             }
           } catch (e) {
             console.warn("Live Supabase fetch error, using local fallback:", e);

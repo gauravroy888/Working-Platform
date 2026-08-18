@@ -56,7 +56,7 @@
 }
 
 .header-brand p {
-  color: #00F0FF;
+  color: var(--brand-primary, #00F0FF);
   margin: 4px 0 0 0;
   font-size: 0.95rem;
   font-weight: 600;

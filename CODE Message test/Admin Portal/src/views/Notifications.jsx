@@ -1,67 +1,140 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Card from '../components/Card';
-import { Bell, BookOpen, MessageSquare, Star, CheckCircle, UserPlus, Info } from 'lucide-react';
+import { Bell, BookOpen, MessageSquare, Star, CheckCircle, UserPlus, Info, Megaphone } from 'lucide-react';
 import { supabase } from '../supabase';
 import './Notifications.css';
+
+// Tracks which announcement IDs have been read locally (persisted across refreshes)
+const ANNOUNCE_READ_KEY = 'edtech_admin_read_announcements';
+
+function getReadAnnouncements() {
+  try { return new Set(JSON.parse(localStorage.getItem(ANNOUNCE_READ_KEY) || '[]')); }
+  catch { return new Set(); }
+}
+
+function saveReadAnnouncements(set) {
+  localStorage.setItem(ANNOUNCE_READ_KEY, JSON.stringify([...set]));
+}
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [filter, setFilter] = useState('all'); // 'all' or 'unread'
   const [currentUser, setCurrentUser] = useState(null);
 
+  // Bug 6 fix: resolve user first, everything else waits on it
   useEffect(() => {
     const userStr = localStorage.getItem('edtech_user');
     if (userStr) {
-      setCurrentUser(JSON.parse(userStr));
+      try { setCurrentUser(JSON.parse(userStr)); } catch (e) {}
     }
   }, []);
 
-  const fetchNotifications = async () => {
+  // Bug 4 fix: announcements use localStorage to track read state per-device
+  const fetchNotifications = useCallback(async (user) => {
+    const resolvedUser = user;
+    if (!resolvedUser) return;
+
+    try {
+      const email = resolvedUser.email;
+      const readSet = getReadAnnouncements();
+
+      const { data: notifData } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      const { data: announceData } = await supabase
+        .from('announcements')
+        .select('*')
+        .order('createdAt', { ascending: false });
+
+      // Bug 4 fix: is_read comes from localStorage, not hardcoded false
+      const mappedAnnouncements = (announceData || []).map(a => ({
+        id: `announce_${a.id}`,
+        dbId: a.id,
+        title: a.title || 'Platform Announcement',
+        message: a.text || a.content || a.message || '',
+        type: 'system',
+        is_read: readSet.has(`announce_${a.id}`),
+        created_at: a.createdAt || a.created_at || new Date().toISOString(),
+        author: a.author || 'SuperAdmin',
+        is_broadcast: true
+      }));
+
+      const filteredNotifs = (notifData || []).filter(n =>
+        n.user_email === 'all' || n.user_email === 'system' || n.user_email === email
+      );
+
+      const combined = [...mappedAnnouncements, ...filteredNotifs];
+      const unique = [];
+      const seen = new Set();
+      for (const item of combined) {
+        if (!seen.has(item.id)) {
+          seen.add(item.id);
+          unique.push(item);
+        }
+      }
+      setNotifications(unique);
+    } catch (e) {
+      console.error('Error fetching notifications:', e);
+    }
+  }, []);
+
+  // Bug 6 fix: only subscribe and fetch once currentUser is resolved
+  useEffect(() => {
     if (!currentUser) return;
-    const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .in('user_email', [currentUser.email, 'all'])
-      .order('created_at', { ascending: false });
-    
-    if (data) {
-      setNotifications(data);
+
+    fetchNotifications(currentUser);
+
+    const subscription = supabase.channel('admin:notifications:v2')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'notifications'
+      }, () => fetchNotifications(currentUser))
+      // Bug 15 fix (admin): also listen to announcements table
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'announcements'
+      }, () => fetchNotifications(currentUser))
+      .subscribe();
+
+    return () => { supabase.removeChannel(subscription); };
+  }, [currentUser, fetchNotifications]);
+
+  const markAsRead = async (id) => {
+    const notif = notifications.find(n => n.id === id);
+    if (!notif) return;
+
+    if (notif.is_broadcast) {
+      // Bug 4 fix: persist announcement read state in localStorage
+      const readSet = getReadAnnouncements();
+      readSet.add(id);
+      saveReadAnnouncements(readSet);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+    } else {
+      await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
     }
   };
 
-  useEffect(() => {
-    if (!currentUser) return;
-    
-    fetchNotifications();
-
-    const subscription = supabase.channel('admin:notifications')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'notifications'
-      }, (payload) => {
-        if (
-          payload.new &&
-          (payload.new.user_email === currentUser.email || payload.new.user_email === 'all')
-        ) {
-          fetchNotifications();
-        }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(subscription);
-    };
-  }, [currentUser]);
-
-  const markAsRead = async (id) => {
-    await supabase.from('notifications').update({ is_read: true }).eq('id', id);
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
-  };
-
+  // Bug 5 fix: markAllAsRead now correctly handles both notifications AND announcements
   const markAllAsRead = async () => {
     if (!currentUser) return;
-    await supabase.from('notifications').update({ is_read: true }).eq('user_email', currentUser.email).eq('is_read', false);
+
+    // Mark DB notifications as read
+    await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .in('user_email', [currentUser.email, 'all', 'system'])
+      .eq('is_read', false);
+
+    // Mark announcement-sourced items read in localStorage
+    const readSet = getReadAnnouncements();
+    notifications.forEach(n => { if (n.is_broadcast) readSet.add(n.id); });
+    saveReadAnnouncements(readSet);
+
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
   };
 
@@ -77,8 +150,8 @@ export default function Notifications() {
     }
   };
 
-  const filteredNotifications = filter === 'unread' 
-    ? notifications.filter(n => !n.is_read) 
+  const filteredNotifications = filter === 'unread'
+    ? notifications.filter(n => !n.is_read)
     : notifications;
 
   return (
@@ -86,15 +159,15 @@ export default function Notifications() {
       <Card className="full-height-card">
         <div className="notifications-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <div className="tabs" style={{ display: 'flex', gap: '20px' }}>
-            <button 
-              className={`tab ${filter === 'all' ? 'active' : ''}`} 
+            <button
+              className={`tab ${filter === 'all' ? 'active' : ''}`}
               onClick={() => setFilter('all')}
               style={{ background: 'transparent', border: 'none', color: filter === 'all' ? '#00E5FF' : 'var(--text-secondary)', fontWeight: filter === 'all' ? 'bold' : 'normal', cursor: 'pointer', borderBottom: filter === 'all' ? '2px solid #00E5FF' : 'none', paddingBottom: '5px' }}
             >
               All Notifications
             </button>
-            <button 
-              className={`tab ${filter === 'unread' ? 'active' : ''}`} 
+            <button
+              className={`tab ${filter === 'unread' ? 'active' : ''}`}
               onClick={() => setFilter('unread')}
               style={{ background: 'transparent', border: 'none', color: filter === 'unread' ? '#00E5FF' : 'var(--text-secondary)', fontWeight: filter === 'unread' ? 'bold' : 'normal', cursor: 'pointer', borderBottom: filter === 'unread' ? '2px solid #00E5FF' : 'none', paddingBottom: '5px' }}
             >
@@ -105,37 +178,50 @@ export default function Notifications() {
             Mark all as read
           </button>
         </div>
-        
+
         <div className="notifications-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {filteredNotifications.length > 0 ? filteredNotifications.map(notif => {
-            const { icon: Icon, color } = getIconAndColor(notif.type);
+            const isBroadcastAlert = notif.is_broadcast || notif.user_email === 'all' || notif.type === 'system';
+            // Bug 11 fix: use Megaphone icon and show the title for broadcasts
+            const { icon: Icon, color } = isBroadcastAlert ? { icon: Megaphone, color: '#c084fc' } : getIconAndColor(notif.type);
             return (
-              <div 
-                key={notif.id} 
+              <div
+                key={notif.id}
                 className={`notification-item ${!notif.is_read ? 'unread' : ''}`}
                 onClick={() => !notif.is_read && markAsRead(notif.id)}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  padding: '15px', 
-                  background: !notif.is_read ? 'rgba(0, 229, 255, 0.05)' : 'rgba(255, 255, 255, 0.02)', 
-                  border: '1px solid var(--panel-border)', 
-                  borderRadius: '12px',
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '16px 20px',
+                  background: isBroadcastAlert
+                    ? 'linear-gradient(135deg, rgba(168, 85, 247, 0.18), rgba(239, 68, 68, 0.12), rgba(13, 20, 36, 0.85))'
+                    : (!notif.is_read ? 'rgba(0, 229, 255, 0.05)' : 'rgba(255, 255, 255, 0.02)'),
+                  border: isBroadcastAlert ? '2px solid rgba(168, 85, 247, 0.5)' : '1px solid var(--panel-border)',
+                  boxShadow: isBroadcastAlert ? '0 0 20px rgba(168, 85, 247, 0.25)' : 'none',
+                  borderRadius: '14px',
                   cursor: !notif.is_read ? 'pointer' : 'default',
                   position: 'relative'
                 }}
               >
-                <div className="notif-icon-wrapper" style={{ backgroundColor: `${color}20`, color: color, width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '15px' }}>
-                  <Icon size={20} />
+                <div className="notif-icon-wrapper" style={{ backgroundColor: `${color}30`, color: color, width: '44px', height: '44px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '16px', flexShrink: 0 }}>
+                  <Icon size={22} />
                 </div>
-                <div className="notif-content" style={{ flex: 1 }}>
-                  <h4 className="notif-title" style={{ margin: '0 0 5px 0', color: '#fff', fontSize: '15px' }}>{notif.title}</h4>
-                  <p className="notif-message" style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '13px' }}>{notif.message}</p>
-                  <span className="notif-time" style={{ display: 'block', marginTop: '5px', color: 'var(--text-secondary)', fontSize: '11px' }}>
-                    {new Date(notif.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                <div className="notif-content" style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                    {isBroadcastAlert && (
+                      <span style={{ background: '#ef4444', color: '#fff', fontSize: '10px', fontWeight: '900', padding: '2px 8px', borderRadius: '4px', letterSpacing: '0.6px' }}>
+                        🔴 OFFICIAL BROADCAST
+                      </span>
+                    )}
+                    {/* Bug 11 fix: title is now always rendered */}
+                    <h4 className="notif-title" style={{ margin: 0, color: '#fff', fontSize: '15px', fontWeight: '800' }}>{notif.title}</h4>
+                  </div>
+                  <p className="notif-message" style={{ margin: '4px 0 0 0', color: '#f1f5f9', fontSize: '14px', fontWeight: '500', lineHeight: '1.4' }}>{notif.message}</p>
+                  <span className="notif-time" style={{ display: 'block', marginTop: '6px', color: 'rgba(255, 255, 255, 0.45)', fontSize: '11px', fontWeight: '600' }}>
+                    {notif.author ? `From: ${notif.author} • ` : ''}{new Date(notif.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                   </span>
                 </div>
-                {!notif.is_read && <div className="unread-dot" style={{ width: '8px', height: '8px', backgroundColor: '#00E5FF', borderRadius: '50%', position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)' }}></div>}
+                {!notif.is_read && <div className="unread-dot" style={{ width: '10px', height: '10px', backgroundColor: isBroadcastAlert ? '#ef4444' : '#00E5FF', borderRadius: '50%', position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', boxShadow: isBroadcastAlert ? '0 0 8px #ef4444' : '0 0 8px #00E5FF' }}></div>}
               </div>
             );
           }) : (

@@ -82,7 +82,7 @@ export default function Timetable() {
                   borderRadius: '10px',
                   border: selectedDay === d ? '1px solid rgba(0, 240, 255, 0.4)' : '1px solid transparent',
                   background: selectedDay === d ? 'linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(59, 130, 246, 0.2))' : 'transparent',
-                  color: selectedDay === d ? '#00F0FF' : '#94a3b8',
+                  color: selectedDay === d ? 'var(--brand-primary, #00F0FF)' : '#94a3b8',
                   fontWeight: '700',
                   fontSize: '0.85rem',
                   cursor: 'pointer',
@@ -104,7 +104,7 @@ export default function Timetable() {
               justifyContent: 'space-between',
               padding: '20px 24px',
               borderRadius: '16px',
-              background: item.status === 'Live Now' ? 'linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(59, 130, 246, 0.15))' : 'rgba(255, 255, 255, 0.03)',
+              background: item.status === 'Live Now' ? 'linear-gradient(135deg, var(--brand-glow, rgba(0, 240, 255, 0.15)), var(--brand-secondary, rgba(59, 130, 246, 0.15)))' : 'rgba(255, 255, 255, 0.03)',
               border: item.status === 'Live Now' ? '1px solid rgba(0, 240, 255, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
               boxShadow: item.status === 'Live Now' ? '0 0 25px rgba(0, 240, 255, 0.2)' : 'none'
             }}>
@@ -115,7 +115,7 @@ export default function Timetable() {
                   <div style={{ display: 'flex', gap: '16px', color: '#94a3b8', fontSize: '0.85rem', flexWrap: 'wrap' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Clock size={14} /> {item.time}</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={14} /> {item.room}</span>
-                    <span style={{ color: '#00F0FF' }}>• {item.teacher}</span>
+                    <span style={{ color: 'var(--brand-primary, #00F0FF)' }}>• {item.teacher}</span>
                   </div>
                 </div>
               </div>
@@ -129,7 +129,7 @@ export default function Timetable() {
                       window.open(window.location.origin + basePath + '/study-island/index.html', '_blank');
                     }}
                     style={{
-                      background: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+                      background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
                       color: '#000',
                       fontWeight: '700',
                       border: 'none',
@@ -139,7 +139,7 @@ export default function Timetable() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      boxShadow: '0 0 15px rgba(0, 240, 255, 0.3)'
+                      boxShadow: '0 0 15px var(--brand-glow, rgba(0, 240, 255, 0.3))'
                     }}
                   >
                     <Video size={16} /> Launch 3D Lab

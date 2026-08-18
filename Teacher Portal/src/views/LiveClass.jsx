@@ -217,7 +217,7 @@ export default function LiveClass() {
       {activeTab === 'active' ? (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }} className="animate-fade-in">
           {activeLiveClass ? (
-            <Card title="Currently Active Class" style={{ background: 'rgba(0, 240, 255, 0.05)', border: '1px solid rgba(0, 240, 255, 0.2)' }}>
+            <Card title="Currently Active Class" style={{ background: 'var(--brand-glow, rgba(0, 240, 255, 0.05))', border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.2))' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
