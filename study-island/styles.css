@@ -2494,3 +2494,19 @@ body.light-theme #theme-toggle {
   filter: brightness(1.2);
   box-shadow: 0 6px 25px rgba(64, 224, 208, 0.6), inset 0 -4px 10px rgba(0, 0, 0, 0.3), inset 0 4px 10px rgba(255, 255, 255, 0.9);
 }
+
+/* Profile Courses Inner Scrollbar */
+#profile-courses-list::-webkit-scrollbar {
+  width: 6px;
+}
+#profile-courses-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+#profile-courses-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 240, 255, 0.3);
+  border-radius: 4px;
+}
+#profile-courses-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 240, 255, 0.6);
+}

@@ -777,105 +777,105 @@
 <!-- ═══════════════════════════════════════════════════════════════
      SCREEN 5: STUDENT PROFILE & COURSES SYNC (2-COLUMN DASHBOARD)
      ═══════════════════════════════════════════════════════════════ -->
-<div id="screen-profile" class="screen" style="background-image: url('assets/Future verion lowres.jpg');">
+<div id="screen-profile" class="screen" style="background-image: url('assets/Future verion lowres.jpg'); overflow: hidden;">
   <div class="bg-overlay"></div>
   <div class="particles" aria-hidden="true">
     <span></span><span></span><span></span><span></span><span></span>
   </div>
 
-  <div class="screen-content profile-content" style="max-width: 1280px; width: 100%; padding-bottom: calc(var(--nav-height) + 24px); flex: 1; display: flex; flex-direction: column; justify-content: center;">
+  <div class="screen-content profile-content" style="max-width: 1320px; width: 95%; height: calc(100vh - var(--nav-height) - 20px); max-height: calc(100vh - 80px); padding: 12px 0; margin: 0 auto; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; flex: 1; min-height: 0;">
     
     <!-- Top Pill Badge -->
-    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 18px;">
-      <div class="logo-pill" role="banner" style="margin: 0; padding: 12px 30px;">
-        <div class="logo-star" style="font-size: 1.2rem;">✦</div>
-        <span class="logo-text" style="font-size: 0.95rem;">CLASS 6TH STUDENT COMMAND CENTER</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 12px; flex-shrink: 0;">
+      <div class="logo-pill" role="banner" style="margin: 0; padding: 8px 22px;">
+        <div class="logo-star" style="font-size: 1.1rem;">✦</div>
+        <span id="profile-header-pill" class="logo-text" style="font-size: 0.88rem;">CLASS 6TH STUDENT COMMAND CENTER</span>
       </div>
-      <span style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; border-radius: 20px; background: rgba(16,185,129,0.18); border: 1px solid rgba(16,185,129,0.35); color: #10B981; font-weight: 800; font-size: 0.92rem; backdrop-filter: blur(10px);">
-        <span style="width: 10px; height: 10px; border-radius: 50%; background: #10B981; box-shadow: 0 0 12px #10B981;"></span> Supabase Realtime Active
+      <span style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 18px; border-radius: 20px; background: rgba(16,185,129,0.18); border: 1px solid rgba(16,185,129,0.35); color: #10B981; font-weight: 800; font-size: 0.85rem; backdrop-filter: blur(10px);">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: #10B981; box-shadow: 0 0 10px #10B981;"></span> Supabase Realtime Active
       </span>
     </div>
 
     <!-- 2-Column Dashboard Layout Grid -->
-    <div style="display: grid; grid-template-columns: 350px 1fr; gap: 24px; width: 100%; align-items: stretch;">
+    <div style="display: grid; grid-template-columns: 320px 1fr; gap: 20px; width: 100%; flex: 1; min-height: 0; align-items: stretch; overflow: hidden;">
       
       <!-- LEFT COLUMN: Student Profile Card & Stats -->
-      <div class="glass-card" style="padding: 28px; display: flex; flex-direction: column; gap: 24px; justify-content: space-between;">
+      <div class="glass-card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between; height: 100%; box-sizing: border-box; overflow-y: auto;">
         
         <!-- Profile Identity Block -->
         <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
-          <div style="position: relative; width: 96px; height: 96px; margin-bottom: 14px;">
-            <img id="profile-avatar-img" src="assets/avatar.png" onerror="this.onerror=null; this.src='https://api.dicebear.com/7.x/bottts/svg?seed=Alex';" alt="Student Avatar" style="width: 100%; height: 100%; border-radius: 50%; border: 3px solid #00F0FF; box-shadow: 0 0 25px rgba(0,240,255,0.4); object-fit: cover; background: #0b1528;" />
-            <span style="position: absolute; bottom: 2px; right: 2px; width: 18px; height: 18px; border-radius: 50%; background: #10B981; border: 3px solid #03071a; box-shadow: 0 0 10px #10B981;"></span>
+          <div style="position: relative; width: 80px; height: 80px; margin-bottom: 10px;">
+            <img id="profile-avatar-img" src="assets/avatar.png" onerror="this.onerror=null; this.src='https://api.dicebear.com/7.x/bottts/svg?seed=Alex';" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; border: 3px solid #00F0FF; box-shadow: 0 0 20px rgba(0,240,255,0.4); object-fit: cover; background: #0b1528;" />
+            <span style="position: absolute; bottom: 2px; right: 2px; width: 16px; height: 16px; border-radius: 50%; background: #10B981; border: 3px solid #03071a; box-shadow: 0 0 8px #10B981;"></span>
           </div>
-          <h2 id="profile-student-name" style="font-size: 1.7rem; font-weight: 800; color: white; margin: 0 0 4px 0;">Alex K.</h2>
-          <span id="profile-student-class" style="color: #f0c060; font-size: 0.95rem; font-weight: 700; margin-bottom: 12px;">Class 6th Science & Physics</span>
+          <h2 id="profile-student-name" style="font-size: 1.45rem; font-weight: 800; color: white; margin: 0 0 2px 0;">Alex K.</h2>
+          <span id="profile-student-class" style="color: #f0c060; font-size: 0.88rem; font-weight: 700; margin-bottom: 10px;">Class 6th Science & Physics</span>
           
-          <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
-            <span id="profile-student-id" class="glass-pill" style="font-size: 0.82rem; padding: 5px 14px; color: #00F0FF; border: 1px solid rgba(0,240,255,0.35); font-weight: 700;">ID: STU-64029</span>
-            <span class="glass-pill" style="font-size: 0.82rem; padding: 5px 14px; color: #10B981; border: 1px solid rgba(16,185,129,0.35); font-weight: 700;">🔓 Full Access</span>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;">
+            <span id="profile-student-id" class="glass-pill" style="font-size: 0.78rem; padding: 4px 12px; color: #00F0FF; border: 1px solid rgba(0,240,255,0.35); font-weight: 700;">ID: STU-64029</span>
+            <span id="profile-badge-access" class="glass-pill" style="font-size: 0.78rem; padding: 4px 12px; color: #10B981; border: 1px solid rgba(16,185,129,0.35); font-weight: 700;">🔓 Full Access</span>
           </div>
         </div>
 
         <!-- Vertical Stats List -->
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-          <div class="glass-mini" style="padding: 12px 16px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; background: rgba(0,240,255,0.08); border: 1px solid rgba(0,240,255,0.25);">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 1.3rem;">⚡</span>
-              <span style="color: #e2e8f0; font-size: 0.9rem; font-weight: 700;">Learning Points</span>
+        <div id="profile-stats-container" style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
+          <div class="glass-mini" style="padding: 10px 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(0,240,255,0.08); border: 1px solid rgba(0,240,255,0.25);">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="stat-1-icon" style="font-size: 1.1rem;">⚡</span>
+              <span id="stat-1-label" style="color: #e2e8f0; font-size: 0.85rem; font-weight: 700;">Learning Points</span>
             </div>
-            <strong id="profile-xp" style="color: white; font-size: 1.15rem; font-weight: 800;">1,250 XP</strong>
+            <strong id="profile-xp" style="color: white; font-size: 1.05rem; font-weight: 800;">1,250 XP</strong>
           </div>
-          <div class="glass-mini" style="padding: 12px 16px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; background: rgba(240,192,96,0.08); border: 1px solid rgba(240,192,96,0.25);">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 1.3rem;">🧪</span>
-              <span style="color: #e2e8f0; font-size: 0.9rem; font-weight: 700;">Completed 3D Labs</span>
+          <div class="glass-mini" style="padding: 10px 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(240,192,96,0.08); border: 1px solid rgba(240,192,96,0.25);">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="stat-2-icon" style="font-size: 1.1rem;">🧪</span>
+              <span id="stat-2-label" style="color: #e2e8f0; font-size: 0.85rem; font-weight: 700;">Completed 3D Labs</span>
             </div>
-            <strong id="profile-labs" style="color: white; font-size: 1.15rem; font-weight: 800;">8 Labs</strong>
+            <strong id="profile-labs" style="color: white; font-size: 1.05rem; font-weight: 800;">8 Labs</strong>
           </div>
-          <div class="glass-mini" style="padding: 12px 16px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.25);">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 1.3rem;">⏱️</span>
-              <span style="color: #e2e8f0; font-size: 0.9rem; font-weight: 700;">3D Time Logged</span>
+          <div class="glass-mini" style="padding: 10px 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.25);">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="stat-3-icon" style="font-size: 1.1rem;">⏱️</span>
+              <span id="stat-3-label" style="color: #e2e8f0; font-size: 0.85rem; font-weight: 700;">3D Time Logged</span>
             </div>
-            <strong id="profile-hours" style="color: white; font-size: 1.15rem; font-weight: 800;">14.5 Hrs</strong>
+            <strong id="profile-hours" style="color: white; font-size: 1.05rem; font-weight: 800;">14.5 Hrs</strong>
           </div>
-          <div class="glass-mini" style="padding: 12px 16px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; background: rgba(236,72,153,0.08); border: 1px solid rgba(236,72,153,0.25);">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 1.3rem;">🔥</span>
-              <span style="color: #e2e8f0; font-size: 0.9rem; font-weight: 700;">Active Streak</span>
+          <div class="glass-mini" style="padding: 10px 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(236,72,153,0.08); border: 1px solid rgba(236,72,153,0.25);">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="stat-4-icon" style="font-size: 1.1rem;">🔥</span>
+              <span id="stat-4-label" style="color: #e2e8f0; font-size: 0.85rem; font-weight: 700;">Active Streak</span>
             </div>
-            <strong id="profile-streak" style="color: white; font-size: 1.15rem; font-weight: 800;">5 Days</strong>
+            <strong id="profile-streak" style="color: white; font-size: 1.05rem; font-weight: 800;">5 Days</strong>
           </div>
         </div>
 
       </div>
 
       <!-- RIGHT COLUMN: Class 6th Full Access Curriculum -->
-      <div class="glass-card" style="padding: 28px 32px; display: flex; flex-direction: column; justify-content: space-between;">
+      <div class="glass-card" style="padding: 20px 24px; display: flex; flex-direction: column; justify-content: space-between; height: 100%; box-sizing: border-box; overflow: hidden;">
         
-        <div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 14px;">
+        <div style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 10px; flex-shrink: 0;">
             <div>
-              <h3 style="font-size: 1.4rem; font-weight: 800; color: white; margin: 0 0 4px 0;">
+              <h3 id="profile-right-title" style="font-size: 1.25rem; font-weight: 800; color: white; margin: 0 0 2px 0;">
                 📚 Class 6th Interactive 3D Curriculum
               </h3>
-              <p style="margin: 0; color: #cbd5e1; font-size: 0.9rem;">Explore 3D simulation models, virtual experiments, and quizzes.</p>
+              <p style="margin: 0; color: #cbd5e1; font-size: 0.85rem;">Explore 3D simulation models, virtual experiments, and quizzes.</p>
             </div>
-            <span style="padding: 6px 16px; border-radius: 20px; background: rgba(0,240,255,0.15); border: 1px solid rgba(0,240,255,0.35); color: #00F0FF; font-size: 0.85rem; font-weight: 800;">
+            <span id="profile-right-pill" style="padding: 5px 14px; border-radius: 20px; background: rgba(0,240,255,0.15); border: 1px solid rgba(0,240,255,0.35); color: #00F0FF; font-size: 0.8rem; font-weight: 800;">
               Full Access Enabled
             </span>
           </div>
 
           <!-- Courses List -->
-          <div id="profile-courses-list" style="display: flex; flex-direction: column; gap: 14px;">
+          <div id="profile-courses-list" style="flex: 1; min-height: 0; overflow-y: auto; padding-right: 6px; display: flex; flex-direction: column; gap: 10px;">
             <!-- Dynamically rendered Class 6th Courses -->
           </div>
         </div>
 
-        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
-          <span style="color: #cbd5e1; font-size: 0.88rem; font-weight: 500;">All Class 6th modules unlocked for your student ID.</span>
-          <button onclick="navigateTo('screen-subjects')" style="padding: 10px 22px; border-radius: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22); color: white; font-weight: 800; cursor: pointer; font-size: 0.92rem;">
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+          <span id="profile-footer-subtext" style="color: #cbd5e1; font-size: 0.82rem; font-weight: 500;">All Class 6th modules unlocked for your account.</span>
+          <button onclick="navigateTo('screen-chapters')" style="padding: 8px 18px; border-radius: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22); color: white; font-weight: 800; cursor: pointer; font-size: 0.85rem;">
             Explore All Subjects →
           </button>
         </div>

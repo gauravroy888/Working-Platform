@@ -1648,22 +1648,96 @@
 
   function syncStudentProfile() {
     var urlParams = new URLSearchParams(window.location.search);
+    var isTeacher = urlParams.get('teacher') === 'true' || urlParams.get('mode') === 'smartboard' || !!localStorage.getItem('teacher_portal_user');
+    
     var studentEmail = urlParams.get('email') || '';
     var studentId = urlParams.get('student_id') || urlParams.get('id') || '';
-    
-    var storedName = localStorage.getItem('student_portal_name') || 'Alex K.';
-    var storedAvatar = localStorage.getItem('student_portal_avatar') || 'assets/avatar.png';
-    var storedClass = localStorage.getItem('student_portal_designation') || 'Class 6th Science & Physics';
     
     var nameEl = byId('profile-student-name');
     var avatarEl = byId('profile-avatar-img');
     var classEl = byId('profile-student-class');
     var idEl = byId('profile-student-id');
+    var headerPill = byId('profile-header-pill');
+    var badgeAccess = byId('profile-badge-access');
+    var footerSubtext = byId('profile-footer-subtext');
 
-    if (nameEl) nameEl.textContent = storedName;
-    if (avatarEl && storedAvatar) avatarEl.src = storedAvatar;
-    if (classEl) classEl.textContent = storedClass;
-    if (idEl) idEl.textContent = 'ID: ' + (studentId || 'STU-64029');
+    var stat1Label = byId('stat-1-label');
+    var stat1Val = byId('profile-xp');
+    var stat1Icon = byId('stat-1-icon');
+
+    var stat2Label = byId('stat-2-label');
+    var stat2Val = byId('profile-labs');
+    var stat2Icon = byId('stat-2-icon');
+
+    var stat3Label = byId('stat-3-label');
+    var stat3Val = byId('profile-hours');
+    var stat3Icon = byId('stat-3-icon');
+
+    var stat4Label = byId('stat-4-label');
+    var stat4Val = byId('profile-streak');
+    var stat4Icon = byId('stat-4-icon');
+
+    if (isTeacher) {
+      // Teacher Smartboard Mode Profile
+      var teacherName = 'Prof. Sarah Jenkins';
+      try {
+        var savedT = localStorage.getItem('teacher_user') || localStorage.getItem('teacher_portal_user');
+        if (savedT) {
+          var parsedT = JSON.parse(savedT);
+          if (parsedT.name || parsedT.full_name) teacherName = parsedT.name || parsedT.full_name;
+        }
+      } catch(e) {}
+
+      if (headerPill) headerPill.textContent = 'CLASS 6TH TEACHER COMMAND CENTER';
+      if (nameEl) nameEl.textContent = teacherName;
+      if (avatarEl) {
+        avatarEl.src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&eyebrows=default&hair=long';
+        avatarEl.style.borderColor = '#F59E0B';
+        avatarEl.style.boxShadow = '0 0 20px rgba(245,158,11,0.5)';
+      }
+      if (classEl) {
+        classEl.textContent = 'Class 6th Lead Educator';
+        classEl.style.color = '#F59E0B';
+      }
+      if (idEl) {
+        idEl.textContent = 'ID: TCH-88402';
+        idEl.style.color = '#F59E0B';
+        idEl.style.borderColor = 'rgba(245,158,11,0.35)';
+      }
+      if (badgeAccess) {
+        badgeAccess.textContent = '🎓 Educator Access';
+        badgeAccess.style.color = '#F59E0B';
+        badgeAccess.style.borderColor = 'rgba(245,158,11,0.35)';
+      }
+      if (footerSubtext) footerSubtext.textContent = 'All Class 6th modules unlocked for smartboard presentation.';
+
+      if (stat1Label) stat1Label.textContent = 'Active Students';
+      if (stat1Val) stat1Val.textContent = '34 Students';
+      if (stat1Icon) stat1Icon.textContent = '👨‍🎓';
+
+      if (stat2Label) stat2Label.textContent = 'Curriculum Modules';
+      if (stat2Val) stat2Val.textContent = '8 Subjects';
+      if (stat2Icon) stat2Icon.textContent = '📚';
+
+      if (stat3Label) stat3Label.textContent = 'Smartboard Hours';
+      if (stat3Val) stat3Val.textContent = '42.5 Hrs';
+      if (stat3Icon) stat3Icon.textContent = '🖥️';
+
+      if (stat4Label) stat4Label.textContent = 'Classroom Attendance';
+      if (stat4Val) stat4Val.textContent = '98.5%';
+      if (stat4Icon) stat4Icon.textContent = '🏫';
+    } else {
+      // Student Profile Mode
+      var storedName = localStorage.getItem('student_portal_name') || 'Alex K.';
+      var storedAvatar = localStorage.getItem('student_portal_avatar') || 'assets/avatar.png';
+      var storedClass = localStorage.getItem('student_portal_designation') || 'Class 6th Science & Physics';
+      
+      if (headerPill) headerPill.textContent = 'CLASS 6TH STUDENT COMMAND CENTER';
+      if (nameEl) nameEl.textContent = storedName;
+      if (avatarEl && storedAvatar) avatarEl.src = storedAvatar;
+      if (classEl) classEl.textContent = storedClass;
+      if (idEl) idEl.textContent = 'ID: ' + (studentId || 'STU-64029');
+    }
 
     var officialClass6thSubjects = [
       {
