@@ -189,6 +189,18 @@ export default function SmartboardTeaching() {
     if (options.subject) params.set('subject', options.subject);
     if (options.chapter) params.set('chapter', options.chapter);
 
+    try {
+      const userStr = localStorage.getItem('edtech_user');
+      if (userStr) {
+        const u = JSON.parse(userStr);
+        if (u.name || u.full_name) params.set('teacher_name', u.name || u.full_name);
+        if (u.email) params.set('teacher_email', u.email);
+        if (u.avatar_url || u.avatar) params.set('teacher_avatar', u.avatar_url || u.avatar);
+        if (u.id || u.teacher_id) params.set('teacher_id', u.id || u.teacher_id);
+        if (u.department || u.degree) params.set('teacher_dept', u.department || u.degree);
+      }
+    } catch(e) {}
+
     return `${url}?${params.toString()}`;
   }
 

@@ -6082,6 +6082,66 @@
                       </div>
                     </div>
 
+                    {/* Custom PNG Icon Option */}
+                    <div className="space-y-1.5 p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] text-slate-300 font-semibold flex items-center gap-1.5">
+                          <span>🖼️ Custom PNG Icon</span>
+                          <span className="text-[10px] text-cyan-400 font-normal">(Overrides emoji if set)</span>
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input type="text" placeholder="Paste PNG Image URL or R2 CDN Link"
+                          value={activeMultiModal.itemData.icon_png || ''}
+                          onChange={e => setActiveMultiModal({ ...activeMultiModal, itemData: { ...activeMultiModal.itemData, icon_png: e.target.value } })}
+                          className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono outline-none focus:border-cyan-500" />
+                        
+                        <label className="py-1.5 px-3 rounded-lg border border-dashed border-cyan-500/60 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition whitespace-nowrap">
+                          <i className="ph ph-image-square text-sm"></i> Upload PNG
+                          <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = async (ev) => {
+                              const base64Data = ev.target.result.split(',')[1];
+                              const res = await fetch('/api/upload-r2', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  className: selectedClass?.name || 'General',
+                                  subjectName: selectedSubject?.name || 'General',
+                                  chapterSlug: activeMultiModal.chapter?.chapter_slug || activeMultiModal.chapter?.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'general',
+                                  modalitySlug: 'experiments-icons',
+                                  filename: file.name,
+                                  base64Content: base64Data,
+                                  contentType: file.type
+                                })
+                              });
+                              const r = await res.json();
+                              if (r.ok && r.cdnUrl) {
+                                setActiveMultiModal(prev => ({ ...prev, itemData: { ...prev.itemData, icon_png: r.cdnUrl } }));
+                                showToast(`✅ Custom PNG icon uploaded to R2!`);
+                              } else {
+                                showToast('Upload failed: ' + (r.error || 'Unknown error'), 'error');
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }} />
+                        </label>
+                      </div>
+                      
+                      {activeMultiModal.itemData.icon_png && (
+                        <div className="flex items-center gap-2 p-1.5 rounded-lg bg-slate-950 border border-cyan-500/30 mt-1">
+                          <div className="w-7 h-7 rounded bg-slate-900 border border-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                            <img src={activeMultiModal.itemData.icon_png} alt="Preview" className="w-full h-full object-contain" />
+                          </div>
+                          <span className="text-[10px] text-cyan-300 font-mono truncate flex-1">{activeMultiModal.itemData.icon_png}</span>
+                          <button type="button" onClick={() => setActiveMultiModal(prev => ({ ...prev, itemData: { ...prev.itemData, icon_png: '' } }))}
+                            className="text-slate-400 hover:text-red-400 text-xs px-1">✕</button>
+                        </div>
+                      )}
+                    </div>
+
                     <div>
                       <label className="text-xs text-slate-300 font-semibold mb-1 block">Simulation URL or File Link *</label>
                       <div className="space-y-2">

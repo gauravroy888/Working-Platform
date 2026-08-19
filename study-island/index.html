@@ -356,81 +356,86 @@
         <!-- Experiments tab -->
         <div id="tabpanel-experiments" class="sol-tab-panel" role="tabpanel" aria-labelledby="tab-experiments">
           <div class="experiments-carousel-container">
-            <h2 class="experiments-carousel-title">Choose Experiments</h2>
+            
+            <div class="exp-section-header">
+              <div class="exp-header-badge">
+                <span class="badge-dot"></span> 🧪 INTERACTIVE VIRTUAL LABS & GAMES
+              </div>
+              <h2 class="experiments-carousel-title">Interactive 3D Science Experiments</h2>
+              <p class="exp-header-desc">Hands-on WebGL simulations, real-time light ray interactions, and virtual laboratory games.</p>
+            </div>
+
             <div class="carousel-wrapper">
               <button class="carousel-nav left" onclick="scrollCarousel(-1)" aria-label="Scroll left">&#10094;</button>
               <div class="experiments-carousel" id="experiments-carousel">
 
                 <!-- Main Target: Shadow Lab -->
                 <div class="experiment-card featured" onclick="openExperiment('Shadow_Lab.html')">
-                  <div class="experiment-card-img" style="background: linear-gradient(135deg, #00d2ff, #3a7bd5);">🌑</div>
-                  <div class="experiment-card-info">
-                    <div class="experiment-title">Shadow Lab</div>
-                    <div class="experiment-author">by Platform</div>
-                    <div class="experiment-stats"><span>Latest!</span><span>♥ 50k</span></div>
+                  <div class="experiment-card-stage">
+                    <div class="exp-stage-floor-glow" style="background: radial-gradient(ellipse at 50% 80%, rgba(0, 240, 255, 0.45) 0%, rgba(99, 102, 241, 0.15) 50%, transparent 75%);"></div>
+                    <div class="exp-top-tag-bar">
+                      <span class="exp-badge-pill">3D LAB</span>
+                      <span class="exp-likes-pill">♥ 50k</span>
+                    </div>
+                    <div class="exp-stage-asset-wrap">
+                      <span class="exp-asset-icon">🌕</span>
+                    </div>
+                  </div>
+                  <div class="experiment-card-body">
+                    <div>
+                      <h3 class="exp-v2-title">Shadow <em>Lab</em></h3>
+                      <p class="exp-v2-desc">Interactive WebGL optical ray simulation, umbra penumbra, and shadow formation models by Platform.</p>
+                    </div>
+                    <div class="exp-v2-footer">
+                      <button class="exp-v2-btn" type="button">Launch Lab <span class="pill-arrow">→</span></button>
+                      <span class="exp-v2-rating">⭐ 4.9</span>
+                    </div>
                   </div>
                 </div>
                 
                 <div class="experiment-card" onclick="openExperiment('placeholder1.html')">
-                  <div class="experiment-card-img" style="background: linear-gradient(135deg, #b000ff, #5c00a3);">🧬</div>
-                  <div class="experiment-card-info">
-                    <div class="experiment-title">Laser Bounce</div>
-                    <div class="experiment-author">by Edtech Lab</div>
-                    <div class="experiment-stats"><span>Ready</span><span>♥ 12k</span></div>
+                  <div class="experiment-card-stage">
+                    <div class="exp-stage-floor-glow" style="background: radial-gradient(ellipse at 50% 80%, rgba(168, 85, 247, 0.45) 0%, rgba(99, 102, 241, 0.15) 50%, transparent 75%);"></div>
+                    <div class="exp-top-tag-bar">
+                      <span class="exp-badge-pill">GAME</span>
+                      <span class="exp-likes-pill">♥ 12k</span>
+                    </div>
+                    <div class="exp-stage-asset-wrap">
+                      <span class="exp-asset-icon">🧬</span>
+                    </div>
+                  </div>
+                  <div class="experiment-card-body">
+                    <div>
+                      <h3 class="exp-v2-title">Laser <em>Bounce</em></h3>
+                      <p class="exp-v2-desc">Reflective laser maze game with prism angles and optical reflection challenges by Edtech Lab.</p>
+                    </div>
+                    <div class="exp-v2-footer">
+                      <button class="exp-v2-btn" type="button">Play Game <span class="pill-arrow">→</span></button>
+                      <span class="exp-v2-rating">⭐ 4.8</span>
+                    </div>
                   </div>
                 </div>
                 
                 <div class="experiment-card" onclick="openExperiment('placeholder2.html')">
-                  <div class="experiment-card-img" style="background: linear-gradient(135deg, #ff0073, #a10048);">🎯</div>
-                  <div class="experiment-card-info">
-                    <div class="experiment-title">Optics Simulator</div>
-                    <div class="experiment-author">by Physics Team</div>
-                    <div class="experiment-stats"><span>Ready</span><span>♥ 21k</span></div>
+                  <div class="experiment-card-stage">
+                    <div class="exp-stage-floor-glow" style="background: radial-gradient(ellipse at 50% 80%, rgba(236, 72, 153, 0.45) 0%, rgba(99, 102, 241, 0.15) 50%, transparent 75%);"></div>
+                    <div class="exp-top-tag-bar">
+                      <span class="exp-badge-pill">SIMULATION</span>
+                      <span class="exp-likes-pill">♥ 21k</span>
+                    </div>
+                    <div class="exp-stage-asset-wrap">
+                      <span class="exp-asset-icon">🎯</span>
+                    </div>
                   </div>
-                </div>
-
-                <div class="experiment-card" onclick="openExperiment('placeholder3.html')">
-                  <div class="experiment-card-img" style="background: linear-gradient(135deg, #ff4e50, #f9d423);">🔥</div>
-                  <div class="experiment-card-info">
-                    <div class="experiment-title">Thermal Dynamics</div>
-                    <div class="experiment-author">by Core</div>
-                    <div class="experiment-stats"><span>Ready</span><span>♥ 34k</span></div>
-                  </div>
-                </div>
-
-                <div class="experiment-card" onclick="openExperiment('placeholder4.html')">
-                  <div class="experiment-card-img" style="background: linear-gradient(135deg, #8E2DE2, #4A00E0);">⚡</div>
-                  <div class="experiment-card-info">
-                    <div class="experiment-title">Circuit Builder</div>
-                    <div class="experiment-author">by Lab Team</div>
-                    <div class="experiment-stats"><span>Ready</span><span>♥ 28k</span></div>
-                  </div>
-                </div>
-
-                <div class="experiment-card" onclick="openExperiment('placeholder5.html')">
-                  <div class="experiment-card-img" style="background: linear-gradient(135deg, #00C9FF, #92FE9D);">🧪</div>
-                  <div class="experiment-card-info">
-                    <div class="experiment-title">Chemistry Mix</div>
-                    <div class="experiment-author">by Science Crew</div>
-                    <div class="experiment-stats"><span>Ready</span><span>♥ 19k</span></div>
-                  </div>
-                </div>
-
-                <div class="experiment-card" onclick="openExperiment('placeholder6.html')">
-                  <div class="experiment-card-img" style="background: linear-gradient(135deg, #f12711, #f5af19);">☄️</div>
-                  <div class="experiment-card-info">
-                    <div class="experiment-title">Meteor Crash</div>
-                    <div class="experiment-author">by Space Dept</div>
-                    <div class="experiment-stats"><span>Ready</span><span>♥ 42k</span></div>
-                  </div>
-                </div>
-
-                <div class="experiment-card" onclick="openExperiment('placeholder7.html')">
-                  <div class="experiment-card-img" style="background: linear-gradient(135deg, #FF416C, #FF4B2B);">🔊</div>
-                  <div class="experiment-card-info">
-                    <div class="experiment-title">Sound Waves</div>
-                    <div class="experiment-author">by Audio Lab</div>
-                    <div class="experiment-stats"><span>Ready</span><span>♥ 27k</span></div>
+                  <div class="experiment-card-body">
+                    <div>
+                      <h3 class="exp-v2-title">Optics <em>Simulator</em></h3>
+                      <p class="exp-v2-desc">Precision concave lens, convex mirror, and refraction laboratory visualizer by Physics Team.</p>
+                    </div>
+                    <div class="exp-v2-footer">
+                      <button class="exp-v2-btn" type="button">Launch Lab <span class="pill-arrow">→</span></button>
+                      <span class="exp-v2-rating">⭐ 4.9</span>
+                    </div>
                   </div>
                 </div>
 
@@ -633,130 +638,129 @@
                 }
             </style>
 
-            <div class="stories-panel">
-                 
-                <div class="stories-stack">
-                    <!-- Up Arrow -->
-                    <div class="stories-arrow stories-arrow--top">
-                        <button onclick="document.getElementById('stories-scroll-container').scrollBy({top: -300, behavior: 'smooth'})" class="stories-arrow-btn stories-arrow-btn--up" onmouseover="this.style.transform='scale(1.1)'; this.style.borderColor='#22d3ee';" onmouseout="this.style.transform='scale(1)'; this.style.borderColor='rgba(34,211,238,0.5)';">
-                            <i class="ph-bold ph-caret-up" style="font-size:1.5rem; color:#22d3ee;"></i>
-                        </button>
-                    </div>
+            <div class="story-section-header">
+              <div class="story-header-badge">
+                <span class="badge-dot"></span> 🎬 VISUAL STORIES & DOCUMENTARIES
+              </div>
+              <h2 class="stories-carousel-title">Interactive Science Video Stories</h2>
+              <p class="story-header-desc">Animated optical narratives, documentary visualizers, and historical science lessons.</p>
+            </div>
 
-                    <div id="stories-scroll-container" class="stories-scroll-container no-scrollbar">
-                    
-                    <!-- Video 1 -->
-                    <div onclick="openStoryVideo('https://www.youtube.com/embed/fy7eoMef3e8?autoplay=1&rel=0&modestbranding=1&showinfo=0')" class="story-list-card">
-                        <!-- Left Image -->
-                        <div style="flex: 0 0 320px; position:relative; overflow:hidden;">
-                            <img src="https://img.youtube.com/vi/fy7eoMef3e8/hqdefault.jpg" style="width:100%; height:100%; object-fit:cover; opacity:0.8;" class="story-thumb" alt="Shadows and Light">
-                            <div style="position:absolute; inset:0; background:linear-gradient(to right, transparent 50%, rgba(0,0,0,0.9) 100%); z-index:1;"></div>
-                            <i class="ph-fill ph-play-circle play-icon" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:4.5rem; color:rgba(255,255,255,0.9); filter:drop-shadow(0 5px 15px rgba(0,0,0,0.8)); z-index:2;"></i>
-                        </div>
-                        <!-- Right Details -->
-                        <div style="flex: 1; padding:30px 40px; display:flex; flex-direction:column; justify-content:center; position:relative;">
-                            <div style="position:absolute; inset:0; background:radial-gradient(ellipse at left, rgba(34,211,238,0.08) 0%, transparent 60%); opacity:0;" class="card-glow"></div>
-                            
-                            <div style="display:flex; gap:12px; margin-bottom:12px; z-index:1;">
-                                <span style="padding:4px 12px; background:rgba(34,211,238,0.1); border:1px solid rgba(34,211,238,0.3); border-radius:12px; color:#22d3ee; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Documentary</span>
-                                <span style="padding:4px 12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#cbd5e1; font-size:0.75rem; font-weight:600; display:flex; align-items:center; gap:4px;"><i class="ph ph-clock"></i> 5:21</span>
-                            </div>
-                            
-                            <h4 style="font-size:1.6rem; font-weight:700; color:white; margin-bottom:12px; z-index:1; letter-spacing:0.5px; text-shadow:0 2px 4px rgba(0,0,0,0.5);">Shadows and Light Explained</h4>
-                            <p style="color:#94a3b8; font-size:1rem; line-height:1.6; max-width:90%; margin-bottom:20px; z-index:1;">Dive deep into the magical interplay between light sources and opaque objects. A beautifully animated introduction to the science of optics.</p>
-                            
-                            <div style="display:flex; align-items:center; gap:8px; color:#22d3ee; font-weight:700; font-size:1rem; z-index:1;">
-                                Watch Experience <i class="ph ph-arrow-right" style="font-weight:bold;"></i>
-                            </div>
-                        </div>
+            <div class="carousel-wrapper">
+              <button class="carousel-nav left" onclick="document.getElementById('stories-scroll-container').scrollBy({left: -320, behavior: 'smooth'})" aria-label="Scroll left">&#10094;</button>
+              
+              <div class="stories-carousel" id="stories-scroll-container">
+                
+                <!-- Video 1 -->
+                <div onclick="openStoryVideo('https://www.youtube.com/embed/fy7eoMef3e8?autoplay=1&rel=0&modestbranding=1&showinfo=0')" class="story-card">
+                  <div class="story-card-stage">
+                    <img src="https://img.youtube.com/vi/fy7eoMef3e8/hqdefault.jpg" class="story-thumb-img" alt="Shadows and Light">
+                    <div class="story-stage-overlay"></div>
+                    <span class="story-badge-pill">DOCUMENTARY</span>
+                    <span class="story-duration-pill">⏱ 5:21</span>
+                    <div class="story-play-glass">
+                      <svg width="20" height="20" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                     </div>
-
-                    <!-- Video 2 -->
-                    <div onclick="openStoryVideo('https://www.youtube.com/embed/4vUozykivNA?autoplay=1&rel=0&modestbranding=1&showinfo=0')" class="story-list-card">
-                        <!-- Left Image -->
-                        <div style="flex: 0 0 320px; position:relative; overflow:hidden;">
-                            <img src="https://img.youtube.com/vi/4vUozykivNA/hqdefault.jpg" style="width:100%; height:100%; object-fit:cover; opacity:0.8;" class="story-thumb" alt="The Science of Shadows">
-                            <div style="position:absolute; inset:0; background:linear-gradient(to right, transparent 50%, rgba(0,0,0,0.9) 100%); z-index:1;"></div>
-                            <i class="ph-fill ph-play-circle play-icon" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:4.5rem; color:rgba(255,255,255,0.9); filter:drop-shadow(0 5px 15px rgba(0,0,0,0.8)); z-index:2;"></i>
-                        </div>
-                        <!-- Right Details -->
-                        <div style="flex: 1; padding:30px 40px; display:flex; flex-direction:column; justify-content:center; position:relative;">
-                            <div style="position:absolute; inset:0; background:radial-gradient(ellipse at left, rgba(34,211,238,0.08) 0%, transparent 60%); opacity:0;" class="card-glow"></div>
-                            
-                            <div style="display:flex; gap:12px; margin-bottom:12px; z-index:1;">
-                                <span style="padding:4px 12px; background:rgba(34,211,238,0.1); border:1px solid rgba(34,211,238,0.3); border-radius:12px; color:#22d3ee; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Explore</span>
-                                <span style="padding:4px 12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#cbd5e1; font-size:0.75rem; font-weight:600; display:flex; align-items:center; gap:4px;"><i class="ph ph-clock"></i> 3:36</span>
-                            </div>
-                            
-                            <h4 style="font-size:1.6rem; font-weight:700; color:white; margin-bottom:12px; z-index:1; letter-spacing:0.5px; text-shadow:0 2px 4px rgba(0,0,0,0.5);">The Science of Shadows</h4>
-                            <p style="color:#94a3b8; font-size:1rem; line-height:1.6; max-width:90%; margin-bottom:20px; z-index:1;">Learn how different light angles and intensities stretch and morph shadows, uncovering the geometry behind visual perception.</p>
-                            
-                            <div style="display:flex; align-items:center; gap:8px; color:#22d3ee; font-weight:700; font-size:1rem; z-index:1;">
-                                Watch Experience <i class="ph ph-arrow-right" style="font-weight:bold;"></i>
-                            </div>
-                        </div>
+                  </div>
+                  <div class="story-card-body">
+                    <div>
+                      <h3 class="story-card-title">Shadows <em>and Light Explained</em></h3>
+                      <div class="story-meta-row">
+                        <span class="story-author-name">by Platform Studio</span>
+                        <span class="story-views-tag">2.2M views</span>
+                      </div>
+                      <p class="story-card-desc">Dive deep into the magical interplay between light sources and opaque objects. A beautifully animated introduction to optics.</p>
                     </div>
-
-                    <!-- Video 3 -->
-                    <div onclick="openStoryVideo('https://www.youtube.com/embed/cDaWohR_DVo?autoplay=1&rel=0&modestbranding=1&showinfo=0')" class="story-list-card">
-                        <!-- Left Image -->
-                        <div style="flex: 0 0 320px; position:relative; overflow:hidden;">
-                            <img src="https://img.youtube.com/vi/cDaWohR_DVo/hqdefault.jpg" style="width:100%; height:100%; object-fit:cover; opacity:0.8;" class="story-thumb" alt="How Do We See Things?">
-                            <div style="position:absolute; inset:0; background:linear-gradient(to right, transparent 50%, rgba(0,0,0,0.9) 100%); z-index:1;"></div>
-                            <i class="ph-fill ph-play-circle play-icon" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:4.5rem; color:rgba(255,255,255,0.9); filter:drop-shadow(0 5px 15px rgba(0,0,0,0.8)); z-index:2;"></i>
-                        </div>
-                        <!-- Right Details -->
-                        <div style="flex: 1; padding:30px 40px; display:flex; flex-direction:column; justify-content:center; position:relative;">
-                            <div style="position:absolute; inset:0; background:radial-gradient(ellipse at left, rgba(34,211,238,0.08) 0%, transparent 60%); opacity:0;" class="card-glow"></div>
-                            
-                            <div style="display:flex; gap:12px; margin-bottom:12px; z-index:1;">
-                                <span style="padding:4px 12px; background:rgba(34,211,238,0.1); border:1px solid rgba(34,211,238,0.3); border-radius:12px; color:#22d3ee; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Lesson</span>
-                                <span style="padding:4px 12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#cbd5e1; font-size:0.75rem; font-weight:600; display:flex; align-items:center; gap:4px;"><i class="ph ph-clock"></i> 3:58</span>
-                            </div>
-                            
-                            <h4 style="font-size:1.6rem; font-weight:700; color:white; margin-bottom:12px; z-index:1; letter-spacing:0.5px; text-shadow:0 2px 4px rgba(0,0,0,0.5);">How Do We See Things?</h4>
-                            <p style="color:#94a3b8; font-size:1rem; line-height:1.6; max-width:90%; margin-bottom:20px; z-index:1;">An engaging visual breakthrough exploring reflection, the human eye, and the biological mechanics of how light turns into vision.</p>
-                            
-                            <div style="display:flex; align-items:center; gap:8px; color:#22d3ee; font-weight:700; font-size:1rem; z-index:1;">
-                                Watch Experience <i class="ph ph-arrow-right" style="font-weight:bold;"></i>
-                            </div>
-                        </div>
+                    <div class="story-card-footer">
+                      <button class="exp-v2-btn" type="button">Watch Story <span class="pill-arrow">→</span></button>
+                      <span class="exp-v2-rating">⭐ 4.9</span>
                     </div>
-
-                    <!-- Video 4 -->
-                    <div onclick="openStoryVideo('https://www.youtube.com/embed/fvKpqIS9k9Y?autoplay=1&rel=0&modestbranding=1&showinfo=0')" class="story-list-card">
-                        <!-- Left Image -->
-                        <div style="flex: 0 0 320px; position:relative; overflow:hidden;">
-                            <img src="https://img.youtube.com/vi/fvKpqIS9k9Y/hqdefault.jpg" style="width:100%; height:100%; object-fit:cover; opacity:0.8;" class="story-thumb" alt="Characteristics of Light">
-                            <div style="position:absolute; inset:0; background:linear-gradient(to right, transparent 50%, rgba(0,0,0,0.9) 100%); z-index:1;"></div>
-                            <i class="ph-fill ph-play-circle play-icon" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:4.5rem; color:rgba(255,255,255,0.9); filter:drop-shadow(0 5px 15px rgba(0,0,0,0.8)); z-index:2;"></i>
-                        </div>
-                        <!-- Right Details -->
-                        <div style="flex: 1; padding:30px 40px; display:flex; flex-direction:column; justify-content:center; position:relative;">
-                            <div style="position:absolute; inset:0; background:radial-gradient(ellipse at left, rgba(34,211,238,0.08) 0%, transparent 60%); opacity:0;" class="card-glow"></div>
-                            
-                            <div style="display:flex; gap:12px; margin-bottom:12px; z-index:1;">
-                                <span style="padding:4px 12px; background:rgba(34,211,238,0.1); border:1px solid rgba(34,211,238,0.3); border-radius:12px; color:#22d3ee; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Science Lab</span>
-                                <span style="padding:4px 12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#cbd5e1; font-size:0.75rem; font-weight:600; display:flex; align-items:center; gap:4px;"><i class="ph ph-clock"></i> 10:30</span>
-                            </div>
-                            
-                            <h4 style="font-size:1.6rem; font-weight:700; color:white; margin-bottom:12px; z-index:1; letter-spacing:0.5px; text-shadow:0 2px 4px rgba(0,0,0,0.5);">Characteristics of Light</h4>
-                            <p style="color:#94a3b8; font-size:1rem; line-height:1.6; max-width:90%; margin-bottom:20px; z-index:1;">A comprehensive breakdown of the core properties of light, including straight-line propagation, speeds, beams, and rays.</p>
-                            
-                            <div style="display:flex; align-items:center; gap:8px; color:#22d3ee; font-weight:700; font-size:1rem; z-index:1;">
-                                Watch Experience <i class="ph ph-arrow-right" style="font-weight:bold;"></i>
-                            </div>
-                        </div>
-                    </div>
-
+                  </div>
                 </div>
 
-                <!-- Down Arrow -->
-                <div class="stories-arrow stories-arrow--bottom">
-                    <button onclick="document.getElementById('stories-scroll-container').scrollBy({top: 300, behavior: 'smooth'})" class="stories-arrow-btn stories-arrow-btn--down" onmouseover="this.style.transform='scale(1.1)'; this.style.borderColor='#22d3ee';" onmouseout="this.style.transform='scale(1)'; this.style.borderColor='rgba(34,211,238,0.5)';">
-                        <i class="ph-bold ph-caret-down" style="font-size:1.5rem; color:#22d3ee;"></i>
-                    </button>
+                <!-- Video 2 -->
+                <div onclick="openStoryVideo('https://www.youtube.com/embed/4vUozykivNA?autoplay=1&rel=0&modestbranding=1&showinfo=0')" class="story-card">
+                  <div class="story-card-stage">
+                    <img src="https://img.youtube.com/vi/4vUozykivNA/hqdefault.jpg" class="story-thumb-img" alt="The Science of Shadows">
+                    <div class="story-stage-overlay"></div>
+                    <span class="story-badge-pill">EXPLORE</span>
+                    <span class="story-duration-pill">⏱ 3:36</span>
+                    <div class="story-play-glass">
+                      <svg width="20" height="20" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
+                  </div>
+                  <div class="story-card-body">
+                    <div>
+                      <h3 class="story-card-title">The Science <em>of Shadows</em></h3>
+                      <div class="story-meta-row">
+                        <span class="story-author-name">by Edtech Lab</span>
+                        <span class="story-views-tag">1.8M views</span>
+                      </div>
+                      <p class="story-card-desc">Learn how different light angles and intensities stretch and morph shadows, uncovering geometric visual perception.</p>
+                    </div>
+                    <div class="story-card-footer">
+                      <button class="exp-v2-btn" type="button">Watch Story <span class="pill-arrow">→</span></button>
+                      <span class="exp-v2-rating">⭐ 4.8</span>
+                    </div>
+                  </div>
                 </div>
+
+                <!-- Video 3 -->
+                <div onclick="openStoryVideo('https://www.youtube.com/embed/cDaWohR_DVo?autoplay=1&rel=0&modestbranding=1&showinfo=0')" class="story-card">
+                  <div class="story-card-stage">
+                    <img src="https://img.youtube.com/vi/cDaWohR_DVo/hqdefault.jpg" class="story-thumb-img" alt="How Do We See Things?">
+                    <div class="story-stage-overlay"></div>
+                    <span class="story-badge-pill">LESSON</span>
+                    <span class="story-duration-pill">⏱ 3:58</span>
+                    <div class="story-play-glass">
+                      <svg width="20" height="20" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
+                  </div>
+                  <div class="story-card-body">
+                    <div>
+                      <h3 class="story-card-title">How Do We <em>See Things?</em></h3>
+                      <div class="story-meta-row">
+                        <span class="story-author-name">by Visual Science</span>
+                        <span class="story-views-tag">3.1M views</span>
+                      </div>
+                      <p class="story-card-desc">An engaging visual breakthrough exploring reflection, the human eye, and biological light vision mechanics.</p>
+                    </div>
+                    <div class="story-card-footer">
+                      <button class="exp-v2-btn" type="button">Watch Story <span class="pill-arrow">→</span></button>
+                      <span class="exp-v2-rating">⭐ 4.9</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Video 4 -->
+                <div onclick="openStoryVideo('https://www.youtube.com/embed/fvKpqIS9k9Y?autoplay=1&rel=0&modestbranding=1&showinfo=0')" class="story-card">
+                  <div class="story-card-stage">
+                    <img src="https://img.youtube.com/vi/fvKpqIS9k9Y/hqdefault.jpg" class="story-thumb-img" alt="Characteristics of Light">
+                    <div class="story-stage-overlay"></div>
+                    <span class="story-badge-pill">SCIENCE LAB</span>
+                    <span class="story-duration-pill">⏱ 10:30</span>
+                    <div class="story-play-glass">
+                      <svg width="20" height="20" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
+                  </div>
+                  <div class="story-card-body">
+                    <div>
+                      <h3 class="story-card-title">Characteristics <em>of Light</em></h3>
+                      <div class="story-meta-row">
+                        <span class="story-author-name">by Physics Team</span>
+                        <span class="story-views-tag">950K views</span>
+                      </div>
+                      <p class="story-card-desc">A comprehensive breakdown of core light properties, straight-line propagation, speeds, beams, and rays.</p>
+                    </div>
+                    <div class="story-card-footer">
+                      <button class="exp-v2-btn" type="button">Watch Story <span class="pill-arrow">→</span></button>
+                      <span class="exp-v2-rating">⭐ 4.9</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              <button class="carousel-nav right" onclick="document.getElementById('stories-scroll-container').scrollBy({left: 320, behavior: 'smooth'})" aria-label="Scroll right">&#10095;</button>
             </div>
         </div>
         </div> <!-- Closes #tabpanel-stories -->

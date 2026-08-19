@@ -1077,6 +1077,8 @@
       scheduleChapterSceneBoot();
     } else if (screenId === 'screen-world') {
       loadWorldCourses();
+    } else if (screenId === 'screen-profile') {
+      syncStudentProfile();
     }
   }
 
@@ -1282,16 +1284,48 @@
         expCarousel.innerHTML = '<div style="color:rgba(255,255,255,0.6); font-size:0.95rem; text-align:center; padding:40px;">No experiments connected yet.</div>';
       } else {
         var expHtml = chapter.experiments_list.map(function(exp, idx) {
-          var grad = exp.gradient || 'linear-gradient(135deg, ' + (exp.color || '#00d2ff') + ', #3a7bd5)';
+          var color = exp.color || '#00d2ff';
           var icon = exp.icon || '🧪';
           var isFeatured = idx === 0 ? ' featured' : '';
           var safeUrl = (exp.url || '').replace(/'/g, "\\'");
+          var tagLabel = exp.badge || '3D LAB';
+          var likes = exp.likes || '50k';
+          var title = exp.title || 'Experiment';
+          var author = exp.author || 'by Platform';
+
+          var titleParts = title.trim().split(' ');
+          var formattedTitle = titleParts.length > 1 
+            ? titleParts.slice(0, -1).join(' ') + ' <em>' + titleParts[titleParts.length - 1] + '</em>'
+            : title;
+
+          var customIconUrl = exp.icon_png || (icon && (icon.indexOf('http://') === 0 || icon.indexOf('https://') === 0 || icon.indexOf('.png') !== -1 || icon.indexOf('.webp') !== -1 || icon.indexOf('.svg') !== -1) ? icon : '');
+          
+          var assetContentHtml = customIconUrl 
+            ? '<img src="' + customIconUrl + '" alt="' + title + '" class="exp-asset-img" />'
+            : '<span class="exp-asset-icon">' + icon + '</span>';
+
+          var glowColor = color.indexOf('#') === 0 ? color : '#00f0ff';
+
           return '<div class="experiment-card' + isFeatured + '" onclick="openExperiment(\'' + safeUrl + '\')">' +
-            '<div class="experiment-card-img" style="background: ' + grad + ';">' + icon + '</div>' +
-            '<div class="experiment-card-info">' +
-              '<div class="experiment-title">' + (exp.title || 'Experiment') + '</div>' +
-              '<div class="experiment-author">' + (exp.author || 'by Platform') + '</div>' +
-              '<div class="experiment-stats"><span>' + (exp.badge || 'Ready') + '</span><span>♥ ' + (exp.likes || '10k') + '</span></div>' +
+            '<div class="experiment-card-stage">' +
+              '<div class="exp-stage-floor-glow" style="background: radial-gradient(ellipse at 50% 80%, ' + glowColor + '45 0%, rgba(99, 102, 241, 0.15) 50%, transparent 75%);"></div>' +
+              '<div class="exp-top-tag-bar">' +
+                '<span class="exp-badge-pill">' + tagLabel + '</span>' +
+                '<span class="exp-likes-pill">♥ ' + likes + '</span>' +
+              '</div>' +
+              '<div class="exp-stage-asset-wrap">' +
+                assetContentHtml +
+              '</div>' +
+            '</div>' +
+            '<div class="experiment-card-body">' +
+              '<div>' +
+                '<h3 class="exp-v2-title">' + formattedTitle + '</h3>' +
+                '<p class="exp-v2-desc">Interactive WebGL simulation model and 3D optics experiment ' + author + '.</p>' +
+              '</div>' +
+              '<div class="exp-v2-footer">' +
+                '<button class="exp-v2-btn" type="button">Launch Lab <span class="pill-arrow">→</span></button>' +
+                '<span class="exp-v2-rating">⭐ 4.9</span>' +
+              '</div>' +
             '</div>' +
           '</div>';
         }).join('');
@@ -1308,24 +1342,37 @@
         var safeVideoUrl = (story.url || '').replace(/'/g, "\\'");
         var thumb = resolveStoryThumbnail(story);
         var fallbackThumb = 'https://img.youtube.com/vi/fy7eoMef3e8/hqdefault.jpg';
-        return '<div class="story-list-card" onclick="openStoryVideo(\'' + safeVideoUrl + '\')">' +
-          '<div style="flex: 0 0 320px; position:relative; overflow:hidden; min-height:190px; background:#000;">' +
-            '<img src="' + thumb + '" alt="' + (story.title || 'Story') + '" class="story-thumb" onerror="this.onerror=null; this.src=\'' + fallbackThumb + '\';" style="width:100%; height:100%; object-fit:cover; opacity:0.85;">' +
-            '<div style="position:absolute; inset:0; background:linear-gradient(to right, transparent 50%, rgba(0,0,0,0.9) 100%); z-index:1;"></div>' +
-            '<div class="play-icon" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:64px; height:64px; border-radius:50%; background:rgba(0,0,0,0.55); border:2px solid rgba(255,255,255,0.8); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px rgba(0,0,0,0.6); z-index:2; transition:transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;">' +
-              '<svg width="26" height="26" viewBox="0 0 24 24" fill="#ffffff" style="margin-left:3px;"><path d="M8 5v14l11-7z"/></svg>' +
+        var title = story.title || 'Story Lesson';
+        var tag = story.tag || 'DOCUMENTARY';
+        var duration = story.duration || '5:00';
+        
+        var titleParts = title.trim().split(' ');
+        var formattedTitle = titleParts.length > 1 
+          ? titleParts.slice(0, -1).join(' ') + ' <em>' + titleParts[titleParts.length - 1] + '</em>'
+          : title;
+
+        return '<div class="story-card" onclick="openStoryVideo(\'' + safeVideoUrl + '\')">' +
+          '<div class="story-card-stage">' +
+            '<img src="' + thumb + '" alt="' + title + '" class="story-thumb-img" onerror="this.onerror=null; this.src=\'' + fallbackThumb + '\';">' +
+            '<div class="story-stage-overlay"></div>' +
+            '<span class="story-badge-pill">' + tag + '</span>' +
+            '<span class="story-duration-pill">⏱ ' + duration + '</span>' +
+            '<div class="story-play-glass">' +
+              '<svg width="20" height="20" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>' +
             '</div>' +
           '</div>' +
-          '<div style="flex: 1; padding:30px 40px; display:flex; flex-direction:column; justify-content:center; position:relative;">' +
-            '<div style="position:absolute; inset:0; background:radial-gradient(ellipse at left, rgba(34,211,238,0.08) 0%, transparent 60%); opacity:0;" class="card-glow"></div>' +
-            '<div style="display:flex; gap:12px; margin-bottom:12px; z-index:1;">' +
-              '<span style="padding:4px 12px; background:rgba(34,211,238,0.1); border:1px solid rgba(34,211,238,0.3); border-radius:12px; color:#22d3ee; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;">' + (story.tag || 'DOCUMENTARY') + '</span>' +
-              '<span style="padding:4px 12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#cbd5e1; font-size:0.75rem; font-weight:600; display:flex; align-items:center; gap:4px;"><i class="ph ph-clock"></i> ' + (story.duration || '5:00') + '</span>' +
+          '<div class="story-card-body">' +
+            '<div>' +
+              '<h3 class="story-card-title">' + formattedTitle + '</h3>' +
+              '<div class="story-meta-row">' +
+                '<span class="story-author-name">by Platform Studio</span>' +
+                '<span class="story-views-tag">2.5M views</span>' +
+              '</div>' +
+              '<p class="story-card-desc">' + (story.description || 'Dive deep into visual scientific storytelling and interactive animated explanations.') + '</p>' +
             '</div>' +
-            '<h4 style="font-size:1.6rem; font-weight:700; color:white; margin-bottom:12px; z-index:1; letter-spacing:0.5px; text-shadow:0 2px 4px rgba(0,0,0,0.5);">' + (story.title || 'Story Lesson') + '</h4>' +
-            '<p style="color:#94a3b8; font-size:1rem; line-height:1.6; max-width:90%; margin-bottom:20px; z-index:1;">' + (story.description || '') + '</p>' +
-            '<div style="display:flex; align-items:center; gap:8px; color:#22d3ee; font-weight:700; font-size:1rem; z-index:1;">' +
-              'Watch Experience <i class="ph ph-arrow-right" style="font-weight:bold;"></i>' +
+            '<div class="story-card-footer">' +
+              '<button class="exp-v2-btn" type="button">Watch Story <span class="pill-arrow">→</span></button>' +
+              '<span class="exp-v2-rating">⭐ 4.9</span>' +
             '</div>' +
           '</div>' +
         '</div>';
@@ -1646,9 +1693,21 @@
     }
   }
 
-  function syncStudentProfile() {
+  async function syncStudentProfile() {
     var urlParams = new URLSearchParams(window.location.search);
-    var isTeacher = urlParams.get('teacher') === 'true' || urlParams.get('mode') === 'smartboard' || !!localStorage.getItem('teacher_portal_user');
+    var isTeacher = urlParams.get('teacher') === 'true' || urlParams.get('mode') === 'smartboard' || !!localStorage.getItem('teacher_portal_user') || !!localStorage.getItem('edtech_user');
+    
+    var teacherEmail = urlParams.get('teacher_email') || urlParams.get('email') || '';
+    var teacherNameParam = urlParams.get('teacher_name') || '';
+    var teacherAvatarParam = urlParams.get('teacher_avatar') || '';
+    var teacherDeptParam = urlParams.get('teacher_dept') || '';
+
+    // Check localStorage edtech_user
+    var localUserObj = null;
+    try {
+      var rawU = localStorage.getItem('edtech_user') || localStorage.getItem('teacher_portal_user') || localStorage.getItem('teacher_user');
+      if (rawU) localUserObj = JSON.parse(rawU);
+    } catch(e) {}
     
     var studentEmail = urlParams.get('email') || '';
     var studentId = urlParams.get('student_id') || urlParams.get('id') || '';
@@ -1678,29 +1737,26 @@
     var stat4Icon = byId('stat-4-icon');
 
     if (isTeacher) {
-      // Teacher Smartboard Mode Profile
-      var teacherName = 'Prof. Sarah Jenkins';
-      try {
-        var savedT = localStorage.getItem('teacher_user') || localStorage.getItem('teacher_portal_user');
-        if (savedT) {
-          var parsedT = JSON.parse(savedT);
-          if (parsedT.name || parsedT.full_name) teacherName = parsedT.name || parsedT.full_name;
-        }
-      } catch(e) {}
-
       if (headerPill) headerPill.textContent = 'CLASS 6TH TEACHER COMMAND CENTER';
-      if (nameEl) nameEl.textContent = teacherName;
+      
+      // Default fallbacks while Supabase query runs
+      var initialName = teacherNameParam || (localUserObj ? (localUserObj.name || localUserObj.full_name) : '') || localStorage.getItem('portal_name') || 'Gaurav Roy';
+      var initialAvatar = teacherAvatarParam || (localUserObj ? (localUserObj.avatar_url || localUserObj.avatar) : '') || localStorage.getItem('portal_avatar') || 'https://pub-670b98370fe642a2be08ee37cbfd385f.r2.dev/avatars/gauravroy476_gmail_com_1786785035807_profile_1000x1000.jpg';
+      var initialDept = teacherDeptParam || (localUserObj ? (localUserObj.department || localUserObj.degree || localUserObj.subject) : '') || localStorage.getItem('portal_designation') || 'Head of Science & Physics';
+      var initialId = (localUserObj ? (localUserObj.id || localUserObj.teacher_id) : '') || 'TCH-213948';
+
+      if (nameEl) nameEl.textContent = initialName;
       if (avatarEl) {
-        avatarEl.src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&eyebrows=default&hair=long';
+        avatarEl.src = initialAvatar;
         avatarEl.style.borderColor = '#F59E0B';
         avatarEl.style.boxShadow = '0 0 20px rgba(245,158,11,0.5)';
       }
       if (classEl) {
-        classEl.textContent = 'Class 6th Lead Educator';
+        classEl.textContent = initialDept;
         classEl.style.color = '#F59E0B';
       }
       if (idEl) {
-        idEl.textContent = 'ID: TCH-88402';
+        idEl.textContent = 'ID: ' + (initialId.length > 10 ? 'TCH-' + initialId.slice(0, 6).toUpperCase() : initialId);
         idEl.style.color = '#F59E0B';
         idEl.style.borderColor = 'rgba(245,158,11,0.35)';
       }
@@ -1726,6 +1782,52 @@
       if (stat4Label) stat4Label.textContent = 'Classroom Attendance';
       if (stat4Val) stat4Val.textContent = '98.5%';
       if (stat4Icon) stat4Icon.textContent = '🏫';
+
+      // ── SUPABASE LIVE FETCH FOR TEACHER PROFILE ──
+      try {
+        var activeEmail = teacherEmail || (localUserObj ? localUserObj.email : '');
+        var endpoint = activeEmail
+          ? SUPABASE_URL + '/rest/v1/profiles?email=eq.' + encodeURIComponent(activeEmail) + '&select=*'
+          : SUPABASE_URL + '/rest/v1/profiles?role=eq.teacher&select=*&limit=1';
+
+        var resp = await fetch(endpoint, {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY
+          }
+        });
+        var profileRows = await resp.json();
+
+        if (!Array.isArray(profileRows) || profileRows.length === 0) {
+          // Fallback to teachers table
+          var tResp = await fetch(SUPABASE_URL + '/rest/v1/teachers?select=*&limit=1', {
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY
+            }
+          });
+          profileRows = await tResp.json();
+        }
+
+        if (Array.isArray(profileRows) && profileRows.length > 0) {
+          var dbTeacher = profileRows[0];
+          if (nameEl && (dbTeacher.name || dbTeacher.full_name)) {
+            nameEl.textContent = dbTeacher.name || dbTeacher.full_name;
+          }
+          if (avatarEl && dbTeacher.avatar_url) {
+            avatarEl.src = dbTeacher.avatar_url;
+          }
+          if (classEl && (dbTeacher.department || dbTeacher.degree || dbTeacher.subject)) {
+            classEl.textContent = dbTeacher.department || dbTeacher.degree || (dbTeacher.subject + ' Faculty');
+          }
+          if (idEl && dbTeacher.id) {
+            idEl.textContent = 'ID: TCH-' + String(dbTeacher.id).slice(0, 6).toUpperCase();
+          }
+        }
+      } catch(err) {
+        console.warn('Supabase live teacher profile fetch failed:', err);
+      }
+
     } else {
       // Student Profile Mode
       var storedName = localStorage.getItem('student_portal_name') || 'Alex K.';
@@ -1737,6 +1839,24 @@
       if (avatarEl && storedAvatar) avatarEl.src = storedAvatar;
       if (classEl) classEl.textContent = storedClass;
       if (idEl) idEl.textContent = 'ID: ' + (studentId || 'STU-64029');
+
+      if (studentEmail) {
+        try {
+          var sResp = await fetch(SUPABASE_URL + '/rest/v1/profiles?role=eq.student&email=eq.' + encodeURIComponent(studentEmail) + '&select=*', {
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY
+            }
+          });
+          var sData = await sResp.json();
+          if (Array.isArray(sData) && sData.length > 0) {
+            var dbStudent = sData[0];
+            if (nameEl && dbStudent.name) nameEl.textContent = dbStudent.name;
+            if (avatarEl && dbStudent.avatar_url) avatarEl.src = dbStudent.avatar_url;
+            if (idEl && dbStudent.id) idEl.textContent = 'ID: STU-' + String(dbStudent.id).slice(0, 6).toUpperCase();
+          }
+        } catch(err) {}
+      }
     }
 
     var officialClass6thSubjects = [
