@@ -162,6 +162,13 @@ export default function Sidebar({ isOpen = false, closeMenu = () => {} }) {
           <Database size={20} />
           <span>Question Bank</span>
         </NavLink>
+        <NavLink to="/settings" onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+          <SettingsIcon size={20} />
+          <span>Settings</span>
+        </NavLink>
+      </nav>
+
+      <div className="sidebar-footer" style={{ marginTop: 'auto', paddingTop: '16px' }}>
         <NavLink to="/notifications" onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
             <Bell size={20} />
@@ -173,11 +180,7 @@ export default function Sidebar({ isOpen = false, closeMenu = () => {} }) {
           </div>
           <span>Notifications</span>
         </NavLink>
-        <NavLink to="/settings" onClick={closeMenu} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-          <SettingsIcon size={20} />
-          <span>Settings</span>
-        </NavLink>
-      </nav>
+      </div>
     </aside>
   );
 }

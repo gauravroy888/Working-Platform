@@ -215,6 +215,8 @@
     var activeLabel = 'HOME';
     if (screenId === 'screen-subjects' || screenId === 'screen-chapters' || screenId === 'screen-chapter-detail') {
       activeLabel = 'STUDIES';
+    } else if (screenId === 'screen-world') {
+      activeLabel = 'WORLD';
     } else if (screenId === 'screen-profile') {
       activeLabel = 'PROFILE';
     }
@@ -223,6 +225,61 @@
       var label = button.querySelector('.nav-label');
       var isActive = !!label && label.textContent.trim() === activeLabel;
       button.classList.toggle('active', isActive);
+    });
+  }
+
+  function loadWorldCourses() {
+    var gridEl = byId('world-courses-grid');
+    if (!gridEl) return;
+    gridEl.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #94a3b8;"><span style="font-size: 2rem; display: block; margin-bottom: 12px;">⌛</span>Fetching World Programs from Supabase...</div>';
+
+    fetch('https://qmyrxvtbzlbnvzxypnus.supabase.co/rest/v1/custom_courses?is_published=eq.true&order=display_order', {
+      headers: {
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFteXJ4dnRiemxibnZ6eHlwbnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjA4OTcsImV4cCI6MjA5NTM5Njg5N30.ABvW_oBzXC2Ffxm5ToLh6t4WmdKPdtg9SyfeAE76iJo',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFteXJ4dnRiemxibnZ6eHlwbnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjA4OTcsImV4cCI6MjA5NTM5Njg5N30.ABvW_oBzXC2Ffxm5ToLh6t4WmdKPdtg9SyfeAE76iJo'
+      }
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(courses) {
+      if (!Array.isArray(courses) || courses.length === 0) {
+        gridEl.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #94a3b8;"><span style="font-size: 3rem; display: block; margin-bottom: 12px;">🌍</span><h3 style="color: white; font-size: 1.2rem; margin-bottom: 8px;">No World Courses Live Yet</h3><p style="font-size: 0.9rem;">Check back soon! Platform administrators are preparing new custom courses.</p></div>';
+        return;
+      }
+
+      var html = '';
+      courses.forEach(function(course) {
+        var expMod = (course.modalities || []).find(function(m) { return m.slug === 'experience'; });
+        var expUrl = expMod ? (expMod.url || '') : '';
+        var color = course.color || '#00E5FF';
+
+        html += '<div class="glass-panel-card" style="background: rgba(13, 20, 36, 0.8); border: 1px solid ' + color + '40; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s ease; position: relative; overflow: hidden;">';
+        html += '<div style="position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; border-radius: 50%; background: ' + color + '; filter: blur(40px); opacity: 0.25; pointer-events: none;"></div>';
+        
+        html += '<div>';
+        html += '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">';
+        html += '<span style="font-size: 2.5rem; background: ' + (course.cover_gradient || 'rgba(255,255,255,0.05)') + '; width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; border: 1px solid ' + color + '40;">' + (course.emoji || '🌍') + '</span>';
+        html += '<span style="font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; background: ' + color + '20; color: ' + color + '; border: 1px solid ' + color + '50;">' + (course.category || 'Special') + '</span>';
+        html += '</div>';
+
+        html += '<h3 style="font-size: 1.3rem; font-weight: 800; color: white; margin: 0 0 8px 0;">' + course.title + '</h3>';
+        html += '<p style="font-size: 0.88rem; color: #94a3b8; line-height: 1.5; margin: 0 0 20px 0;">' + (course.tagline || '') + '</p>';
+        html += '</div>';
+
+        html += '<div style="display: flex; gap: 10px; align-items: center; margin-top: auto; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);">';
+        if (expUrl) {
+          html += '<button onclick="openAppOverlay(\'' + expUrl + '\', \'fullscreen\')" style="flex: 1; padding: 12px; border-radius: 14px; background: linear-gradient(135deg, ' + color + ', #3B82F6); color: #000; font-weight: 800; font-size: 0.95rem; border: none; cursor: pointer; box-shadow: 0 0 20px ' + color + '40; display: flex; align-items: center; justify-content: center; gap: 8px;">▶ Launch Experience</button>';
+        } else {
+          html += '<button disabled style="flex: 1; padding: 12px; border-radius: 14px; background: rgba(255,255,255,0.05); color: #64748b; font-weight: 700; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.1); cursor: not-allowed;">⌛ Content Coming Soon</button>';
+        }
+        html += '</div>';
+
+        html += '</div>';
+      });
+
+      gridEl.innerHTML = html;
+    })
+    .catch(function(err) {
+      gridEl.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #f87171;">Failed to load courses. Please check connection.</div>';
     });
   }
 
@@ -1018,6 +1075,8 @@
 
     if (screenId === 'screen-chapter-detail') {
       scheduleChapterSceneBoot();
+    } else if (screenId === 'screen-world') {
+      loadWorldCourses();
     }
   }
 
@@ -1820,6 +1879,8 @@
           }
         }
       }
+    } else if (params.get('openWorld') === 'true' || paramScreen === 'screen-world') {
+      navigateTo('screen-world');
     } else if (paramScreen) {
       navigateTo(paramScreen);
     }

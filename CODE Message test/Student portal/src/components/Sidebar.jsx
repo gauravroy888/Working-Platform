@@ -131,15 +131,18 @@ export default function Sidebar() {
           <BarChart2 size={20} />
           <span>Analytics</span>
         </NavLink>
-        <NavLink to="/notifications" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-          <Bell size={20} />
-          <span>Alerts</span>
-        </NavLink>
         <NavLink to="/settings" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
           <SettingsIcon size={20} />
           <span>Settings</span>
         </NavLink>
       </nav>
+
+      <div className="sidebar-footer" style={{ marginTop: 'auto', paddingTop: '16px' }}>
+        <NavLink to="/notifications" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+          <Bell size={20} />
+          <span>Notifications</span>
+        </NavLink>
+      </div>
     </aside>
   );
 }

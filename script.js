@@ -18,6 +18,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Global Fullscreen Toggle for Static Navbars
+    const navActions = document.querySelector('.nav-actions');
+    if (navActions && !document.getElementById('staticFullscreenBtn')) {
+        const fsBtn = document.createElement('button');
+        fsBtn.id = 'staticFullscreenBtn';
+        fsBtn.className = 'btn btn-secondary';
+        fsBtn.type = 'button';
+        fsBtn.style.padding = '8px 14px';
+        fsBtn.style.fontSize = '13px';
+        fsBtn.style.cursor = 'pointer';
+        fsBtn.style.display = 'inline-flex';
+        fsBtn.style.alignItems = 'center';
+        fsBtn.style.gap = '6px';
+        fsBtn.innerHTML = '⛶ Fullscreen';
+        
+        fsBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => console.warn(err));
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        });
+
+        document.addEventListener('fullscreenchange', () => {
+            fsBtn.innerHTML = document.fullscreenElement ? '🗗 Exit Fullscreen' : '⛶ Fullscreen';
+        });
+
+        navActions.insertBefore(fsBtn, navActions.firstChild);
+    }
+
     // Glass Card Hover 3D effect (Optional micro-animation)
     const cards = document.querySelectorAll('.glass-card');
     

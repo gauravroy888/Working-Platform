@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 
+const ANNOUNCE_READ_KEY = 'edtech_teacher_read_announcements';
+
+function getReadAnnouncements() {
+  try { return new Set(JSON.parse(localStorage.getItem(ANNOUNCE_READ_KEY) || '[]')); }
+  catch { return new Set(); }
+}
+
 export function useUnreadNotifications() {
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -21,12 +28,17 @@ export function useUnreadNotifications() {
       const { count } = await supabase
         .from('notifications')
         .select('*', { count: 'exact', head: true })
-        .in('user_email', [currentUser.email, 'all'])
+        .in('user_email', [currentUser.email, 'all', 'system'])
         .eq('is_read', false);
       
-      if (count !== null) {
-        setUnreadCount(count);
-      }
+      const { data: announceData } = await supabase
+        .from('announcements')
+        .select('id');
+
+      const readSet = getReadAnnouncements();
+      const unreadAnnounceCount = (announceData || []).filter(a => !readSet.has(`announce_${a.id}`)).length;
+
+      setUnreadCount((count || 0) + unreadAnnounceCount);
     };
 
     fetchUnreadCount();
@@ -36,11 +48,12 @@ export function useUnreadNotifications() {
         event: '*', 
         schema: 'public', 
         table: 'notifications'
-      }, (payload) => {
-        if (payload.new && (payload.new.user_email === currentUser.email || payload.new.user_email === 'all')) {
-          fetchUnreadCount();
-        }
-      })
+      }, fetchUnreadCount)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'announcements'
+      }, fetchUnreadCount)
       .subscribe();
 
     return () => {

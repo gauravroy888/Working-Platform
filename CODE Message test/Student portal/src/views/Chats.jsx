@@ -58,8 +58,8 @@ export default function Chats() {
   }, []);
 
   return (
-    <div className="view-container animate-fade-in" style={{ paddingBottom: '50px', height: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <div className="view-header flex-between" style={{ flexWrap: 'wrap', gap: '20px' }}>
+    <div className="view-container animate-fade-in" style={{ height: 'calc(100vh - 145px)', display: 'flex', flexDirection: 'column', gap: '16px', overflow: 'hidden' }}>
+      <div className="view-header flex-between" style={{ flexWrap: 'wrap', gap: '20px', flexShrink: 0 }}>
         <div>
           <h1 style={{ fontSize: '1.8rem', fontWeight: '800', margin: '0 0 6px 0', color: 'white' }}>Inbox & Direct Messages</h1>
           <p style={{ margin: 0, color: '#94a3b8' }}>Chat directly with teacher Gaurav and your course mentors.</p>
@@ -114,7 +114,7 @@ export default function Chats() {
           <p style={{ margin: 0 }}>Please log in to access your messages.</p>
         </Card>
       ) : (
-        <Card style={{ padding: '0', display: 'flex', flexDirection: 'column', flex: 1, minHeight: '600px', overflow: 'hidden' }}>
+        <Card style={{ padding: '0', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
           <ChatInterface
             currentUser={currentUser}
             activeTab={activeTab}

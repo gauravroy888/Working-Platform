@@ -5,6 +5,8 @@ import Sidebar from './Sidebar';
 import GlobalBroadcastBanner from './GlobalBroadcastBanner';
 import { useTheme } from '../ThemeContext';
 
+import FullscreenButton from './FullscreenButton';
+
 export default function Layout({ children }) {
   const { backgroundImage, profileName, schoolName, primaryColor } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -37,7 +39,7 @@ export default function Layout({ children }) {
             </div>
           </div>
           <div className="header-actions">
-            {/* Any global actions */}
+            <FullscreenButton />
           </div>
         </header>
         

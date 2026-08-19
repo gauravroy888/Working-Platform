@@ -52,8 +52,8 @@ export default function Inbox() {
   }, []);
 
   return (
-    <div className="view-container animate-fade-in" style={{ paddingBottom: '50px', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div className="view-header flex-between" style={{ flexWrap: 'wrap', gap: '20px', marginBottom: '20px' }}>
+    <div className="view-container animate-fade-in" style={{ height: 'calc(100vh - 145px)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div className="view-header flex-between" style={{ flexWrap: 'wrap', gap: '20px', marginBottom: '16px', flexShrink: 0 }}>
         <div>
           <h1>Inbox & Announcements</h1>
           <p>Manage your communications and stay up to date.</p>
@@ -151,7 +151,7 @@ export default function Inbox() {
         </div>
       </div>
 
-      <Card style={{ padding: '0', display: 'flex', flexDirection: 'column', flex: 1, minHeight: '600px', overflow: 'hidden' }}>
+      <Card style={{ padding: '0', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
         {activeTab === 'announcements' ? (
           <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <h3 style={{ margin: 0, marginBottom: '10px' }}>Global Announcements</h3>

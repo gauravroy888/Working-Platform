@@ -18,6 +18,8 @@ const PAGE_TITLES = {
   '/notifications': 'Notification Center'
 };
 
+import FullscreenButton from './FullscreenButton';
+
 export default function Layout({ children }) {
   const { backgroundImage, profileName, profileDesignation, schoolName, primaryColor } = useTheme();
   const location = useLocation();
@@ -38,10 +40,7 @@ export default function Layout({ children }) {
           </div>
 
           <div className="header-right-actions">
-            <div className="status-badge">
-              <span className="live-pulse"></span>
-              <span>Online • Supabase Active</span>
-            </div>
+            <FullscreenButton />
             
             <a 
               href="/study-island/" 

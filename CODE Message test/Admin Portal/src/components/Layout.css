@@ -124,3 +124,45 @@
   display: flex;
   flex-direction: column;
 }
+
+/* Fullscreen Toggle Button */
+.fullscreen-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  background: rgba(13, 20, 36, 0.7);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  color: var(--text-secondary, #94a3b8);
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  transition: all 0.2s ease;
+  user-select: none;
+  outline: none;
+  font-family: inherit;
+}
+
+.fullscreen-toggle-btn:hover {
+  background: rgba(0, 240, 255, 0.12);
+  color: #FFFFFF;
+  border-color: rgba(0, 240, 255, 0.45);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.fullscreen-toggle-btn:active {
+  transform: scale(0.96);
+}
+
+@media (max-width: 640px) {
+  .fullscreen-btn-text {
+    display: none;
+  }
+  .fullscreen-toggle-btn {
+    padding: 8px;
+    border-radius: 50%;
+  }
+}
