@@ -3,6 +3,8 @@
 
   var THEME_STORAGE_KEY = 'edtech-island-theme';
   var R2_PUBLIC_CDN_URL = 'https://pub-670b98370fe642a2be08ee37cbfd385f.r2.dev';
+  var SUPABASE_URL = window.SUPABASE_URL || 'https://qmyrxvtbzlbnvzxypnus.supabase.co';
+  var SUPABASE_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFteXJ4dnRiemxibnZ6eHlwbnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjA4OTcsImV4cCI6MjA5NTM5Njg5N30.ABvW_oBzXC2Ffxm5ToLh6t4WmdKPdtg9SyfeAE76iJo';
   var DEFAULT_CHAPTER_ID = 'light-shadows';
   var DETAIL_CHAPTER_ORDER = ['light-shadows', 'space-solar'];
 
@@ -233,10 +235,10 @@
     if (!gridEl) return;
     gridEl.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #94a3b8;"><span style="font-size: 2rem; display: block; margin-bottom: 12px;">⌛</span>Fetching World Programs from Supabase...</div>';
 
-    fetch('https://qmyrxvtbzlbnvzxypnus.supabase.co/rest/v1/custom_courses?is_published=eq.true&order=display_order', {
+    fetch(SUPABASE_URL + '/rest/v1/custom_courses?is_published=eq.true&order=display_order', {
       headers: {
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFteXJ4dnRiemxibnZ6eHlwbnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjA4OTcsImV4cCI6MjA5NTM5Njg5N30.ABvW_oBzXC2Ffxm5ToLh6t4WmdKPdtg9SyfeAE76iJo',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFteXJ4dnRiemxibnZ6eHlwbnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjA4OTcsImV4cCI6MjA5NTM5Njg5N30.ABvW_oBzXC2Ffxm5ToLh6t4WmdKPdtg9SyfeAE76iJo'
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY
       }
     })
     .then(function(res) { return res.json(); })
@@ -1637,8 +1639,6 @@
   }
 
   // ─── SUPABASE REALTIME PROFILE & COURSE SYNC ───
-  var SUPABASE_URL = 'https://qmyrxvtbzlbnvzxypnus.supabase.co';
-  var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFteXJ4dnRiemxibnZ6eHlwbnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjA4OTcsImV4cCI6MjA5NTM5Njg5N30.ABvW_oBzXC2Ffxm5ToLh6t4WmdKPdtg9SyfeAE76iJo';
   var supabaseClient = null;
 
   function initSupabaseSync() {
