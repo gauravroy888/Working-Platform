@@ -12,7 +12,71 @@ import Notifications from './views/Notifications';
 import Settings from './views/Settings';
 import { ThemeProvider } from './ThemeContext';
 import { supabase } from './supabase';
-import './App.css';
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Student Portal caught error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          background: '#060a14',
+          color: '#fff',
+          fontFamily: 'Inter, system-ui, sans-serif',
+          textAlign: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'rgba(13, 20, 36, 0.95)',
+            border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.4))',
+            borderRadius: '24px',
+            padding: '40px',
+            maxWidth: '520px',
+            boxShadow: '0 0 40px var(--brand-glow, rgba(0, 240, 255, 0.2))'
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🚀</div>
+            <h2 style={{ color: 'var(--brand-primary, #00F0FF)', fontSize: '1.6rem', fontWeight: '800', marginBottom: '12px' }}>Student Hub Ready</h2>
+            <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '24px' }}>
+              The portal encountered a temporary rendering hitch. Click below to reload cleanly.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: '12px 28px',
+                background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',
+                color: '#000',
+                border: 'none',
+                borderRadius: '12px',
+                fontWeight: '700',
+                fontSize: '1rem',
+                cursor: 'pointer',
+                boxShadow: '0 0 20px var(--brand-glow, rgba(0, 240, 255, 0.4))'
+              }}
+            >
+              Reload Student Portal
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function App() {
   const [user, setUser] = React.useState(() => {
@@ -32,7 +96,7 @@ export default function App() {
           if (userStr) {
             try {
               const u = JSON.parse(userStr);
-              if (u && (u.role === 'student' || u.role === 'super_admin' || u.role === 'superadmin')) {
+              if (u && u.role) {
                 setUser(u);
                 return;
               }
@@ -193,24 +257,26 @@ export default function App() {
   }
 
   return (
-    <ThemeProvider>
-      <BrowserRouter basename="/student">
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Navigate to="/courses" replace />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/courses" element={<Courses />} />
-            <Route path="/timetable" element={<Timetable />} />
-            <Route path="/liveclass" element={<LiveClass />} />
-            <Route path="/chats" element={<Chats />} />
-            <Route path="/mentors" element={<Mentors />} />
-            <Route path="/progress" element={<Progress />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<Navigate to="/courses" replace />} />
-          </Routes>
-        </Layout>
-      </BrowserRouter>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <BrowserRouter basename="/student">
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Navigate to="/courses" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/courses" element={<Courses />} />
+              <Route path="/timetable" element={<Timetable />} />
+              <Route path="/liveclass" element={<LiveClass />} />
+              <Route path="/chats" element={<Chats />} />
+              <Route path="/mentors" element={<Mentors />} />
+              <Route path="/progress" element={<Progress />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="*" element={<Navigate to="/courses" replace />} />
+            </Routes>
+          </Layout>
+        </BrowserRouter>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
