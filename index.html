@@ -66,15 +66,15 @@
             <div class="widget-stats">
                 <div class="stat-item">
                     <h4>Science</h4>
-                    <p>5 Studies Active</p>
+                    <p id="stat-science-count">2 Interactive Labs</p>
                 </div>
                 <div class="stat-item">
-                    <h4>History</h4>
-                    <p>3 Eras Open</p>
+                    <h4>Astronomy</h4>
+                    <p id="stat-astronomy-count">3D Solar System</p>
                 </div>
                 <div class="stat-item">
-                    <h4>Geography</h4>
-                    <p>6 Continents Mapped</p>
+                    <h4>Interactive 3D</h4>
+                    <p id="stat-interactive-count">Real-time Physics</p>
                 </div>
             </div>
             
@@ -82,6 +82,23 @@
             <a href="login.html" class="btn btn-secondary" style="width: 100%; display: inline-block; text-align: center; box-sizing: border-box;">Resume</a>
         </div>
     </header>
+
+    <script>
+      // Fix U1: Fetch dynamic counts from Supabase custom_courses
+      (function() {
+        var url = 'https://qmyrxvtbzlbnvzxypnus.supabase.co/rest/v1/custom_courses?select=id,category&is_published=eq.true';
+        var key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFteXJ4dnRiemxibnZ6eHlwbnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjA4OTcsImV4cCI6MjA5NTM5Njg5N30.ABvW_oBzXC2Ffxm5ToLh6t4WmdKPdtg9SyfeAE76iJo';
+        fetch(url, { headers: { 'apikey': key, 'Authorization': 'Bearer ' + key } })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (Array.isArray(data) && data.length > 0) {
+              var el = document.getElementById('stat-science-count');
+              if (el) el.textContent = data.length + ' Courses Published';
+            }
+          })
+          .catch(function(e) { /* use default text */ });
+      })();
+    </script>
 
     <!-- Platform Features Section -->
     <section id="features" class="showcase-section">

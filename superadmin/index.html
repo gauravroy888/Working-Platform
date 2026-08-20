@@ -210,6 +210,34 @@
       font-weight: 700;
     }
 
+    /* Mobile Responsiveness (Fix U7) */
+    @media (max-width: 768px) {
+      .portal-sidebar {
+        position: relative !important;
+        width: 100% !important;
+        height: auto !important;
+        border-right: none !important;
+        border-bottom: 1px solid rgba(0, 240, 255, 0.15) !important;
+        padding: 16px !important;
+      }
+      .app-layout {
+        flex-direction: column !important;
+      }
+      .main-content {
+        margin-left: 0 !important;
+        padding: 16px !important;
+        width: 100% !important;
+      }
+      .profile-section {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        padding: 8px 14px !important;
+      }
+      .grid-responsive {
+        grid-template-columns: 1fr !important;
+      }
+    }
+
     /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }

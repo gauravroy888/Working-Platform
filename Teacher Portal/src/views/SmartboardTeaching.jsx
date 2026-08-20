@@ -47,10 +47,10 @@ export default function SmartboardTeaching() {
           setAssignedClasses(data);
         } else {
           setAssignedClasses([
-            { id: '1', name: 'Class 6th', section: 'A', subject: 'Science & Physics', students: 34 },
-            { id: '2', name: 'Class 7th', section: 'B', subject: 'History & Civilization', students: 30 },
-            { id: '3', name: 'Class 8th', section: 'A', subject: 'Geography & Earth Science', students: 32 },
-            { id: '4', name: 'Class 9th', section: 'C', subject: 'Mathematics & Calculus', students: 28 }
+            { id: '1', name: 'Class 6th Science', section: 'Standard Curriculum', subject: 'Science & Physics', students: 0 },
+            { id: '2', name: 'Class 7th Astronomy', section: 'Standard Curriculum', subject: 'Space & Solar System', students: 0 },
+            { id: '3', name: 'Class 8th Earth Science', section: 'Standard Curriculum', subject: 'Geography & Geology', students: 0 },
+            { id: '4', name: 'Class 9th Physics', section: 'Standard Curriculum', subject: 'Optics & Mechanics', students: 0 }
           ]);
         }
       } catch (e) {

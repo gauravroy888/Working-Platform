@@ -243,8 +243,31 @@ const server = http.createServer(async (req, res) => {
     // Read and stream file
     fs.readFile(filePath, (readErr, content) => {
       if (readErr) {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('404 Not Found: ' + pathname);
+        const errorHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>404 - Page Not Found | EdTech Island</title>
+  <style>
+    body { margin:0; font-family: system-ui, -apple-system, sans-serif; background:#070d18; color:#fff; display:flex; align-items:center; justify-content:center; min-height:100vh; text-align:center; padding:20px; }
+    .card { background: rgba(13,20,36,0.85); border: 1px solid rgba(0,240,255,0.3); border-radius:24px; padding: 48px 36px; max-width:480px; backdrop-filter:blur(20px); box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+    h1 { font-size:4rem; margin:0 0 8px 0; color:#00F0FF; font-weight:900; }
+    h2 { font-size:1.4rem; margin:0 0 16px 0; }
+    p { color:#94a3b8; font-size:0.95rem; line-height:1.6; margin-bottom:28px; }
+    a { display:inline-block; padding:12px 28px; background:linear-gradient(135deg,#00F0FF,#3B82F6); color:#000; font-weight:800; border-radius:14px; text-decoration:none; box-shadow:0 0 20px rgba(0,240,255,0.4); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>404</h1>
+    <h2>Island Portal Not Found</h2>
+    <p>The path <code>${pathname}</code> does not exist on this EdTech Island server.</p>
+    <a href="/index.html">← Return to Home</a>
+  </div>
+</body>
+</html>`;
+        res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(errorHtml);
         return;
       }
 

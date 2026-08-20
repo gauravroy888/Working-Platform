@@ -88,11 +88,53 @@
       description: 'The solar system model provides an interactive journey through our cosmic neighbourhood. Explore planetary orbits, understand gravitational forces, and discover the unique characteristics of each planet from the scorching Mercury to the icy realms of Neptune.',
       iconClass: 'ph ph-planet',
       sceneKey: 'solarSystem',
-      experienceUrl: '',
-      quizReady: false,
-      contentReady: false,
-      experiments_list: [],
-      stories_list: []
+      experienceUrl: 'Chapter_experience_L_S.html',
+      quizReady: true,
+      contentReady: true,
+      experiments_list: [
+        {
+          id: 'exp_solar_1',
+          title: 'Celestial Orbit & Eclipse 3D',
+          author: 'by Platform Studio',
+          badge: 'Featured 3D',
+          likes: '42k',
+          icon: '🪐',
+          gradient: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+          color: '#8B5CF6',
+          url: 'Chapter_experience_L_S.html'
+        },
+        {
+          id: 'exp_solar_2',
+          title: 'Optics & Shadow Geometry Lab',
+          author: 'by Platform',
+          badge: 'Interactive',
+          likes: '38k',
+          icon: '🌔',
+          gradient: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
+          color: '#00F0FF',
+          url: 'Shadow_Lab.html'
+        }
+      ],
+      stories_list: [
+        {
+          id: 'story_solar_1',
+          title: 'Understanding Solar System Orbits',
+          tag: 'ASTRONOMY',
+          duration: '6:15',
+          description: 'A visual Journey through our solar system, planetary motion, and gravitational balance.',
+          thumbnail_url: 'https://img.youtube.com/vi/libKVRa0740/hqdefault.jpg',
+          url: 'https://www.youtube.com/embed/libKVRa0740?autoplay=1'
+        },
+        {
+          id: 'story_solar_2',
+          title: 'Planets of the Solar System',
+          tag: 'EXPLORE',
+          duration: '4:40',
+          description: 'Explore the size scale, rotation speeds, and atmospheric features of all 8 planets.',
+          thumbnail_url: 'https://img.youtube.com/vi/ks2S02q7vS0/hqdefault.jpg',
+          url: 'https://www.youtube.com/embed/ks2S02q7vS0?autoplay=1'
+        }
+      ]
     }
   };
 
@@ -217,7 +259,52 @@
   function loadWorldCourses() {
     var gridEl = byId('world-courses-grid');
     if (!gridEl) return;
-    gridEl.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #94a3b8;"><span style="font-size: 2rem; display: block; margin-bottom: 12px;">⌛</span>Fetching World Programs from Supabase...</div>';
+
+    // Fix U5: Animated CSS Glass Shimmer Skeleton Loader
+    gridEl.innerHTML = [1, 2, 3].map(function() {
+      return '<div class="glass-panel-card" style="background: rgba(13, 20, 36, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 16px; min-height: 220px; animation: pulse 1.5s infinite ease-in-out;">' +
+        '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+          '<div style="width: 50px; height: 50px; border-radius: 14px; background: rgba(255,255,255,0.1);"></div>' +
+          '<div style="width: 70px; height: 24px; border-radius: 10px; background: rgba(255,255,255,0.08);"></div>' +
+        '</div>' +
+        '<div style="width: 75%; height: 22px; border-radius: 6px; background: rgba(255,255,255,0.12);"></div>' +
+        '<div style="width: 90%; height: 14px; border-radius: 4px; background: rgba(255,255,255,0.06);"></div>' +
+        '<div style="width: 100%; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.08); margin-top: auto;"></div>' +
+      '</div>';
+    }).join('');
+
+    var fallbackCourses = [
+      {
+        id: 'fallback_1',
+        title: 'Optics & Shadow Physics 3D',
+        tagline: 'Interactive 3D simulation of light propagation, shadows, umbra and penumbra.',
+        emoji: '💡',
+        category: 'PHYSICS',
+        color: '#00F0FF',
+        cover_gradient: 'linear-gradient(135deg, rgba(0,240,255,0.2), rgba(59,130,246,0.2))',
+        modalities: [{ slug: 'experience', url: 'Shadow_Lab.html' }]
+      },
+      {
+        id: 'fallback_2',
+        title: 'Solar System & Celestial Motion',
+        tagline: 'Explore planet orbits, gravitational forces, and eclipses in real-time 3D.',
+        emoji: '🪐',
+        category: 'ASTRONOMY',
+        color: '#8B5CF6',
+        cover_gradient: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(236,72,153,0.2))',
+        modalities: [{ slug: 'experience', url: 'Chapter_experience_L_S.html' }]
+      },
+      {
+        id: 'fallback_3',
+        title: 'Interactive Optics Quiz Challenge',
+        tagline: 'Test your understanding of light reflection, refraction, and optical Ray Tracing.',
+        emoji: '🎯',
+        category: 'ASSESSMENT',
+        color: '#10B981',
+        cover_gradient: 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(59,130,246,0.2))',
+        modalities: [{ slug: 'experience', url: 'quiz.html' }]
+      }
+    ];
 
     fetch(SUPABASE_URL + '/rest/v1/custom_courses?is_published=eq.true&order=display_order', {
       headers: {
@@ -227,11 +314,15 @@
     })
     .then(function(res) { return res.json(); })
     .then(function(courses) {
-      if (!Array.isArray(courses) || courses.length === 0) {
-        gridEl.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #94a3b8;"><span style="font-size: 3rem; display: block; margin-bottom: 12px;">🌍</span><h3 style="color: white; font-size: 1.2rem; margin-bottom: 8px;">No World Courses Live Yet</h3><p style="font-size: 0.9rem;">Check back soon! Platform administrators are preparing new custom courses.</p></div>';
-        return;
-      }
+      var courseList = (Array.isArray(courses) && courses.length > 0) ? courses : fallbackCourses;
+      renderCourses(courseList);
+    })
+    .catch(function(err) {
+      console.warn('[World Courses Fetch]', err);
+      renderCourses(fallbackCourses);
+    });
 
+    function renderCourses(courses) {
       var html = '';
       courses.forEach(function(course) {
         var expMod = (course.modalities || []).find(function(m) { return m.slug === 'experience'; });
@@ -263,10 +354,7 @@
       });
 
       gridEl.innerHTML = html;
-    })
-    .catch(function(err) {
-      gridEl.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #f87171;">Failed to load courses. Please check connection.</div>';
-    });
+    }
   }
 
   function activateTab(tabName) {
@@ -1339,7 +1427,7 @@
 
         return '<div class="story-card" onclick="openStoryVideo(\'' + safeVideoUrl + '\')">' +
           '<div class="story-card-stage">' +
-            '<img src="' + thumb + '" alt="' + title + '" class="story-thumb-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=\'' + fallbackThumb + '\';">' +
+            '<img src="' + thumb + '" alt="' + escapeHtml(title) + '" class="story-thumb-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=\'' + fallbackThumb + '\';">' +
             '<div class="story-stage-overlay"></div>' +
             '<span class="story-badge-pill">' + tag + '</span>' +
             '<span class="story-duration-pill">⏱ ' + duration + '</span>' +
