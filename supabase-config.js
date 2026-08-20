@@ -16,17 +16,20 @@ supabase.auth.onAuthStateChange(async (event, session) => {
         let existingProfile = null;
         try {
             // Check profiles table for user role, name, and avatar
-            const { data: profile } = await supabase
+            const { data: profile, error: profileErr } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('email', userEmail)
                 .single();
             if (profile) {
-                role = profile.role || 'student';
+                const VALID_ROLES = ['student', 'teacher', 'admin', 'super_admin', 'superadmin'];
+                role = (profile.role && VALID_ROLES.includes(profile.role)) ? profile.role : 'student';
                 existingProfile = profile;
+            } else if (profileErr) {
+                console.warn('[Auth Profile Fetch]', profileErr.message);
             }
         } catch (err) {
-            // User not found in users table — default to student
+            console.warn('[Auth Profile Catch]', err.message);
         }
 
         // Role is determined solely from the DB profiles table above.
@@ -38,15 +41,18 @@ supabase.auth.onAuthStateChange(async (event, session) => {
 
         // Auto-sync profile on first login (upsert so no duplicates)
         try {
-            await supabase.from('profiles').upsert({
+            const { error: upsertErr } = await supabase.from('profiles').upsert({
                 email: userEmail,
                 name: profileName,
                 role: role,
                 auth_id: user.id,
                 avatar_url: profileAvatar
             }, { onConflict: 'email', ignoreDuplicates: false });
+            if (upsertErr) {
+                console.warn('[Auth Profile Upsert]', upsertErr.message);
+            }
         } catch (err) {
-            // Profile sync failed silently — user will still be logged in
+            console.warn('[Auth Profile Upsert Catch]', err.message);
         }
 
         const edtechUser = {

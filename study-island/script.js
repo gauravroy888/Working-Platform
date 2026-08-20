@@ -8,6 +8,16 @@
   var DEFAULT_CHAPTER_ID = 'light-shadows';
   var DETAIL_CHAPTER_ORDER = ['light-shadows', 'space-solar'];
 
+  function escapeHtml(str) {
+    if (typeof str !== 'string') return '';
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   function resolveR2Url(url) {
     if (!url) return '';
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
@@ -162,55 +172,29 @@
       fullscreenButton.textContent = label;
     }
     fullscreenButton.setAttribute('aria-label', inFullscreen ? 'Exit fullscreen' : 'Enter fullscreen');
-  }
-
   function ensureToast() {
     var toast = byId('app-toast');
-
-    if (toast) {
-      return toast;
-    }
+    if (toast) return toast;
 
     toast = document.createElement('div');
     toast.id = 'app-toast';
     toast.setAttribute('role', 'status');
     toast.setAttribute('aria-live', 'polite');
-    toast.style.position = 'fixed';
-    toast.style.left = '50%';
-    toast.style.bottom = '96px';
-    toast.style.transform = 'translateX(-50%) translateY(12px)';
-    toast.style.padding = '12px 18px';
-    toast.style.borderRadius = '999px';
-    toast.style.border = '1px solid rgba(255, 255, 255, 0.18)';
-    toast.style.background = 'rgba(8, 15, 28, 0.92)';
-    toast.style.backdropFilter = 'blur(14px)';
-    toast.style.webkitBackdropFilter = 'blur(14px)';
-    toast.style.color = '#f8fafc';
-    toast.style.fontSize = '0.95rem';
-    toast.style.fontWeight = '600';
-    toast.style.letterSpacing = '0.02em';
-    toast.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.35)';
-    toast.style.opacity = '0';
-    toast.style.pointerEvents = 'none';
-    toast.style.transition = 'opacity 180ms ease, transform 180ms ease';
-    toast.style.zIndex = '1200';
     document.body.appendChild(toast);
-
     return toast;
   }
 
   function showToast(message) {
     var toast = ensureToast();
-
     toast.textContent = message;
-    toast.style.opacity = '1';
-    toast.style.transform = 'translateX(-50%) translateY(0)';
+    toast.classList.add('toast-visible');
 
     window.clearTimeout(toastHideTimer);
     toastHideTimer = window.setTimeout(function () {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateX(-50%) translateY(12px)';
-    }, 2600);
+      toast.classList.remove('toast-visible');
+    }, 2400);
+  }
+
   }
 
   function updateBottomNav(screenId) {
@@ -260,11 +244,11 @@
         html += '<div>';
         html += '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">';
         html += '<span style="font-size: 2.5rem; background: ' + (course.cover_gradient || 'rgba(255,255,255,0.05)') + '; width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; border: 1px solid ' + color + '40;">' + (course.emoji || '🌍') + '</span>';
-        html += '<span style="font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; background: ' + color + '20; color: ' + color + '; border: 1px solid ' + color + '50;">' + (course.category || 'Special') + '</span>';
+        html += '<span style="font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; background: ' + color + '20; color: ' + color + '; border: 1px solid ' + color + '50;">' + escapeHtml(course.category || 'Special') + '</span>';
         html += '</div>';
 
-        html += '<h3 style="font-size: 1.3rem; font-weight: 800; color: white; margin: 0 0 8px 0;">' + course.title + '</h3>';
-        html += '<p style="font-size: 0.88rem; color: #94a3b8; line-height: 1.5; margin: 0 0 20px 0;">' + (course.tagline || '') + '</p>';
+        html += '<h3 style="font-size: 1.3rem; font-weight: 800; color: white; margin: 0 0 8px 0;">' + escapeHtml(course.title || 'Course') + '</h3>';
+        html += '<p style="font-size: 0.88rem; color: #94a3b8; line-height: 1.5; margin: 0 0 20px 0;">' + escapeHtml(course.tagline || '') + '</p>';
         html += '</div>';
 
         html += '<div style="display: flex; gap: 10px; align-items: center; margin-top: auto; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);">';
@@ -2126,11 +2110,30 @@
     }, 300);
   }
 
+  // Expose clean, structured public API under window.StudyIsland (Fix C2)
+  var StudyIslandAPI = {
+    navigateTo: navigateTo,
+    activateTab: activateTab,
+    scrollCarousel: scrollCarousel,
+    openExperiment: openExperiment,
+    openStoryVideo: openStoryVideo,
+    openAppOverlay: openAppOverlay,
+    toggleTheme: toggleTheme,
+    toggleAppFullscreen: toggleAppFullscreen,
+    closeOverlay: closeOverlay,
+    showExitModal: showExitModal,
+    closeExitModal: closeExitModal,
+    confirmExitSession: confirmExitSession
+  };
+  window.StudyIsland = StudyIslandAPI;
+
+  // Window delegation for string-built HTML onclick handlers
   window.navigateTo = navigateTo;
   window.activateTab = activateTab;
   window.scrollCarousel = scrollCarousel;
   window.openExperiment = openExperiment;
   window.openStoryVideo = openStoryVideo;
+  window.openAppOverlay = openAppOverlay;
   window.toggleTheme = toggleTheme;
   window.toggleAppFullscreen = toggleAppFullscreen;
   window.closeOverlay = closeOverlay;
