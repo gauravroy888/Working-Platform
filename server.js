@@ -2,6 +2,10 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+// Load environment variables from .env in development.
+// In production (Netlify), set env vars in the platform dashboard instead.
+try { require('dotenv').config(); } catch (_) { /* dotenv is optional */ }
+
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
 
@@ -37,26 +41,65 @@ function getContentType(filePath) {
 
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 
+// SECURITY: R2 credentials come from environment variables ONLY.
+// Never hardcode credentials in source. Set them in .env locally
+// and in the Netlify environment dashboard for production.
+if (!process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || !process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY) {
+  console.warn('⚠️  R2 credentials not found in environment — /api/upload-r2 will be unavailable.');
+}
+
 const R2_CONFIG = {
-  bucketName: 'edtechplatform',
-  publicCdnUrl: 'https://pub-670b98370fe642a2be08ee37cbfd385f.r2.dev',
-  endpoint: 'https://21b75f7da0ec0dde4d08d3f19d2102f3.r2.cloudflarestorage.com',
-  credentials: {
-    accessKeyId: '5fd10d137b4e437c604356c7d14b138c',
-    secretAccessKey: '229ede3cbc0f2264b9f72545eecf99c12a5e9e06699ba9da08d7544458755693'
-  }
+  bucketName: process.env.CLOUDFLARE_R2_BUCKET_NAME || 'edtechplatform',
+  publicCdnUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL || 'https://pub-670b98370fe642a2be08ee37cbfd385f.r2.dev',
+  endpoint: process.env.CLOUDFLARE_R2_ENDPOINT || ''
 };
 
 const s3Client = new S3Client({
   region: 'auto',
   endpoint: R2_CONFIG.endpoint,
-  credentials: R2_CONFIG.credentials
+  credentials: {
+    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || ''
+  }
 });
 
+// SECURITY: Verify Supabase JWT on protected API endpoints.
+// Calls Supabase /auth/v1/user to validate the Bearer token.
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || '';
+
+async function verifySupabaseJWT(authHeader) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  const token = authHeader.slice(7);
+  if (!token || !SUPABASE_URL) return null;
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: { Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY }
+    });
+    if (!resp.ok) return null;
+    return await resp.json(); // Supabase user object
+  } catch { return null; }
+}
+
+// SECURITY: Allowed CORS origins (NOT wildcard '*').
+const ALLOWED_ORIGINS = new Set([
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'https://gauravroy888.github.io',
+  'https://working-platform.netlify.app'
+]);
+
 const server = http.createServer(async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, HEAD, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', '*');
+  // Restrict CORS to known origins only
+  const requestOrigin = req.headers['origin'];
+  const allowedOrigin = ALLOWED_ORIGINS.has(requestOrigin) ? requestOrigin : null;
+
+  if (allowedOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, HEAD, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -69,13 +112,29 @@ const server = http.createServer(async (req, res) => {
 
   // ☁️ CLOUDFLARE R2 DIRECT UPLOAD API ENDPOINT
   if (pathname === '/api/upload-r2' && req.method === 'POST') {
+
+    // SECURITY: Require valid Supabase session JWT
+    const user = await verifySupabaseJWT(req.headers['authorization']);
+    if (!user || !user.id) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'Unauthorized: valid Supabase session required to upload' }));
+      return;
+    }
+
+    // SECURITY: Verify R2 credentials are actually configured
+    if (!process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || !process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'Storage service not configured on this server' }));
+      return;
+    }
+
     try {
       const chunks = [];
       for await (const chunk of req) chunks.push(chunk);
       const rawBody = Buffer.concat(chunks).toString();
       const body = JSON.parse(rawBody);
 
-      const { className, subjectName, chapterSlug, modalitySlug, filename, base64Content, contentType, category, isAvatar, userEmail } = body;
+      const { className, subjectName, chapterSlug, modalitySlug, filename, base64Content, contentType, category, isAvatar } = body;
 
       if (!filename || !base64Content) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -83,9 +142,19 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      const fileBuffer = Buffer.from(base64Content, 'base64');
+
+      // SECURITY: Cap upload size at 50MB
+      if (fileBuffer.length > 50 * 1024 * 1024) {
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'File too large. Maximum upload size is 50MB.' }));
+        return;
+      }
+
       let key;
       if (category === 'avatars' || isAvatar) {
-        const cleanEmail = (userEmail || 'user').toLowerCase().replace(/[^a-z0-9]/g, '_');
+        // SECURITY: Use email from the verified JWT — NOT from request body
+        const cleanEmail = (user.email || 'user').toLowerCase().replace(/[^a-z0-9]/g, '_');
         const cleanFile = (filename || 'avatar.jpg').replace(/[^a-zA-Z0-9._-]/g, '_');
         key = `avatars/${cleanEmail}_${Date.now()}_${cleanFile}`;
       } else {
@@ -97,7 +166,6 @@ const server = http.createServer(async (req, res) => {
         key = `courses/${cleanClass}/${cleanSubj}/${cleanChap}/${cleanMod}/${cleanFile}`;
       }
 
-      const fileBuffer = Buffer.from(base64Content, 'base64');
       const mime = contentType || getContentType(filename);
 
       await s3Client.send(new PutObjectCommand({
@@ -108,7 +176,7 @@ const server = http.createServer(async (req, res) => {
       }));
 
       const cdnUrl = `${R2_CONFIG.publicCdnUrl}/${key}`;
-      console.log(`☁️ [R2 Upload] Saved ${key} (${fileBuffer.length} bytes) -> ${cdnUrl}`);
+      console.log(`☁️ [R2 Upload] user=${user.email} | ${key} (${fileBuffer.length} bytes) -> ${cdnUrl}`);
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
@@ -121,7 +189,7 @@ const server = http.createServer(async (req, res) => {
     } catch (err) {
       console.error('❌ R2 Upload Error:', err);
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ok: false, error: err.message }));
+      res.end(JSON.stringify({ ok: false, error: 'Upload failed. Please try again.' }));
     }
     return;
   }
@@ -132,6 +200,13 @@ const server = http.createServer(async (req, res) => {
   }
 
   let filePath = path.join(ROOT, pathname);
+
+  // SECURITY: Prevent path traversal attacks
+  if (!filePath.startsWith(ROOT + path.sep) && filePath !== ROOT) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('403 Forbidden');
+    return;
+  }
 
   // Check if requested path is a directory or file exists
   fs.stat(filePath, (err, stats) => {

@@ -29,9 +29,9 @@ supabase.auth.onAuthStateChange(async (event, session) => {
             // User not found in users table — default to student
         }
 
-        if (userEmail === 'urvashinath0409@gmail.com') {
-            role = 'super_admin';
-        }
+        // Role is determined solely from the DB profiles table above.
+        // Do NOT override role client-side based on email — this is a security risk.
+        // To grant super_admin: set role = 'super_admin' directly in Supabase profiles table.
 
         const profileName = existingProfile?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
         const profileAvatar = existingProfile?.avatar_url || user.user_metadata?.avatar_url || null;
@@ -46,7 +46,7 @@ supabase.auth.onAuthStateChange(async (event, session) => {
                 avatar_url: profileAvatar
             }, { onConflict: 'email', ignoreDuplicates: false });
         } catch (err) {
-            // Profile sync failed silently — chat will still work
+            // Profile sync failed silently — user will still be logged in
         }
 
         const edtechUser = {
@@ -57,13 +57,14 @@ supabase.auth.onAuthStateChange(async (event, session) => {
             avatar_url: profileAvatar
         };
         localStorage.setItem('edtech_user', JSON.stringify(edtechUser));
-        
+
         // Save to global portal variables so ThemeContext picks them up!
         localStorage.setItem('portal_name', profileName);
         if (profileAvatar) localStorage.setItem('portal_avatar', profileAvatar);
         let designation = 'Student';
         if (role === 'admin') designation = 'Administrator';
         else if (role === 'teacher') designation = 'Teacher';
+        else if (role === 'super_admin' || role === 'superadmin') designation = 'Super Admin';
         localStorage.setItem('portal_designation', designation);
 
         // Determine target portal based on DB role
@@ -73,7 +74,7 @@ supabase.auth.onAuthStateChange(async (event, session) => {
         let targetPortal = '/student/';
         if (role === 'admin') targetPortal = '/admin/';
         else if (role === 'teacher') targetPortal = '/teacher/';
-        else if (role === 'super_admin' || role === 'superadmin' || userEmail === 'urvashinath0409@gmail.com') targetPortal = '/superadmin/';
+        else if (role === 'super_admin' || role === 'superadmin') targetPortal = '/superadmin/';
 
         const isOnLoginPage = window.location.pathname.includes('login.html') ||
             window.location.pathname === '/' ||

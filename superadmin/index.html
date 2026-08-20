@@ -6,7 +6,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SuperAdmin Portal — Study Island</title>
 
-  <!-- React & ReactDOM -->
+  <!-- AUTH GUARD: Must be first — redirect before any React code loads -->
+  <script>
+    (function () {
+      try {
+        var raw = localStorage.getItem('edtech_user');
+        if (!raw) { window.location.replace('../superadmin-login.html'); return; }
+        var u = JSON.parse(raw);
+        if (!u || !u.uid) { window.location.replace('../superadmin-login.html'); return; }
+        if (u.role !== 'super_admin' && u.role !== 'superadmin') {
+          // Authenticated but not super_admin — redirect to their portal
+          window.location.replace('../login.html');
+        }
+      } catch (e) {
+        window.location.replace('../superadmin-login.html');
+      }
+    })();
+  </script>
+
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>

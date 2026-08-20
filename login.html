@@ -284,10 +284,9 @@
                             .eq('auth_id', authData.user.id)
                             .single();
 
-                        let profileRole = profile?.role || role;
-                        if (authData.user.email === 'urvashinath0409@gmail.com' || role === 'superadmin') {
-                            profileRole = 'super_admin';
-                        }
+                        // Role is determined from DB profiles table only.
+                        // Do NOT override role based on email — set role in Supabase profiles table instead.
+                        let profileRole = profile?.role || 'student';
                         const profileName = profile?.name || loginId;
                         const profileAvatar = profile?.avatar_url || null;
 
@@ -298,26 +297,26 @@
                             role: profileRole,
                             avatar_url: profileAvatar
                         };
-                        
+
                         localStorage.setItem('edtech_user', JSON.stringify(edtechUser));
                         localStorage.setItem('portal_name', profileName);
                         if (profileAvatar) localStorage.setItem('portal_avatar', profileAvatar);
-                        
+
                         let designation = 'Student';
                         if (profileRole === 'admin') designation = 'Administrator';
                         else if (profileRole === 'teacher') designation = 'Teacher';
                         else if (profileRole === 'super_admin' || profileRole === 'superadmin') designation = 'Super Administrator';
                         localStorage.setItem('portal_designation', designation);
-                        
+
                         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '';
                         const basePath = isLocal ? '' : '/Working-Platform';
-                        let targetPortal = '/' + profileRole + '/';
-                        if (profileRole === 'super_admin' || profileRole === 'superadmin' || authData.user.email === 'urvashinath0409@gmail.com') {
-                            targetPortal = '/superadmin/';
-                        }
-                        
+                        let targetPortal = '/student/';
+                        if (profileRole === 'admin') targetPortal = '/admin/';
+                        else if (profileRole === 'teacher') targetPortal = '/teacher/';
+                        else if (profileRole === 'super_admin' || profileRole === 'superadmin') targetPortal = '/superadmin/';
+
                         window.location.href = window.location.origin + basePath + targetPortal;
-                        
+
                     } catch (err) {
                         alert("An error occurred during login.");
                         console.error(err);
