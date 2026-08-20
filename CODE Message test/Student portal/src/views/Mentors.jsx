@@ -108,11 +108,14 @@ export default function Mentors() {
     navigate(`/chats?name=${encodeURIComponent(teacher.name)}&email=${encodeURIComponent(targetEmail)}`);
   };
 
-  const filteredTeachers = teachers.filter(t => 
-    t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    (t.subject && t.subject.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (t.email && t.email.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredTeachers = teachers.filter(t => {
+    if (!t) return false;
+    const nameStr = (t.name || '').toLowerCase();
+    const subjectStr = (t.subject || '').toLowerCase();
+    const emailStr = (t.email || '').toLowerCase();
+    const q = (searchQuery || '').toLowerCase();
+    return nameStr.includes(q) || subjectStr.includes(q) || emailStr.includes(q);
+  });
 
   return (
     <div className="view-container animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -311,7 +314,7 @@ export default function Mentors() {
                   width: '14px',
                   height: '14px',
                   borderRadius: '50%',
-                  background: '#10B981',
+                  background: (selectedTeacher.email && onlineEmails.has(selectedTeacher.email.toLowerCase())) ? '#10B981' : '#64748B',
                   border: '2px solid #0D1424'
                 }}></span>
               </div>
