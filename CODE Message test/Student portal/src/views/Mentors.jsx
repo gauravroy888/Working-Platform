@@ -21,7 +21,14 @@ export default function Mentors() {
     presenceChannel
       .on('presence', { event: 'sync' }, () => {
         const state = presenceChannel.presenceState();
-        const emails = new Set(Object.keys(state).map(k => k.toLowerCase()));
+        const emails = new Set();
+        Object.keys(state).forEach(key => {
+          emails.add(key.toLowerCase());
+          const presences = state[key] || [];
+          presences.forEach(p => {
+            if (p.email) emails.add(p.email.toLowerCase());
+          });
+        });
         setOnlineEmails(emails);
       })
       .subscribe();

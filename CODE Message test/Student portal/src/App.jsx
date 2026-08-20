@@ -167,6 +167,30 @@ export default function App() {
     };
   }, []);
 
+  React.useEffect(() => {
+    if (!user?.email) return;
+
+    const userEmail = user.email.toLowerCase();
+    const presenceChannel = supabase.channel('public:online-users', {
+      config: { presence: { key: userEmail } }
+    });
+
+    presenceChannel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await presenceChannel.track({
+          email: userEmail,
+          name: user.name || 'Student',
+          role: user.role || 'student',
+          online_at: new Date().toISOString()
+        });
+      }
+    });
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+    };
+  }, [user]);
+
   const loginUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? '/login.html'
     : 'https://gauravroy888.github.io/Working-Platform/login.html';

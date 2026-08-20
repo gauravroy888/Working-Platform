@@ -194,6 +194,30 @@ export default function App() {
     };
   }, []);
 
+  React.useEffect(() => {
+    if (!user?.email) return;
+
+    const userEmail = user.email.toLowerCase();
+    const presenceChannel = supabase.channel('public:online-users', {
+      config: { presence: { key: userEmail } }
+    });
+
+    presenceChannel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await presenceChannel.track({
+          email: userEmail,
+          name: user.name || 'Teacher',
+          role: user.role || 'teacher',
+          online_at: new Date().toISOString()
+        });
+      }
+    });
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+    };
+  }, [user]);
+
   const handleQuickTeacherLogin = () => {
     const defaultTeacher = {
       uid: 'teacher-priya-001',
