@@ -7,14 +7,19 @@ import './Mentors.css';
 
 export default function Mentors() {
   const [activeTab, setActiveTab] = useState('all');
-  const [teachers, setTeachers] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedTeacher, setSelectedTeacher] = useState(null);
-  const navigate = useNavigate();
+  const [onlineEmails, setOnlineEmails] = useState(new Set());
 
   useEffect(() => {
     fetchTeachers();
+
+    const presenceChannel = supabase.channel('public:online-users');
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState();
+        const emails = new Set(Object.keys(state).map(k => k.toLowerCase()));
+        setOnlineEmails(emails);
+      })
+      .subscribe();
 
     const tChannel = supabase
       .channel('public:teachers_sync')
@@ -27,6 +32,7 @@ export default function Mentors() {
       .subscribe();
 
     return () => {
+      supabase.removeChannel(presenceChannel);
       supabase.removeChannel(tChannel);
       supabase.removeChannel(uChannel);
     };
@@ -53,7 +59,7 @@ export default function Mentors() {
             degree: t.degree || 'Faculty Instructor',
             subject: t.subject || 'General Sciences',
             rating: t.rating || 5.0,
-            status: t.status || 'Online',
+            status: t.status || 'Offline',
             email: t.email,
             avatar_url: t.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(t.name)}`,
             bio: t.bio || `${t.name} is a dedicated educator assigned to Class 6th interactive coursework and laboratory sessions.`,
@@ -76,7 +82,7 @@ export default function Mentors() {
               degree: isHarsh ? 'Faculty of Mathematics & Computing' : 'Faculty Instructor',
               subject: isHarsh ? 'Mathematics' : 'Science',
               rating: 5.0,
-              status: 'Online',
+              status: 'Offline',
               email: u.email,
               avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.full_name || 'Teacher')}&clothing=blazerAndShirt&backgroundColor=b6e3f4`,
               bio: `${u.full_name} is a verified Class 6th faculty instructor in the Edtech Island platform.`,
@@ -153,39 +159,44 @@ export default function Mentors() {
           ) : filteredTeachers.length === 0 ? (
             <p style={{ color: '#94a3b8', padding: '20px' }}>No teachers found in database.</p>
           ) : (
-            filteredTeachers.map(mentor => (
-              <div key={mentor.id} className="mentor-row">
-                <div className="mentor-info-block">
-                  <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0 }}>
-                    <img 
-                      src={mentor.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${mentor.name}`} 
-                      alt={mentor.name} 
-                      style={{
-                        width: '100%',
-                        height: '100%',
+            filteredTeachers.map(mentor => {
+              const isUserOnline = mentor.email && onlineEmails.has(mentor.email.toLowerCase());
+              const displayStatus = isUserOnline ? 'Online' : 'Offline';
+              const statusColor = isUserOnline ? '#10B981' : '#64748B';
+
+              return (
+                <div key={mentor.id} className="mentor-row">
+                  <div className="mentor-info-block">
+                    <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0 }}>
+                      <img 
+                        src={mentor.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${mentor.name}`} 
+                        alt={mentor.name} 
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: '50%',
+                          border: '2px solid var(--brand-primary, #00F0FF)',
+                          boxShadow: '0 0 12px var(--brand-glow, rgba(0, 240, 255, 0.3))',
+                          objectFit: 'cover'
+                        }}
+                      />
+                      <span style={{
+                        position: 'absolute',
+                        bottom: '0',
+                        right: '0',
+                        width: '12px',
+                        height: '12px',
                         borderRadius: '50%',
-                        border: '2px solid var(--brand-primary, #00F0FF)',
-                        boxShadow: '0 0 12px var(--brand-glow, rgba(0, 240, 255, 0.3))',
-                        objectFit: 'cover'
-                      }}
-                    />
-                    <span style={{
-                      position: 'absolute',
-                      bottom: '0',
-                      right: '0',
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '50%',
-                      background: '#10B981',
-                      border: '2px solid #0D1424'
-                    }}></span>
+                        background: statusColor,
+                        border: '2px solid #0D1424'
+                      }}></span>
+                    </div>
+                    <div>
+                      <h4 className="mentor-name" style={{ color: 'white', fontWeight: '700', margin: '0 0 2px 0' }}>{mentor.name}</h4>
+                      <p className="mentor-title" style={{ color: '#94a3b8', margin: '0 0 2px 0', fontSize: '0.85rem' }}>{mentor.degree}</p>
+                      <span className="status-text" style={{ color: statusColor, fontSize: '0.8rem', fontWeight: '600' }}>● {displayStatus}</span>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="mentor-name" style={{ color: 'white', fontWeight: '700', margin: '0 0 2px 0' }}>{mentor.name}</h4>
-                    <p className="mentor-title" style={{ color: '#94a3b8', margin: '0 0 2px 0', fontSize: '0.85rem' }}>{mentor.degree}</p>
-                    <span className="status-text online" style={{ color: '#10B981', fontSize: '0.8rem', fontWeight: '600' }}>● {mentor.status}</span>
-                  </div>
-                </div>
                 
                 <div className="mentor-subject">
                   <span className="subject-badge" style={{ background: 'var(--brand-glow, rgba(0, 240, 255, 0.1))', color: 'var(--brand-primary, #00F0FF)', border: '1px solid var(--brand-border, rgba(0, 240, 255, 0.3))', padding: '6px 16px', borderRadius: '20px', fontWeight: '700', fontSize: '0.85rem' }}>
@@ -226,7 +237,8 @@ export default function Mentors() {
                   </button>
                 </div>
               </div>
-            ))
+            );
+          })
           )}
         </div>
       </Card>
