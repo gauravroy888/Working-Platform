@@ -52,18 +52,20 @@ export default function Mentors() {
       // Add records from 'teachers' table
       if (dbTeachers && dbTeachers.length > 0) {
         dbTeachers.forEach(t => {
-          const emailKey = (t.email || t.name).toLowerCase();
+          if (!t) return;
+          const teacherName = t.name || t.full_name || 'Faculty Member';
+          const emailKey = (t.email || teacherName || t.id || String(Math.random())).toLowerCase();
           teacherMap.set(emailKey, {
-            id: t.id,
-            name: t.name,
-            degree: t.degree || 'Faculty Instructor',
+            id: t.id || emailKey,
+            name: teacherName,
+            degree: t.degree || t.role || 'Faculty Instructor',
             subject: t.subject || 'General Sciences',
             rating: t.rating || 5.0,
             status: t.status || 'Offline',
-            email: t.email,
-            avatar_url: t.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(t.name)}`,
-            bio: t.bio || `${t.name} is a dedicated educator assigned to Class 6th interactive coursework and laboratory sessions.`,
-            classes: t.classes || 'Class 6th',
+            email: t.email || '',
+            avatar_url: t.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(teacherName)}`,
+            bio: t.bio || `${teacherName} is a dedicated educator assigned to Class 6th interactive coursework and laboratory sessions.`,
+            classes: typeof t.classes === 'string' ? t.classes : (Array.isArray(t.classes) ? t.classes.join(', ') : 'Class 6th'),
             office_hours: t.office_hours || 'Mon - Fri: 09:00 AM - 04:00 PM',
             location: t.location || 'Science Lab 3 (3D VR Room)'
           });
@@ -73,19 +75,22 @@ export default function Mentors() {
       // Add records from 'users' table where role = 'teacher'
       if (dbUsers && dbUsers.length > 0) {
         dbUsers.forEach(u => {
-          const emailKey = (u.email || u.full_name).toLowerCase();
+          if (!u) return;
+          const uName = u.full_name || u.name || 'Teacher';
+          const uEmail = u.email || '';
+          const emailKey = (uEmail || uName || u.id || String(Math.random())).toLowerCase();
           if (!teacherMap.has(emailKey)) {
-            const isHarsh = (u.full_name || '').toLowerCase().includes('harsh') || (u.email || '').includes('rathore');
+            const isHarsh = uName.toLowerCase().includes('harsh') || uEmail.toLowerCase().includes('rathore');
             teacherMap.set(emailKey, {
-              id: u.id,
-              name: u.full_name || 'Teacher',
+              id: u.id || emailKey,
+              name: uName,
               degree: isHarsh ? 'Faculty of Mathematics & Computing' : 'Faculty Instructor',
               subject: isHarsh ? 'Mathematics' : 'Science',
               rating: 5.0,
               status: 'Offline',
-              email: u.email,
-              avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.full_name || 'Teacher')}&clothing=blazerAndShirt&backgroundColor=b6e3f4`,
-              bio: `${u.full_name} is a verified Class 6th faculty instructor in the Edtech Island platform.`,
+              email: uEmail,
+              avatar_url: u.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(uName)}&clothing=blazerAndShirt&backgroundColor=b6e3f4`,
+              bio: `${uName} is a verified Class 6th faculty instructor in the Edtech Island platform.`,
               classes: 'Class 6th',
               office_hours: 'Mon - Fri: 09:00 AM - 04:00 PM',
               location: isHarsh ? 'Mathematics Wing Room 204' : 'Lab 3 (3D VR Room)'
