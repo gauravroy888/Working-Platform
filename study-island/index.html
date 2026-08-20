@@ -40,12 +40,12 @@
     (function () {
       try {
         var raw = localStorage.getItem('edtech_user');
-        if (!raw) { window.location.replace('../login.html'); return; }
+        if (!raw) { window.location.replace('/login.html'); return; }
         var u = JSON.parse(raw);
-        if (!u || !u.uid || !u.role) { window.location.replace('../login.html'); return; }
+        if (!u || !u.uid || !u.role) { window.location.replace('/login.html'); return; }
         // Study Island is accessible to all authenticated roles
       } catch (e) {
-        window.location.replace('../login.html');
+        window.location.replace('/login.html');
       }
     })();
   </script>

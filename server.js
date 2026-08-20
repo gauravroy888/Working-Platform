@@ -223,18 +223,24 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
-    // Check SPA rewrites if file doesn't exist
+    // Check clean route resolutions & SPA rewrites
     if (err || !fs.existsSync(filePath)) {
-      if (pathname.startsWith('/student') && !path.extname(pathname)) {
+      if (pathname === '/login' || pathname === '/login.html') {
+        filePath = path.join(ROOT, 'login.html');
+      } else if (pathname === '/superadmin-login' || pathname === '/superadmin-login.html') {
+        filePath = path.join(ROOT, 'superadmin-login.html');
+      } else if (pathname.startsWith('/student') && !path.extname(pathname)) {
         filePath = path.join(ROOT, 'student', 'index.html');
       } else if (pathname.startsWith('/teacher') && !path.extname(pathname)) {
         filePath = path.join(ROOT, 'teacher', 'index.html');
       } else if (pathname.startsWith('/admin') && !path.extname(pathname)) {
         filePath = path.join(ROOT, 'admin', 'index.html');
-      } else if (pathname.startsWith('/superadmin') && !path.extname(pathname)) {
+      } else if ((pathname === '/superadmin' || pathname.startsWith('/superadmin/')) && !path.extname(pathname)) {
         filePath = path.join(ROOT, 'superadmin', 'index.html');
       } else if (pathname.startsWith('/study-island') && !path.extname(pathname)) {
         filePath = path.join(ROOT, 'study-island', 'index.html');
+      } else if (!path.extname(pathname) && fs.existsSync(filePath + '.html')) {
+        filePath = filePath + '.html';
       } else if (!path.extname(pathname)) {
         filePath = path.join(ROOT, 'index.html');
       }
