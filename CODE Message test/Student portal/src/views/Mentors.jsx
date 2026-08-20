@@ -7,7 +7,12 @@ import './Mentors.css';
 
 export default function Mentors() {
   const [activeTab, setActiveTab] = useState('all');
+  const [teachers, setTeachers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [onlineEmails, setOnlineEmails] = useState(new Set());
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchTeachers();
