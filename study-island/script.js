@@ -1355,7 +1355,7 @@
 
         return '<div class="story-card" onclick="openStoryVideo(\'' + safeVideoUrl + '\')">' +
           '<div class="story-card-stage">' +
-            '<img src="' + thumb + '" alt="' + title + '" class="story-thumb-img" onerror="this.onerror=null; this.src=\'' + fallbackThumb + '\';">' +
+            '<img src="' + thumb + '" alt="' + title + '" class="story-thumb-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=\'' + fallbackThumb + '\';">' +
             '<div class="story-stage-overlay"></div>' +
             '<span class="story-badge-pill">' + tag + '</span>' +
             '<span class="story-duration-pill">⏱ ' + duration + '</span>' +

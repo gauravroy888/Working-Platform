@@ -248,7 +248,13 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      res.writeHead(200, { 'Content-Type': getContentType(filePath) });
+      const ext = path.extname(filePath).toLowerCase();
+      const isStaticAsset = ['.css', '.js', '.jpg', '.jpeg', '.png', '.webp', '.svg', '.woff2', '.ttf'].includes(ext);
+      const headers = { 'Content-Type': getContentType(filePath) };
+      if (isStaticAsset) {
+        headers['Cache-Control'] = 'public, max-age=86400';
+      }
+      res.writeHead(200, headers);
       res.end(content);
     });
   });

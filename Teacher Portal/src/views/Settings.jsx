@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Card from '../components/Card';
 import { Save, Image as ImageIcon, User, Upload } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
-import defaultAvatar from '../assets/avatar.png';
+const defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher&backgroundColor=b6e3f4';
 import defaultBg from '../assets/milky-way-starry-sky2k.jpg';
 import ProfilePhotoModal from '../components/ProfilePhotoModal';
 

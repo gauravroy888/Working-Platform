@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import defaultBg from './assets/Future verion lowres.jpg';
-import defaultAvatar from './assets/avatar.png';
+const defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher&backgroundColor=b6e3f4';
 import { supabase } from './supabase';
 
 export const THEME_PRESETS = {

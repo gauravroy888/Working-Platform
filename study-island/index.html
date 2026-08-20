@@ -999,5 +999,15 @@
 </div>
 
 <script src="script.js?v=17"></script>
+<!-- SERVICE WORKER (Fix P8): Enables offline shell fallback for classroom environments -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('./sw.js').catch(function(err) {
+        console.warn('SW registration skipped:', err);
+      });
+    });
+  }
+</script>
 </body>
 </html>
