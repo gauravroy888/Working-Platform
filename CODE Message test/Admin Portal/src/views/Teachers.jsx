@@ -4,20 +4,24 @@ import Card from '../components/Card';
 import { supabase } from '../supabase';
 
 export default function Teachers() {
-  const [teachers, setTeachers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [deptFilter, setDeptFilter] = useState('ALL');
-  const [selectedTeacher, setSelectedTeacher] = useState(null);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [feedbackMsg, setFeedbackMsg] = useState(null);
-  const [newFaculty, setNewFaculty] = useState({
-    name: '',
-    email: '',
-    department: 'Science & Physics',
-    role: 'Subject Faculty'
-  });
+  const [onlineEmails, setOnlineEmails] = useState(new Set());
+
+  useEffect(() => {
+    loadTeachers();
+
+    const presenceChannel = supabase.channel('public:online-users');
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState();
+        const emails = new Set(Object.keys(state).map(k => k.toLowerCase()));
+        setOnlineEmails(emails);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+    };
+  }, []);
 
   // Fetch only real database records from Supabase
   const loadTeachers = async () => {
@@ -336,12 +340,19 @@ export default function Teachers() {
                       <span style={{ color: '#34d399', fontWeight: '700' }}>{teacher.classes.join(', ')}</span>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                      <span style={{ color: '#94a3b8' }}>Verified Status:</span>
-                      <span style={{ color: '#10B981', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <CheckCircle size={13} /> {teacher.status}
-                      </span>
-                    </div>
+                    {(() => {
+                      const isOnline = teacher.email && onlineEmails.has(teacher.email.toLowerCase());
+                      const statusText = isOnline ? 'Online' : 'Offline';
+                      const statusColor = isOnline ? '#10B981' : '#64748B';
+                      return (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                          <span style={{ color: '#94a3b8' }}>Verified Status:</span>
+                          <span style={{ color: statusColor, fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <CheckCircle size={13} /> {statusText}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
