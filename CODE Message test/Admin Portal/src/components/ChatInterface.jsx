@@ -81,6 +81,13 @@ export default function ChatInterface({ currentUser: propUser, activeTab, onUnre
   useEffect(() => {
     if (!currentUser?.email) return;
 
+    try {
+      const existing = supabase.getChannels().find(ch => ch.topic === 'realtime:public:online-users');
+      if (existing) {
+        supabase.removeChannel(existing);
+      }
+    } catch (e) {}
+
     const presenceChannel = supabase.channel('public:online-users', {
       config: { presence: { key: currentUser.email.toLowerCase() } }
     });
@@ -88,7 +95,14 @@ export default function ChatInterface({ currentUser: propUser, activeTab, onUnre
     presenceChannel
       .on('presence', { event: 'sync' }, () => {
         const state = presenceChannel.presenceState();
-        const emails = new Set(Object.keys(state).map(k => k.toLowerCase()));
+        const emails = new Set();
+        Object.keys(state).forEach(key => {
+          emails.add(key.toLowerCase());
+          const presences = state[key] || [];
+          presences.forEach(p => {
+            if (p.email) emails.add(p.email.toLowerCase());
+          });
+        });
         setOnlineEmails(emails);
       })
       .subscribe(async (status) => {

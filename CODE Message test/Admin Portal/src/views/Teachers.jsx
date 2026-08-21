@@ -9,6 +9,13 @@ export default function Teachers() {
   useEffect(() => {
     loadTeachers();
 
+    try {
+      const existing = supabase.getChannels().find(ch => ch.topic === 'realtime:public:online-users');
+      if (existing) {
+        supabase.removeChannel(existing);
+      }
+    } catch (e) {}
+
     const presenceChannel = supabase.channel('public:online-users');
     presenceChannel
       .on('presence', { event: 'sync' }, () => {
