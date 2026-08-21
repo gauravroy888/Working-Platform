@@ -297,10 +297,10 @@ export default function ChatInterface({ currentUser: propUser, activeTab, select
 
     // Sort by recent activity
     filtered.sort((a, b) => {
-      const keyA = a.isGroup ? a.id : a.email.toLowerCase();
-      const keyB = b.isGroup ? b.id : b.email.toLowerCase();
-      const convA = conversationsMap[keyA];
-      const convB = conversationsMap[keyB];
+      const keyA = a.isGroup ? a.id : (a.email ? a.email.toLowerCase() : '');
+      const keyB = b.isGroup ? b.id : (b.email ? b.email.toLowerCase() : '');
+      const convA = keyA ? conversationsMap[keyA] : null;
+      const convB = keyB ? conversationsMap[keyB] : null;
       const timeA = convA?.updatedAt ? new Date(convA.updatedAt).getTime() : 0;
       const timeB = convB?.updatedAt ? new Date(convB.updatedAt).getTime() : 0;
       return timeB - timeA;

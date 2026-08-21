@@ -241,7 +241,7 @@ export default function ChatInterface({ currentUser: propUser, activeTab, onUnre
   useEffect(() => {
     if (!profiles) return;
     
-    let baseList = profiles.filter(p => !currentUser?.email || p.email !== currentUser.email);
+    let baseList = profiles.filter(p => p && p.email && (!currentUser?.email || p.email.toLowerCase() !== currentUser.email.toLowerCase()));
 
     if (filterRole === 'students') {
       baseList = baseList.filter(p => p.role === 'student');
@@ -259,8 +259,10 @@ export default function ChatInterface({ currentUser: propUser, activeTab, onUnre
     
     // Sort contacts by latest conversation activity (updatedAt descending)
     baseList.sort((a, b) => {
-      const convA = conversationsMap[a.email.toLowerCase()];
-      const convB = conversationsMap[b.email.toLowerCase()];
+      const emailA = (a.email || '').toLowerCase();
+      const emailB = (b.email || '').toLowerCase();
+      const convA = emailA ? conversationsMap[emailA] : null;
+      const convB = emailB ? conversationsMap[emailB] : null;
       const timeA = convA?.updatedAt ? new Date(convA.updatedAt).getTime() : 0;
       const timeB = convB?.updatedAt ? new Date(convB.updatedAt).getTime() : 0;
       return timeB - timeA;

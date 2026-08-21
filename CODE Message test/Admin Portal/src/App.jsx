@@ -52,9 +52,14 @@ class ErrorBoundary extends React.Component {
           }}>
             <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⚡</div>
             <h2 style={{ color: 'var(--brand-primary, #00F0FF)', fontSize: '1.6rem', fontWeight: '800', marginBottom: '12px' }}>Admin Deck Ready</h2>
-            <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '24px' }}>
+            <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '16px' }}>
               The portal encountered a temporary rendering hitch. Click below to reload cleanly.
             </p>
+            {this.state.error && (
+              <pre style={{ color: '#ef4444', fontSize: '0.75rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', padding: '10px 14px', borderRadius: '10px', marginBottom: '20px', textAlign: 'left', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all', maxHeight: '140px' }}>
+                {this.state.error.toString()}
+              </pre>
+            )}
             <button
               onClick={() => window.location.reload()}
               style={{
