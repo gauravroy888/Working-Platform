@@ -4,6 +4,20 @@ import Card from '../components/Card';
 import { supabase } from '../supabase';
 
 export default function Teachers() {
+  const [teachers, setTeachers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [deptFilter, setDeptFilter] = useState('ALL');
+  const [selectedTeacher, setSelectedTeacher] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedbackMsg, setFeedbackMsg] = useState(null);
+  const [newFaculty, setNewFaculty] = useState({
+    name: '',
+    email: '',
+    department: 'Science & Physics',
+    role: 'Subject Faculty'
+  });
   const [onlineEmails, setOnlineEmails] = useState(new Set());
 
   useEffect(() => {
