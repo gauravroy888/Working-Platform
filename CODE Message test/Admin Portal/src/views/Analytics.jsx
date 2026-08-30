@@ -202,8 +202,8 @@ export default function Analytics() {
                   <AreaChart data={attendanceTrend}>
                     <defs>
                       <linearGradient id="studentGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopcolor="var(--brand-primary, #00F0FF)" stopOpacity={0.4}/>
-                        <stop offset="95%" stopcolor="var(--brand-primary, #00F0FF)" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#00F0FF" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="#00F0FF" stopOpacity={0}/>
                       </linearGradient>
                       <linearGradient id="facultyGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#10B981" stopOpacity={0.4}/>

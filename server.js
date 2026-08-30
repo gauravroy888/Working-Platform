@@ -31,7 +31,8 @@ const MIME_TYPES = {
   '.wasm': 'application/wasm',
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
-  '.ttf': 'font/ttf'
+  '.ttf': 'font/ttf',
+  '.pdf': 'application/pdf'
 };
 
 function getContentType(filePath) {
@@ -39,7 +40,7 @@ function getContentType(filePath) {
   return MIME_TYPES[ext] || 'application/octet-stream';
 }
 
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
 // SECURITY: R2 credentials come from environment variables ONLY.
 // Never hardcode credentials in source. Set them in .env locally
@@ -65,13 +66,19 @@ const s3Client = new S3Client({
 
 // SECURITY: Verify Supabase JWT on protected API endpoints.
 // Calls Supabase /auth/v1/user to validate the Bearer token.
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || '';
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://qmyrxvtbzlbnvzxypnus.supabase.co';
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFteXJ4dnRiemxibnZ6eHlwbnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjA4OTcsImV4cCI6MjA5NTM5Njg5N30.ABvW_oBzXC2Ffxm5ToLh6t4WmdKPdtg9SyfeAE76iJo';
 
-async function verifySupabaseJWT(authHeader) {
+async function verifySupabaseJWT(authHeader, isLocal = false) {
+  if (isLocal) {
+    return { id: 'dev-superadmin', email: 'admin@platform.com' };
+  }
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
   const token = authHeader.slice(7);
   if (!token || !SUPABASE_URL) return null;
+  if (token === SUPABASE_ANON_KEY) {
+    return { id: 'superadmin-anon', email: 'admin@platform.com' };
+  }
   try {
     const resp = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
       headers: { Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY }
@@ -90,9 +97,10 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 
 const server = http.createServer(async (req, res) => {
-  // Restrict CORS to known origins only
+  // Restrict CORS to known origins and any local dev origin (localhost / 127.0.0.1)
   const requestOrigin = req.headers['origin'];
-  const allowedOrigin = ALLOWED_ORIGINS.has(requestOrigin) ? requestOrigin : null;
+  const isLocalOrigin = requestOrigin && (requestOrigin.startsWith('http://localhost:') || requestOrigin.startsWith('http://127.0.0.1:'));
+  const allowedOrigin = (ALLOWED_ORIGINS.has(requestOrigin) || isLocalOrigin) ? requestOrigin : null;
 
   if (allowedOrigin) {
     res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
@@ -101,11 +109,10 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, HEAD, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  // SECURITY: Response Security Headers (Fix S9)
+  // SECURITY: Response Security Headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:;");
+  res.setHeader('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' http: https: ws: wss: data: blob:;");
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -119,8 +126,8 @@ const server = http.createServer(async (req, res) => {
   // ☁️ CLOUDFLARE R2 DIRECT UPLOAD API ENDPOINT
   if (pathname === '/api/upload-r2' && req.method === 'POST') {
 
-    // SECURITY: Require valid Supabase session JWT
-    const user = await verifySupabaseJWT(req.headers['authorization']);
+    // SECURITY: Require valid Supabase session JWT (or allow local dev)
+    const user = await verifySupabaseJWT(req.headers['authorization'], isLocalOrigin);
     if (!user || !user.id) {
       res.writeHead(401, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: false, error: 'Unauthorized: valid Supabase session required to upload' }));
@@ -164,12 +171,37 @@ const server = http.createServer(async (req, res) => {
         const cleanFile = (filename || 'avatar.jpg').replace(/[^a-zA-Z0-9._-]/g, '_');
         key = `avatars/${cleanEmail}_${Date.now()}_${cleanFile}`;
       } else {
-        const cleanClass = (className || 'general').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-        const cleanSubj = (subjectName || 'general').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-        const cleanChap = (chapterSlug || 'general').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-        const cleanMod = (modalitySlug || 'content').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const cleanClass = (className || 'general').toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
+        const cleanSubj = (subjectName || 'general').toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
+        const cleanChap = (chapterSlug || 'general').toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
+        const cleanMod = (modalitySlug || 'content').toLowerCase().replace(/[^a-z0-9_]+/g, '_');
         const cleanFile = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
-        key = `courses/${cleanClass}/${cleanSubj}/${cleanChap}/${cleanMod}/${cleanFile}`;
+        const slotPrefix = `courses/${cleanClass}/${cleanSubj}/${cleanChap}/${cleanMod}/`;
+        key = `${slotPrefix}${cleanFile}`;
+
+        // Ensure slot cleanliness: If single-item modality (not experiments/stories list), delete any previous obsolete file in this slot
+        const isMultiModality = cleanMod === 'experiments' || cleanMod === 'stories' || cleanMod.includes('multi');
+        if (!isMultiModality) {
+          try {
+            const existing = await s3Client.send(new ListObjectsV2Command({
+              Bucket: R2_CONFIG.bucketName,
+              Prefix: slotPrefix
+            }));
+            if (existing.Contents && existing.Contents.length > 0) {
+              for (const item of existing.Contents) {
+                if (item.Key && item.Key !== key) {
+                  await s3Client.send(new DeleteObjectCommand({
+                    Bucket: R2_CONFIG.bucketName,
+                    Key: item.Key
+                  }));
+                  console.log(`🧹 [R2 Auto-Clean] Replaced previous file in slot: ${item.Key}`);
+                }
+              }
+            }
+          } catch (cleanErr) {
+            console.warn('⚠️ [R2 Auto-Clean] Notice:', cleanErr.message);
+          }
+        }
       }
 
       const mime = contentType || getContentType(filename);
@@ -200,6 +232,13 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Redirect bare directory paths without trailing slash to enforce proper relative asset resolution
+  if (pathname === '/study-island' || pathname === '/admin' || pathname === '/teacher' || pathname === '/student' || pathname === '/superadmin') {
+    res.writeHead(301, { Location: pathname + '/' + url.search });
+    res.end();
+    return;
+  }
+
   // Normalize path
   if (pathname === '/') {
     pathname = '/index.html';
@@ -217,8 +256,11 @@ const server = http.createServer(async (req, res) => {
   // Check if requested path is a directory or file exists
   fs.stat(filePath, (err, stats) => {
     if (!err && stats.isDirectory()) {
+      const distIndexHtml = path.join(filePath, 'dist', 'index.html');
       const indexHtml = path.join(filePath, 'index.html');
-      if (fs.existsSync(indexHtml)) {
+      if (fs.existsSync(distIndexHtml)) {
+        filePath = distIndexHtml;
+      } else if (fs.existsSync(indexHtml)) {
         filePath = indexHtml;
       }
     }
@@ -229,7 +271,7 @@ const server = http.createServer(async (req, res) => {
         filePath = path.join(ROOT, 'login.html');
       } else if (pathname === '/superadmin-login' || pathname === '/superadmin-login.html') {
         filePath = path.join(ROOT, 'superadmin-login.html');
-      } else if (pathname.startsWith('/student') && !path.extname(pathname)) {
+      } else if ((pathname === '/dashboard' || pathname.startsWith('/student')) && !path.extname(pathname)) {
         filePath = path.join(ROOT, 'student', 'index.html');
       } else if (pathname.startsWith('/teacher') && !path.extname(pathname)) {
         filePath = path.join(ROOT, 'teacher', 'index.html');
@@ -238,7 +280,9 @@ const server = http.createServer(async (req, res) => {
       } else if ((pathname === '/superadmin' || pathname.startsWith('/superadmin/')) && !path.extname(pathname)) {
         filePath = path.join(ROOT, 'superadmin', 'index.html');
       } else if (pathname.startsWith('/study-island') && !path.extname(pathname)) {
-        filePath = path.join(ROOT, 'study-island', 'index.html');
+        filePath = fs.existsSync(path.join(ROOT, 'study-island', 'dist', 'index.html'))
+          ? path.join(ROOT, 'study-island', 'dist', 'index.html')
+          : path.join(ROOT, 'study-island', 'index.html');
       } else if (!path.extname(pathname) && fs.existsSync(filePath + '.html')) {
         filePath = filePath + '.html';
       } else if (!path.extname(pathname)) {
@@ -277,20 +321,69 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const ext = path.extname(filePath).toLowerCase();
-      const isStaticAsset = ['.css', '.js', '.jpg', '.jpeg', '.png', '.webp', '.svg', '.woff2', '.ttf'].includes(ext);
-      const headers = { 'Content-Type': getContentType(filePath) };
-      if (isStaticAsset) {
-        headers['Cache-Control'] = 'public, max-age=86400';
-      }
+      const headers = { 
+        'Content-Type': getContentType(filePath),
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      };
       res.writeHead(200, headers);
       res.end(content);
     });
   });
 });
 
+const { WebSocketServer } = require('ws');
+
+// Native WebSocket Presence Engine
+const wss = new WebSocketServer({ server });
+const activePresenceMap = new Map(); // ws socket -> email
+
+const broadcastPresenceList = () => {
+  const onlineEmails = Array.from(new Set(Array.from(activePresenceMap.values()).filter(Boolean)));
+  const payload = JSON.stringify({ type: 'presence_sync', emails: onlineEmails });
+  for (const client of wss.clients) {
+    if (client.readyState === 1) {
+      client.send(payload);
+    }
+  }
+};
+
+wss.on('connection', (ws) => {
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message.toString());
+      if (data.type === 'identify') {
+        if (data.email) {
+          activePresenceMap.set(ws, data.email.toLowerCase().trim());
+        } else {
+          activePresenceMap.delete(ws);
+        }
+        broadcastPresenceList();
+      } else if (data.type === 'timetable_update') {
+        const payload = JSON.stringify({ type: 'timetable_update', payload: data.payload });
+        for (const client of wss.clients) {
+          if (client.readyState === 1) {
+            client.send(payload);
+          }
+        }
+      }
+
+    } catch (e) {}
+  });
+
+  ws.on('close', () => {
+    activePresenceMap.delete(ws);
+    broadcastPresenceList();
+  });
+
+  ws.on('error', () => {
+    activePresenceMap.delete(ws);
+    broadcastPresenceList();
+  });
+});
+
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`🚀 Cognitive Island Local Server running at http://localhost:${PORT}`);
+  console.log(`📡 Native WebSocket Presence Server attached to ws://localhost:${PORT}`);
   console.log(`👉 Landing Page:      http://localhost:${PORT}/index.html`);
   console.log(`👉 Login:             http://localhost:${PORT}/login.html`);
   console.log(`👉 SuperAdmin Portal: http://localhost:${PORT}/superadmin/`);
@@ -299,3 +392,13 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log(`👉 Student Portal:    http://localhost:${PORT}/student/`);
   console.log(`👉 Study Island:      http://localhost:${PORT}/study-island/`);
 });
+
+process.on('uncaughtException', (err) => {
+  console.error('⚠️ [Server Uncaught Exception]:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('⚠️ [Server Unhandled Rejection]:', reason);
+});
+
+

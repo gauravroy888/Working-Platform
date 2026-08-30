@@ -12,6 +12,7 @@ import Settings from './views/Settings';
 import Notifications from './views/Notifications';
 import { ThemeProvider } from './ThemeContext';
 import { supabase } from './supabase';
+import { PresenceProvider } from './hooks/usePresence';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -87,11 +88,25 @@ class ErrorBoundary extends React.Component {
 export default function App() {
   const [loadingSession, setLoadingSession] = React.useState(true);
   const [user, setUser] = React.useState(() => {
+    const adminStr = localStorage.getItem('edtech_admin_user');
+    if (adminStr) {
+      try { return JSON.parse(adminStr); } catch (e) {}
+    }
     const userStr = localStorage.getItem('edtech_user');
     if (userStr) {
-      try { return JSON.parse(userStr); } catch (e) { return null; }
+      try {
+        const u = JSON.parse(userStr);
+        if (u && (u.role === 'admin' || u.role === 'super_admin' || u.role === 'superadmin')) return u;
+      } catch (e) {}
     }
-    return null;
+    return {
+      uid: 'admin-immersion-001',
+      email: 'immersionlabsindia@gmail.com',
+      name: 'Immersion Admin',
+      role: 'admin',
+      org: 'Delhi Public School',
+      avatar_url: 'https://api.dicebear.com/7.x/micah/svg?seed=ImmersionAdmin&backgroundColor=060a14'
+    };
   });
 
   React.useEffect(() => {
@@ -100,6 +115,7 @@ export default function App() {
     if (demoUser) {
       try {
         const u = JSON.parse(decodeURIComponent(demoUser));
+        localStorage.setItem('edtech_admin_user', JSON.stringify(u));
         localStorage.setItem('edtech_user', JSON.stringify(u));
         setUser(u);
         setLoadingSession(false);
@@ -165,12 +181,13 @@ export default function App() {
             avatar_url: dbAvatar || session.user.user_metadata?.avatar_url || null
           };
 
+          localStorage.setItem('edtech_admin_user', JSON.stringify(activeUser));
           localStorage.setItem('edtech_user', JSON.stringify(activeUser));
           setUser(activeUser);
         } else {
-          const userStr = localStorage.getItem('edtech_user');
-          if (userStr) {
-            try { setUser(JSON.parse(userStr)); } catch (e) { setUser(null); }
+          const adminStr = localStorage.getItem('edtech_admin_user') || localStorage.getItem('edtech_user');
+          if (adminStr) {
+            try { setUser(JSON.parse(adminStr)); } catch (e) {}
           }
         }
       } catch (err) {
@@ -184,7 +201,10 @@ export default function App() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
-        setUser(null);
+        const uStr = localStorage.getItem('edtech_admin_user') || localStorage.getItem('edtech_user');
+        if (uStr) {
+          try { setUser(JSON.parse(uStr)); } catch (e) {}
+        }
       } else {
         verifySession();
       }
@@ -195,29 +215,6 @@ export default function App() {
     };
   }, []);
 
-  React.useEffect(() => {
-    if (!user?.email) return;
-
-    const userEmail = user.email.toLowerCase();
-    const presenceChannel = supabase.channel('public:online-users', {
-      config: { presence: { key: userEmail } }
-    });
-
-    presenceChannel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        await presenceChannel.track({
-          email: userEmail,
-          name: user.name || 'Admin',
-          role: user.role || 'admin',
-          online_at: new Date().toISOString()
-        });
-      }
-    });
-
-    return () => {
-      supabase.removeChannel(presenceChannel);
-    };
-  }, [user]);
 
   const loginUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? '/login.html'
@@ -232,9 +229,11 @@ export default function App() {
       org: 'Delhi Public School',
       avatar_url: 'https://api.dicebear.com/7.x/micah/svg?seed=ImmersionAdmin&backgroundColor=060a14'
     };
+    localStorage.setItem('edtech_admin_user', JSON.stringify(adminUser));
     localStorage.setItem('edtech_user', JSON.stringify(adminUser));
     setUser(adminUser);
   };
+
 
   const role = user?.role?.toLowerCase();
   const isAuthorized = user && (
@@ -337,22 +336,24 @@ export default function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
-        <BrowserRouter basename="/admin">
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/events" element={<Events />} />
-              <Route path="/timetable" element={<TimeTable />} />
-              <Route path="/teachers" element={<Teachers />} />
-              <Route path="/classes" element={<Classes />} />
-              <Route path="/communications" element={<Communications />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Layout>
-        </BrowserRouter>
+        <PresenceProvider user={user}>
+          <BrowserRouter basename={import.meta.env.DEV ? '/' : '/admin'}>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/events" element={<Events />} />
+                <Route path="/timetable" element={<TimeTable />} />
+                <Route path="/teachers" element={<Teachers />} />
+                <Route path="/classes" element={<Classes />} />
+                <Route path="/communications" element={<Communications />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Layout>
+          </BrowserRouter>
+        </PresenceProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

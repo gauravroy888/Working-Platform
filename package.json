@@ -7,10 +7,12 @@
     "build:teacher": "npm run build --prefix \"Teacher Portal\"",
     "build:admin": "npm run build --prefix \"CODE Message test/Admin Portal\"",
     "build:student": "npm run build --prefix \"CODE Message test/Student portal\"",
-    "build:all": "npm run build:teacher && npm run build:admin && npm run build:student"
+    "build:all": "npm run build:teacher && npm run build:admin && npm run build:student && npm run build:study-island",
+    "build:study-island": "npm run build --prefix study-island"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1110.0"
+    "@aws-sdk/client-s3": "^3.1110.0",
+    "ws": "^8.21.3"
   },
   "devDependencies": {
     "dotenv": "^17.4.2"

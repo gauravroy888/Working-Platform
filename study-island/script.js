@@ -3,20 +3,8 @@
 
   var THEME_STORAGE_KEY = 'edtech-island-theme';
   var R2_PUBLIC_CDN_URL = 'https://pub-670b98370fe642a2be08ee37cbfd385f.r2.dev';
-  var SUPABASE_URL = window.SUPABASE_URL || 'https://qmyrxvtbzlbnvzxypnus.supabase.co';
-  var SUPABASE_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFteXJ4dnRiemxibnZ6eHlwbnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjA4OTcsImV4cCI6MjA5NTM5Njg5N30.ABvW_oBzXC2Ffxm5ToLh6t4WmdKPdtg9SyfeAE76iJo';
   var DEFAULT_CHAPTER_ID = 'light-shadows';
   var DETAIL_CHAPTER_ORDER = ['light-shadows', 'space-solar'];
-
-  function escapeHtml(str) {
-    if (typeof str !== 'string') return '';
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
 
   function resolveR2Url(url) {
     if (!url) return '';
@@ -38,49 +26,7 @@
       sceneKey: 'lightShadows',
       experienceUrl: 'Chapter_experience_L_S.html',
       quizReady: true,
-      contentReady: true,
-      experiments_list: [
-        {
-          id: 'exp_1',
-          title: 'Shadow Lab',
-          author: 'by Platform',
-          badge: 'Latest!',
-          likes: '50k',
-          icon: '🌕',
-          gradient: 'linear-gradient(135deg, #00F0FF, #0070F3)',
-          color: '#00F0FF',
-          url: 'Shadow_Lab.html'
-        }
-      ],
-      stories_list: [
-        {
-          id: 'story_1',
-          title: 'Shadows and Light Explained',
-          tag: 'DOCUMENTARY',
-          duration: '5:21',
-          description: 'Dive deep into the magical interplay between light sources and opaque objects. A beautifully animated introduction to the science of optics.',
-          thumbnail_url: 'https://img.youtube.com/vi/fy7eoMef3e8/hqdefault.jpg',
-          url: 'https://www.youtube.com/embed/fy7eoMef3e8?autoplay=1'
-        },
-        {
-          id: 'story_2',
-          title: 'The Science of Shadows',
-          tag: 'EXPLORE',
-          duration: '3:36',
-          description: 'Learn how different light angles and intensities stretch and morph shadows, uncovering the geometry behind visual perception.',
-          thumbnail_url: 'https://img.youtube.com/vi/4vUozykivNA/hqdefault.jpg',
-          url: 'https://www.youtube.com/embed/4vUozykivNA?autoplay=1'
-        },
-        {
-          id: 'story_3',
-          title: 'Light & Optics in Real Life',
-          tag: 'LESSON',
-          duration: '3:58',
-          description: 'Discover optical phenomena in nature, camera lenses, and everyday technology.',
-          thumbnail_url: 'https://img.youtube.com/vi/cDaWohR_DVo/hqdefault.jpg',
-          url: 'https://www.youtube.com/embed/cDaWohR_DVo?autoplay=1'
-        }
-      ]
+      contentReady: true
     },
     'space-solar': {
       id: 'space-solar',
@@ -88,53 +34,9 @@
       description: 'The solar system model provides an interactive journey through our cosmic neighbourhood. Explore planetary orbits, understand gravitational forces, and discover the unique characteristics of each planet from the scorching Mercury to the icy realms of Neptune.',
       iconClass: 'ph ph-planet',
       sceneKey: 'solarSystem',
-      experienceUrl: 'Chapter_experience_L_S.html',
-      quizReady: true,
-      contentReady: true,
-      experiments_list: [
-        {
-          id: 'exp_solar_1',
-          title: 'Celestial Orbit & Eclipse 3D',
-          author: 'by Platform Studio',
-          badge: 'Featured 3D',
-          likes: '42k',
-          icon: '🪐',
-          gradient: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
-          color: '#8B5CF6',
-          url: 'Chapter_experience_L_S.html'
-        },
-        {
-          id: 'exp_solar_2',
-          title: 'Optics & Shadow Geometry Lab',
-          author: 'by Platform',
-          badge: 'Interactive',
-          likes: '38k',
-          icon: '🌔',
-          gradient: 'linear-gradient(135deg, #00F0FF, #3B82F6)',
-          color: '#00F0FF',
-          url: 'Shadow_Lab.html'
-        }
-      ],
-      stories_list: [
-        {
-          id: 'story_solar_1',
-          title: 'Understanding Solar System Orbits',
-          tag: 'ASTRONOMY',
-          duration: '6:15',
-          description: 'A visual Journey through our solar system, planetary motion, and gravitational balance.',
-          thumbnail_url: 'https://img.youtube.com/vi/libKVRa0740/hqdefault.jpg',
-          url: 'https://www.youtube.com/embed/libKVRa0740?autoplay=1'
-        },
-        {
-          id: 'story_solar_2',
-          title: 'Planets of the Solar System',
-          tag: 'EXPLORE',
-          duration: '4:40',
-          description: 'Explore the size scale, rotation speeds, and atmospheric features of all 8 planets.',
-          thumbnail_url: 'https://img.youtube.com/vi/ks2S02q7vS0/hqdefault.jpg',
-          url: 'https://www.youtube.com/embed/ks2S02q7vS0?autoplay=1'
-        }
-      ]
+      experienceUrl: '',
+      quizReady: false,
+      contentReady: false
     }
   };
 
@@ -214,37 +116,61 @@
       fullscreenButton.textContent = label;
     }
     fullscreenButton.setAttribute('aria-label', inFullscreen ? 'Exit fullscreen' : 'Enter fullscreen');
+  }
+
   function ensureToast() {
     var toast = byId('app-toast');
-    if (toast) return toast;
+
+    if (toast) {
+      return toast;
+    }
 
     toast = document.createElement('div');
     toast.id = 'app-toast';
     toast.setAttribute('role', 'status');
     toast.setAttribute('aria-live', 'polite');
+    toast.style.position = 'fixed';
+    toast.style.left = '50%';
+    toast.style.bottom = '96px';
+    toast.style.transform = 'translateX(-50%) translateY(12px)';
+    toast.style.padding = '12px 18px';
+    toast.style.borderRadius = '999px';
+    toast.style.border = '1px solid rgba(255, 255, 255, 0.18)';
+    toast.style.background = 'rgba(8, 15, 28, 0.92)';
+    toast.style.backdropFilter = 'blur(14px)';
+    toast.style.webkitBackdropFilter = 'blur(14px)';
+    toast.style.color = '#f8fafc';
+    toast.style.fontSize = '0.95rem';
+    toast.style.fontWeight = '600';
+    toast.style.letterSpacing = '0.02em';
+    toast.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.35)';
+    toast.style.opacity = '0';
+    toast.style.pointerEvents = 'none';
+    toast.style.transition = 'opacity 180ms ease, transform 180ms ease';
+    toast.style.zIndex = '1200';
     document.body.appendChild(toast);
+
     return toast;
   }
 
   function showToast(message) {
     var toast = ensureToast();
+
     toast.textContent = message;
-    toast.classList.add('toast-visible');
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(-50%) translateY(0)';
 
     window.clearTimeout(toastHideTimer);
     toastHideTimer = window.setTimeout(function () {
-      toast.classList.remove('toast-visible');
-    }, 2400);
-  }
-
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(-50%) translateY(12px)';
+    }, 2600);
   }
 
   function updateBottomNav(screenId) {
     var activeLabel = 'HOME';
     if (screenId === 'screen-subjects' || screenId === 'screen-chapters' || screenId === 'screen-chapter-detail') {
       activeLabel = 'STUDIES';
-    } else if (screenId === 'screen-world') {
-      activeLabel = 'WORLD';
     } else if (screenId === 'screen-profile') {
       activeLabel = 'PROFILE';
     }
@@ -254,107 +180,6 @@
       var isActive = !!label && label.textContent.trim() === activeLabel;
       button.classList.toggle('active', isActive);
     });
-  }
-
-  function loadWorldCourses() {
-    var gridEl = byId('world-courses-grid');
-    if (!gridEl) return;
-
-    // Fix U5: Animated CSS Glass Shimmer Skeleton Loader
-    gridEl.innerHTML = [1, 2, 3].map(function() {
-      return '<div class="glass-panel-card" style="background: rgba(13, 20, 36, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 16px; min-height: 220px; animation: pulse 1.5s infinite ease-in-out;">' +
-        '<div style="display: flex; justify-content: space-between; align-items: center;">' +
-          '<div style="width: 50px; height: 50px; border-radius: 14px; background: rgba(255,255,255,0.1);"></div>' +
-          '<div style="width: 70px; height: 24px; border-radius: 10px; background: rgba(255,255,255,0.08);"></div>' +
-        '</div>' +
-        '<div style="width: 75%; height: 22px; border-radius: 6px; background: rgba(255,255,255,0.12);"></div>' +
-        '<div style="width: 90%; height: 14px; border-radius: 4px; background: rgba(255,255,255,0.06);"></div>' +
-        '<div style="width: 100%; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.08); margin-top: auto;"></div>' +
-      '</div>';
-    }).join('');
-
-    var fallbackCourses = [
-      {
-        id: 'fallback_1',
-        title: 'Optics & Shadow Physics 3D',
-        tagline: 'Interactive 3D simulation of light propagation, shadows, umbra and penumbra.',
-        emoji: '💡',
-        category: 'PHYSICS',
-        color: '#00F0FF',
-        cover_gradient: 'linear-gradient(135deg, rgba(0,240,255,0.2), rgba(59,130,246,0.2))',
-        modalities: [{ slug: 'experience', url: 'Shadow_Lab.html' }]
-      },
-      {
-        id: 'fallback_2',
-        title: 'Solar System & Celestial Motion',
-        tagline: 'Explore planet orbits, gravitational forces, and eclipses in real-time 3D.',
-        emoji: '🪐',
-        category: 'ASTRONOMY',
-        color: '#8B5CF6',
-        cover_gradient: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(236,72,153,0.2))',
-        modalities: [{ slug: 'experience', url: 'Chapter_experience_L_S.html' }]
-      },
-      {
-        id: 'fallback_3',
-        title: 'Interactive Optics Quiz Challenge',
-        tagline: 'Test your understanding of light reflection, refraction, and optical Ray Tracing.',
-        emoji: '🎯',
-        category: 'ASSESSMENT',
-        color: '#10B981',
-        cover_gradient: 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(59,130,246,0.2))',
-        modalities: [{ slug: 'experience', url: 'quiz.html' }]
-      }
-    ];
-
-    fetch(SUPABASE_URL + '/rest/v1/custom_courses?is_published=eq.true&order=display_order', {
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY
-      }
-    })
-    .then(function(res) { return res.json(); })
-    .then(function(courses) {
-      var courseList = (Array.isArray(courses) && courses.length > 0) ? courses : fallbackCourses;
-      renderCourses(courseList);
-    })
-    .catch(function(err) {
-      console.warn('[World Courses Fetch]', err);
-      renderCourses(fallbackCourses);
-    });
-
-    function renderCourses(courses) {
-      var html = '';
-      courses.forEach(function(course) {
-        var expMod = (course.modalities || []).find(function(m) { return m.slug === 'experience'; });
-        var expUrl = expMod ? (expMod.url || '') : '';
-        var color = course.color || '#00E5FF';
-
-        html += '<div class="glass-panel-card" style="background: rgba(13, 20, 36, 0.8); border: 1px solid ' + color + '40; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s ease; position: relative; overflow: hidden;">';
-        html += '<div style="position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; border-radius: 50%; background: ' + color + '; filter: blur(40px); opacity: 0.25; pointer-events: none;"></div>';
-        
-        html += '<div>';
-        html += '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">';
-        html += '<span style="font-size: 2.5rem; background: ' + (course.cover_gradient || 'rgba(255,255,255,0.05)') + '; width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; border: 1px solid ' + color + '40;">' + (course.emoji || '🌍') + '</span>';
-        html += '<span style="font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; background: ' + color + '20; color: ' + color + '; border: 1px solid ' + color + '50;">' + escapeHtml(course.category || 'Special') + '</span>';
-        html += '</div>';
-
-        html += '<h3 style="font-size: 1.3rem; font-weight: 800; color: white; margin: 0 0 8px 0;">' + escapeHtml(course.title || 'Course') + '</h3>';
-        html += '<p style="font-size: 0.88rem; color: #94a3b8; line-height: 1.5; margin: 0 0 20px 0;">' + escapeHtml(course.tagline || '') + '</p>';
-        html += '</div>';
-
-        html += '<div style="display: flex; gap: 10px; align-items: center; margin-top: auto; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);">';
-        if (expUrl) {
-          html += '<button onclick="openAppOverlay(\'' + expUrl + '\', \'fullscreen\')" style="flex: 1; padding: 12px; border-radius: 14px; background: linear-gradient(135deg, ' + color + ', #3B82F6); color: #000; font-weight: 800; font-size: 0.95rem; border: none; cursor: pointer; box-shadow: 0 0 20px ' + color + '40; display: flex; align-items: center; justify-content: center; gap: 8px;">▶ Launch Experience</button>';
-        } else {
-          html += '<button disabled style="flex: 1; padding: 12px; border-radius: 14px; background: rgba(255,255,255,0.05); color: #64748b; font-weight: 700; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.1); cursor: not-allowed;">⌛ Content Coming Soon</button>';
-        }
-        html += '</div>';
-
-        html += '</div>';
-      });
-
-      gridEl.innerHTML = html;
-    }
   }
 
   function activateTab(tabName) {
@@ -375,12 +200,6 @@
           scheduleChapterSceneBoot();
         }
       }, 10);
-    } else if (tabName === 'experiments') {
-      window.setTimeout(function () {
-        if (typeof updateCarouselArrows === 'function') {
-          updateCarouselArrows();
-        }
-      }, 30);
     }
   }
 
@@ -523,22 +342,6 @@
   function initLightAndShadows3D() {
     var container = byId('canvas-container');
     var loadingEl = byId('canvas-loading');
-    var scene;
-    var width;
-    var height;
-    var camera;
-    var renderer;
-    var lightPosition;
-    var pointLight;
-    var corona;
-    var objectGroup;
-    var objectGeometry;
-    var positionsAttr;
-    var uniquePoints = [];
-    var lines = [];
-    var onResize;
-    var removeDragRotate;
-    var time = 0;
 
     if (typeof THREE === 'undefined' || !container) {
       showToast('The 3D engine is not available right now.');
@@ -547,42 +350,27 @@
 
     destroyChapterScene();
 
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x070d18);
-    scene.fog = new THREE.FogExp2(0x070d18, 0.025);
-    scene.rotation.y = 1.8;
-    scene.rotation.x = 0.1;
+    var width = Math.max(container.clientWidth, 1);
+    var height = Math.max(container.clientHeight, 1);
 
-    width = Math.max(container.clientWidth, 1);
-    height = Math.max(container.clientHeight, 1);
-    camera = new THREE.PerspectiveCamera(52, width / height, 0.1, 200);
-    camera.position.set(0, 2.5, 13);
-    camera.lookAt(1, 0, 0);
+    var scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x040812);
+    scene.fog = new THREE.FogExp2(0x040812, 0.022);
 
-    renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    var worldGroup = new THREE.Group();
+    scene.add(worldGroup);
+
+    var camera = new THREE.PerspectiveCamera(46, width / height, 0.1, 100);
+    camera.position.set(4.2, 2.2, 10.5);
+    camera.lookAt(-0.8, 0.4, -0.2);
+
+    var renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(window.IFP_PIXEL_RATIO || Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.setPixelRatio(window.IFP_PIXEL_RATIO || Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.4;
-
-    // WebGL Hardware crash protection & automatic context recovery
-    renderer.domElement.addEventListener('webglcontextlost', function (event) {
-      event.preventDefault();
-      console.warn('WebGL context lost on display hardware! Pausing loop.');
-      if (sceneAnimationId) {
-        window.cancelAnimationFrame(sceneAnimationId);
-        sceneAnimationId = 0;
-      }
-    }, false);
-
-    renderer.domElement.addEventListener('webglcontextrestored', function () {
-      console.info('WebGL context restored! Auto-rebooting 3D scene.');
-      destroyChapterScene();
-      scheduleChapterSceneBoot();
-    }, false);
-
+    renderer.toneMappingExposure = 1.35;
     container.appendChild(renderer.domElement);
     sceneRenderer = renderer;
     sceneRoot = scene;
@@ -591,216 +379,238 @@
       loadingEl.style.display = 'none';
     }
 
-    scene.add(new THREE.AmbientLight(0x0d1b33, 0.4));
+    var groundY = -2.2;
+    var screenX = -5.5;
+    var lightPos = new THREE.Vector3(4.5, -1.0, 2.8);
+    var objPos = new THREE.Vector3(-1.2, 0.65, 0.0);
 
-    lightPosition = new THREE.Vector3(-4.8, -1.2, 3.0);
-    pointLight = new THREE.PointLight(0xffffff, 5.0, 40);
-    pointLight.position.copy(lightPosition);
-    pointLight.castShadow = true;
-    pointLight.shadow.mapSize.set(2048, 2048);
-    pointLight.shadow.bias = -0.001;
-    pointLight.shadow.camera.near = 0.5;
-    pointLight.shadow.camera.far = 25;
-    scene.add(pointLight);
+    worldGroup.add(new THREE.AmbientLight(0x0a1628, 0.65));
+    var fillLight = new THREE.DirectionalLight(0x1a3a60, 0.3);
+    fillLight.position.set(0, 8, 8);
+    worldGroup.add(fillLight);
 
-    (function addLightVisuals() {
-      var rimLight = new THREE.DirectionalLight(0x40d0e0, 0.1);
-      var bulb = new THREE.Mesh(
-        new THREE.SphereGeometry(0.22, 16, 16),
-        new THREE.MeshBasicMaterial({ color: 0xffffff })
-      );
-      var coronaMaterial = new THREE.SpriteMaterial({
-        map: makeGlowTexture(),
-        blending: THREE.AdditiveBlending,
-        transparent: true,
-        opacity: 0.92
-      });
-      var stand = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.04, 0.12, 1.2, 8),
-        new THREE.MeshStandardMaterial({ color: 0x334455, roughness: 0.8, metalness: 0.5 })
-      );
-      var pool = new THREE.Mesh(
-        new THREE.PlaneGeometry(8, 8),
-        new THREE.MeshBasicMaterial({
-          map: makeGlowTexture('rgba(160, 220, 255, 0.40)', 'rgba(0,0,0,0)'),
-          blending: THREE.AdditiveBlending,
-          transparent: true,
-          depthWrite: false
-        })
-      );
+    // Floor wireframe & solid receiver
+    var floorGeo = new THREE.PlaneGeometry(36, 36, 24, 24);
+    var floorWireMat = new THREE.MeshBasicMaterial({ color: 0x0088aa, wireframe: true, transparent: true, opacity: 0.18 });
+    var floorWire = new THREE.Mesh(floorGeo, floorWireMat);
+    floorWire.rotation.x = -Math.PI / 2;
+    floorWire.position.y = groundY;
+    worldGroup.add(floorWire);
 
-      rimLight.position.set(8, 4, -4);
-      scene.add(rimLight);
+    var floorSolid = new THREE.Mesh(
+      floorGeo,
+      new THREE.MeshStandardMaterial({ color: 0x050914, roughness: 0.95, metalness: 0.05 })
+    );
+    floorSolid.rotation.x = -Math.PI / 2;
+    floorSolid.position.y = groundY - 0.01;
+    floorSolid.receiveShadow = true;
+    worldGroup.add(floorSolid);
 
-      bulb.position.copy(lightPosition);
-      scene.add(bulb);
+    var gridSize = 36;
+    var step = 1.5;
+    var diagMat = new THREE.LineBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.12 });
+    for (var i = -gridSize / 2; i <= gridSize / 2; i += step) {
+      var pts1 = [new THREE.Vector3(i, groundY, -gridSize / 2), new THREE.Vector3(i + gridSize, groundY, gridSize / 2)];
+      var pts2 = [new THREE.Vector3(i, groundY, gridSize / 2), new THREE.Vector3(i + gridSize, groundY, -gridSize / 2)];
+      worldGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts1), diagMat));
+      worldGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts2), diagMat));
+    }
 
-      corona = new THREE.Sprite(coronaMaterial);
-      corona.position.copy(lightPosition);
-      corona.scale.set(2.2, 2.2, 1);
-      scene.add(corona);
+    // Vertical screen wall
+    var screenGeo = new THREE.PlaneGeometry(16, 12, 16, 12);
+    var screenWireMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true, transparent: true, opacity: 0.28 });
+    var screenWire = new THREE.Mesh(screenGeo, screenWireMat);
+    screenWire.position.set(screenX, 1.8, 0);
+    screenWire.rotation.y = Math.PI / 2;
+    worldGroup.add(screenWire);
 
-      stand.position.set(lightPosition.x, lightPosition.y - 0.85, lightPosition.z);
-      scene.add(stand);
+    var screenSolid = new THREE.Mesh(
+      screenGeo,
+      new THREE.MeshStandardMaterial({ color: 0x081324, roughness: 0.85, metalness: 0.1, side: THREE.DoubleSide })
+    );
+    screenSolid.position.set(screenX - 0.01, 1.8, 0);
+    screenSolid.rotation.y = Math.PI / 2;
+    screenSolid.receiveShadow = true;
+    worldGroup.add(screenSolid);
 
-      pool.rotation.x = -Math.PI / 2;
-      pool.position.set(lightPosition.x, -2.39, lightPosition.z);
-      scene.add(pool);
-    })();
+    // Lamp group
+    var lampGroup = new THREE.Group();
+    lampGroup.position.copy(lightPos);
 
-    objectGroup = new THREE.Group();
-    objectGroup.position.set(0.6, 0.2, 0);
-    objectGeometry = new THREE.IcosahedronGeometry(1.4, 0);
-    objectGroup.add(new THREE.Mesh(
-      objectGeometry,
-      new THREE.MeshStandardMaterial({
-        color: 0xbbeeff,
-        roughness: 0.8,
-        metalness: 0.1,
-        flatShading: true
-      })
-    ));
-    objectGroup.children[0].castShadow = true;
-    scene.add(objectGroup);
+    var lampStandMat = new THREE.MeshStandardMaterial({ color: 0x111622, roughness: 0.3, metalness: 0.8 });
+    var lampPole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.16, 1.4, 32), lampStandMat);
+    lampPole.position.y = -0.7;
+    lampGroup.add(lampPole);
 
-    (function addWireframeStand() {
-      var pyramid = new THREE.Mesh(
-        new THREE.ConeGeometry(0.9, 3.2, 4),
-        new THREE.MeshBasicMaterial({ color: 0x99ccdd, wireframe: true, transparent: true, opacity: 0.35 })
-      );
-      pyramid.position.set(0.6, -1.5, 0);
-      pyramid.rotation.y = Math.PI / 4;
-      scene.add(pyramid);
-    })();
+    var lampFoot = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.38, 0.08, 32), lampStandMat);
+    lampFoot.position.y = -1.36;
+    lampGroup.add(lampFoot);
 
-    (function addProjectionScreen() {
-      var screenPosition = new THREE.Vector3(-7.27, 1.0, 4.37);
-      var screenGeometry = new THREE.CylinderGeometry(15.0, 15.0, 14.0, 64, 16, true, -0.7, 1.4);
-      var screenMesh = new THREE.Mesh(
-        screenGeometry,
-        new THREE.MeshStandardMaterial({
-          color: 0xaaddf0,
-          roughness: 1,
-          metalness: 0,
-          side: THREE.DoubleSide
-        })
-      );
-      var gridMesh = new THREE.Mesh(
-        screenGeometry.clone(),
-        new THREE.MeshBasicMaterial({
-          color: 0x336677,
-          wireframe: true,
-          transparent: true,
-          opacity: 0.4,
-          side: THREE.DoubleSide,
-          polygonOffset: true,
-          polygonOffsetFactor: -1
-        })
-      );
+    var bulb = new THREE.Mesh(new THREE.SphereGeometry(0.24, 32, 32), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    lampGroup.add(bulb);
 
-      screenMesh.rotation.y = 2.07;
-      screenMesh.position.copy(screenPosition);
-      screenMesh.receiveShadow = true;
-      scene.add(screenMesh);
+    var glowTex = makeGlowTexture('rgba(255,255,255,1)', 'rgba(0,100,200,0)');
+    var corona = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: glowTex,
+      color: 0xe0f7ff,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    }));
+    corona.scale.set(3.0, 3.0, 3.0);
+    lampGroup.add(corona);
 
-      gridMesh.rotation.y = 2.07;
-      gridMesh.position.copy(screenPosition);
-      scene.add(gridMesh);
-    })();
+    var groundPool = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 4.5), new THREE.MeshBasicMaterial({
+      map: glowTex,
+      color: 0x00f0ff,
+      transparent: true,
+      opacity: 0.45,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    }));
+    groundPool.rotation.x = -Math.PI / 2;
+    groundPool.position.y = -1.38;
+    lampGroup.add(groundPool);
 
-    (function addFloorGrid() {
-      var floor = new THREE.Mesh(
-        new THREE.PlaneGeometry(22, 16, 22, 16),
-        new THREE.MeshBasicMaterial({
-          color: 0x40e0d0,
-          wireframe: true,
-          transparent: true,
-          opacity: 0.055
-        })
-      );
+    var spotLight = new THREE.SpotLight(0xe8f6ff, 7.5, 30, Math.PI / 4, 0.35, 0.9);
+    spotLight.position.copy(lightPos);
+    spotLight.target.position.set(screenX, objPos.y + 0.3, objPos.z);
+    spotLight.castShadow = true;
+    spotLight.shadow.mapSize.width = 2048;
+    spotLight.shadow.mapSize.height = 2048;
+    spotLight.shadow.bias = -0.0005;
+    spotLight.shadow.camera.near = 0.5;
+    spotLight.shadow.camera.far = 25;
+    worldGroup.add(spotLight);
+    worldGroup.add(spotLight.target);
 
-      floor.rotation.x = -Math.PI / 2;
-      floor.position.y = -2.4;
-      scene.add(floor);
-    })();
+    var pointLight = new THREE.PointLight(0xffffff, 3.5, 20);
+    pointLight.position.copy(lightPos);
+    worldGroup.add(pointLight);
+    worldGroup.add(lampGroup);
 
-    (function addRays() {
-      var linesGroup = new THREE.Group();
-      var rayMaterial = new THREE.LineBasicMaterial({
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.45
-      });
+    // Obstacle & Pedestal
+    var obstacleGroup = new THREE.Group();
+    obstacleGroup.position.copy(objPos);
 
-      scene.add(linesGroup);
-      positionsAttr = objectGeometry.attributes.position;
+    var towerMat = new THREE.LineBasicMaterial({ color: 0x88d4f8, transparent: true, opacity: 0.85 });
+    var baseW = 0.95;
+    var topW = 0.28;
+    var yBottom = groundY - objPos.y;
+    var yTop = -0.65;
+    var towerLines = [];
 
-      for (var i = 0; i < positionsAttr.count; i += 1) {
-        var vertex = new THREE.Vector3().fromBufferAttribute(positionsAttr, i);
-        if (!uniquePoints.some(function (point) { return point.distanceTo(vertex) < 0.1; })) {
-          uniquePoints.push(vertex);
-        }
+    var b0 = new THREE.Vector3(-baseW / 2, yBottom, -baseW / 2);
+    var b1 = new THREE.Vector3(baseW / 2, yBottom, -baseW / 2);
+    var b2 = new THREE.Vector3(baseW / 2, yBottom, baseW / 2);
+    var b3 = new THREE.Vector3(-baseW / 2, yBottom, baseW / 2);
+    var t0 = new THREE.Vector3(-topW / 2, yTop, -topW / 2);
+    var t1 = new THREE.Vector3(topW / 2, yTop, -topW / 2);
+    var t2 = new THREE.Vector3(topW / 2, yTop, topW / 2);
+    var t3 = new THREE.Vector3(-topW / 2, yTop, topW / 2);
+
+    towerLines.push(b0, t0, b1, t1, b2, t2, b3, t3);
+    towerLines.push(b0, b1, b1, b2, b2, b3, b3, b0);
+    towerLines.push(t0, t1, t1, t2, t2, t3, t3, t0);
+    towerLines.push(b0, b2, b1, b3);
+
+    for (var tier = 1; tier < 3; tier++) {
+      var f = tier / 3;
+      var yMid = yBottom + (yTop - yBottom) * f;
+      var wMid = baseW + (topW - baseW) * f;
+      var m0 = new THREE.Vector3(-wMid / 2, yMid, -wMid / 2);
+      var m1 = new THREE.Vector3(wMid / 2, yMid, -wMid / 2);
+      var m2 = new THREE.Vector3(wMid / 2, yMid, wMid / 2);
+      var m3 = new THREE.Vector3(-wMid / 2, yMid, wMid / 2);
+      towerLines.push(m0, m1, m1, m2, m2, m3, m3, m0);
+
+      var prevF = (tier - 1) / 3;
+      var prevY = yBottom + (yTop - yBottom) * prevF;
+      var prevW = baseW + (topW - baseW) * prevF;
+      var p0 = new THREE.Vector3(-prevW / 2, prevY, -prevW / 2);
+      var p1 = new THREE.Vector3(prevW / 2, prevY, -prevW / 2);
+      var p2 = new THREE.Vector3(prevW / 2, prevY, prevW / 2);
+      var p3 = new THREE.Vector3(-prevW / 2, prevY, prevW / 2);
+      towerLines.push(p0, m1, p1, m0, p1, m2, p2, m1, p2, m3, p3, m2, p3, m0, p0, m3);
+    }
+    obstacleGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(towerLines), towerMat));
+
+    var polyGeo = new THREE.DodecahedronGeometry(1.25, 0);
+    var polyMesh = new THREE.Mesh(polyGeo, new THREE.MeshStandardMaterial({
+      color: 0x5a708a,
+      roughness: 0.4,
+      metalness: 0.15,
+      flatShading: true
+    }));
+    polyMesh.castShadow = true;
+    polyMesh.receiveShadow = true;
+    obstacleGroup.add(polyMesh);
+    worldGroup.add(obstacleGroup);
+
+    // Clean straight rays
+    var rayMat = new THREE.LineBasicMaterial({ color: 0xdff4ff, transparent: true, opacity: 0.42, blending: THREE.AdditiveBlending });
+    var rayLinesMesh = new THREE.LineSegments(new THREE.BufferGeometry(), rayMat);
+    worldGroup.add(rayLinesMesh);
+
+    var removeDragRotate = addDragRotate(container, worldGroup, 0.005, 0.003);
+
+    var posAttr = polyGeo.attributes.position;
+    var localVertices = [];
+    for (var k = 0; k < posAttr.count; k++) {
+      var v = new THREE.Vector3().fromBufferAttribute(posAttr, k);
+      var duplicate = false;
+      for (var u = 0; u < localVertices.length; u++) {
+        if (localVertices[u].distanceToSquared(v) < 0.001) { duplicate = true; break; }
       }
+      if (!duplicate) localVertices.push(v);
+    }
 
-      uniquePoints.forEach(function () {
-        var line = new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
-          rayMaterial
-        );
-        linesGroup.add(line);
-        lines.push(line);
-      });
-    })();
-
-    removeDragRotate = addDragRotate(container, scene, 0.005, 0.003);
-
-    onResize = function () {
-      if (!container || !sceneRenderer) {
-        return;
-      }
+    var onResize = function () {
+      if (!container || !sceneRenderer) return;
       camera.aspect = Math.max(container.clientWidth, 1) / Math.max(container.clientHeight, 1);
       camera.updateProjectionMatrix();
       sceneRenderer.setSize(Math.max(container.clientWidth, 1), Math.max(container.clientHeight, 1));
     };
-
     window.addEventListener('resize', onResize);
+
     sceneCleanup = function () {
       window.removeEventListener('resize', onResize);
       removeDragRotate();
     };
 
+    var time = 0;
     function animate() {
       sceneAnimationId = window.requestAnimationFrame(animate);
+      if (window.IFP_VISIBLE === false || currentScreenId !== 'screen-chapter-detail') return;
 
-      if (window.IFP_VISIBLE === false || currentScreenId !== 'screen-chapter-detail') {
-        return;
+      time += 0.016;
+      polyMesh.rotation.y = time * 0.2;
+      polyMesh.rotation.x = Math.sin(time * 0.15) * 0.12;
+
+      var pulse = Math.sin(time * 3) * 0.12;
+      corona.scale.set(3.0 + pulse, 3.0 + pulse, 3.0 + pulse);
+
+      var rayPoints = [];
+      for (var idx = 0; idx < localVertices.length; idx++) {
+        var worldV = localVertices[idx].clone().applyMatrix4(polyMesh.matrix).add(objPos);
+        var dir = new THREE.Vector3().subVectors(worldV, lightPos);
+        if (dir.x < -0.01) {
+          var timeFactor = (screenX - lightPos.x) / dir.x;
+          if (timeFactor > 0) {
+            var hitScreen = new THREE.Vector3().copy(lightPos).addScaledVector(dir, timeFactor);
+            rayPoints.push(lightPos.clone(), hitScreen);
+          }
+        }
       }
 
-      time += 0.012;
-      objectGroup.rotation.y += 0.002;
-      objectGroup.rotation.x += 0.001;
-      objectGroup.updateMatrixWorld();
-
-      uniquePoints.forEach(function (localPosition, index) {
-        var worldPosition = localPosition.clone().applyMatrix4(objectGroup.matrixWorld);
-        var direction = worldPosition.clone().sub(lightPosition).normalize();
-        var endPosition = lightPosition.clone().add(direction.multiplyScalar(24));
-        var buffer = new Float32Array([
-          lightPosition.x, lightPosition.y, lightPosition.z,
-          endPosition.x, endPosition.y, endPosition.z
-        ]);
-        lines[index].geometry.setAttribute('position', new THREE.BufferAttribute(buffer, 3));
-      });
-
-      if (corona) {
-        var pulse = 1 + Math.sin(time * 1.8) * 0.14;
-        corona.scale.set(2.2 * pulse, 2.2 * pulse, 1);
+      if (rayPoints.length > 0) {
+        rayLinesMesh.geometry.dispose();
+        rayLinesMesh.geometry = new THREE.BufferGeometry().setFromPoints(rayPoints);
       }
 
-      pointLight.intensity = 5.0 + Math.sin(time * 3.5) * 0.5 + (Math.random() - 0.5) * 0.2;
       renderer.render(scene, camera);
     }
-
     animate();
   }
 
@@ -833,27 +643,10 @@
     camera.position.set(0, 30, 45);
     camera.lookAt(0, 0, 0);
 
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(Math.max(container.clientWidth, 1), Math.max(container.clientHeight, 1));
-    renderer.setPixelRatio(window.IFP_PIXEL_RATIO || Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.setPixelRatio(window.IFP_PIXEL_RATIO || Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x050814);
-
-    // WebGL Hardware crash protection & automatic context recovery
-    renderer.domElement.addEventListener('webglcontextlost', function (event) {
-      event.preventDefault();
-      console.warn('Solar System WebGL context lost! Pausing loop.');
-      if (sceneAnimationId) {
-        window.cancelAnimationFrame(sceneAnimationId);
-        sceneAnimationId = 0;
-      }
-    }, false);
-
-    renderer.domElement.addEventListener('webglcontextrestored', function () {
-      console.info('Solar System WebGL context restored! Auto-rebooting scene.');
-      destroyChapterScene();
-      scheduleChapterSceneBoot();
-    }, false);
-
     container.appendChild(renderer.domElement);
     sceneRenderer = renderer;
     sceneRoot = scene;
@@ -1087,8 +880,6 @@
       canvasLoading.style.display = 'flex';
     }
 
-    renderDynamicChapterModalities(chapter);
-
     destroyChapterScene();
     activateTab('experience');
   }
@@ -1149,10 +940,6 @@
 
     if (screenId === 'screen-chapter-detail') {
       scheduleChapterSceneBoot();
-    } else if (screenId === 'screen-world') {
-      loadWorldCourses();
-    } else if (screenId === 'screen-profile') {
-      syncStudentProfile();
     }
   }
 
@@ -1238,248 +1025,24 @@
     }, 160);
   }
 
-  function updateCarouselArrows() {
-    var carousel = byId('experiments-carousel');
-    var leftBtn = document.querySelector('.carousel-nav.left');
-    var rightBtn = document.querySelector('.carousel-nav.right');
-
-    if (!carousel) return;
-
-    // Check if cards actually overflow the viewport width of the carousel container
-    var hasOverflow = carousel.scrollWidth > (carousel.clientWidth + 8);
-
-    if (!hasOverflow) {
-      carousel.style.justifyContent = 'center';
-      if (leftBtn) leftBtn.classList.add('is-hidden');
-      if (rightBtn) rightBtn.classList.add('is-hidden');
-    } else {
-      carousel.style.justifyContent = 'flex-start';
-      var atStart = carousel.scrollLeft <= 10;
-      var atEnd = (carousel.scrollLeft + carousel.clientWidth) >= (carousel.scrollWidth - 10);
-
-      if (leftBtn) {
-        if (atStart) leftBtn.classList.add('is-hidden');
-        else leftBtn.classList.remove('is-hidden');
-      }
-      if (rightBtn) {
-        if (atEnd) rightBtn.classList.add('is-hidden');
-        else rightBtn.classList.remove('is-hidden');
-      }
-    }
-  }
-
-  function initCarouselDrag() {
-    var carousel = byId('experiments-carousel');
-    if (!carousel || carousel._dragInitialized) return;
-    carousel._dragInitialized = true;
-
-    var isDown = false;
-    var startX = 0;
-    var scrollLeftPos = 0;
-    var moved = false;
-
-    carousel.addEventListener('mousedown', function(e) {
-      if (carousel.scrollWidth <= carousel.clientWidth) return;
-      isDown = true;
-      startX = e.pageX - carousel.offsetLeft;
-      scrollLeftPos = carousel.scrollLeft;
-      moved = false;
-      carousel.style.scrollBehavior = 'auto';
-    });
-
-    carousel.addEventListener('mouseleave', function() {
-      if (isDown) {
-        isDown = false;
-        carousel.style.scrollBehavior = 'smooth';
-        updateCarouselArrows();
-      }
-    });
-
-    carousel.addEventListener('mouseup', function() {
-      if (isDown) {
-        isDown = false;
-        carousel.style.scrollBehavior = 'smooth';
-        updateCarouselArrows();
-      }
-    });
-
-    carousel.addEventListener('mousemove', function(e) {
-      if (!isDown) return;
-      e.preventDefault();
-      var x = e.pageX - carousel.offsetLeft;
-      var walk = (x - startX) * 1.4;
-      if (Math.abs(walk) > 6) moved = true;
-      carousel.scrollLeft = scrollLeftPos - walk;
-    });
-
-    // Horizontal mouse wheel support
-    carousel.addEventListener('wheel', function(e) {
-      if (carousel.scrollWidth > carousel.clientWidth) {
-        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-          e.preventDefault();
-          carousel.scrollBy({ left: e.deltaY * 0.9, behavior: 'auto' });
-          updateCarouselArrows();
-        }
-      }
-    }, { passive: false });
-
-    carousel.addEventListener('scroll', updateCarouselArrows);
-  }
-
-  function resolveStoryThumbnail(story) {
-    if (story && story.thumbnail_url && !story.thumbnail_url.includes('placeholders/')) {
-      return story.thumbnail_url;
-    }
-    var url = (story && story.url) || '';
-    var videoId = '';
-    if (url.includes('embed/')) {
-      var parts = url.split('embed/')[1];
-      videoId = parts ? parts.split('?')[0] : '';
-    } else if (url.includes('v=')) {
-      var parts2 = url.split('v=')[1];
-      videoId = parts2 ? parts2.split('&')[0] : '';
-    } else if (url.includes('youtu.be/')) {
-      var parts3 = url.split('youtu.be/')[1];
-      videoId = parts3 ? parts3.split('?')[0] : '';
-    }
-    if (videoId) {
-      return 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg';
-    }
-    return 'assets/chapter%20background%20lowres.jpg';
-  }
-
-  function renderDynamicChapterModalities(chapter) {
-    if (!chapter) return;
-
-    // 1. Render Experiments Carousel (#experiments-carousel)
-    var expCarousel = byId('experiments-carousel');
-    if (expCarousel && Array.isArray(chapter.experiments_list)) {
-      if (chapter.experiments_list.length === 0) {
-        expCarousel.innerHTML = '<div style="color:rgba(255,255,255,0.6); font-size:0.95rem; text-align:center; padding:40px;">No experiments connected yet.</div>';
-      } else {
-        var expHtml = chapter.experiments_list.map(function(exp, idx) {
-          var color = exp.color || '#00d2ff';
-          var icon = exp.icon || '🧪';
-          var isFeatured = idx === 0 ? ' featured' : '';
-          var safeUrl = (exp.url || '').replace(/'/g, "\\'");
-          var tagLabel = exp.badge || '3D LAB';
-          var likes = exp.likes || '50k';
-          var title = exp.title || 'Experiment';
-          var author = exp.author || 'by Platform';
-
-          var titleParts = title.trim().split(' ');
-          var formattedTitle = titleParts.length > 1 
-            ? titleParts.slice(0, -1).join(' ') + ' <em>' + titleParts[titleParts.length - 1] + '</em>'
-            : title;
-
-          var customIconUrl = exp.icon_png || (icon && (icon.indexOf('http://') === 0 || icon.indexOf('https://') === 0 || icon.indexOf('.png') !== -1 || icon.indexOf('.webp') !== -1 || icon.indexOf('.svg') !== -1) ? icon : '');
-          
-          var assetContentHtml = customIconUrl 
-            ? '<img src="' + customIconUrl + '" alt="' + title + '" class="exp-asset-img" />'
-            : '<span class="exp-asset-icon">' + icon + '</span>';
-
-          var glowColor = color.indexOf('#') === 0 ? color : '#00f0ff';
-
-          return '<div class="experiment-card' + isFeatured + '" onclick="openExperiment(\'' + safeUrl + '\')">' +
-            '<div class="experiment-card-stage">' +
-              '<div class="exp-stage-floor-glow" style="background: radial-gradient(ellipse at 50% 80%, ' + glowColor + '45 0%, rgba(99, 102, 241, 0.15) 50%, transparent 75%);"></div>' +
-              '<div class="exp-top-tag-bar">' +
-                '<span class="exp-badge-pill">' + tagLabel + '</span>' +
-                '<span class="exp-likes-pill">♥ ' + likes + '</span>' +
-              '</div>' +
-              '<div class="exp-stage-asset-wrap">' +
-                assetContentHtml +
-              '</div>' +
-            '</div>' +
-            '<div class="experiment-card-body">' +
-              '<div>' +
-                '<h3 class="exp-v2-title">' + formattedTitle + '</h3>' +
-                '<p class="exp-v2-desc">Interactive WebGL simulation model and 3D optics experiment ' + author + '.</p>' +
-              '</div>' +
-              '<div class="exp-v2-footer">' +
-                '<button class="exp-v2-btn" type="button">Launch Lab <span class="pill-arrow">→</span></button>' +
-                '<span class="exp-v2-rating">⭐ 4.9</span>' +
-              '</div>' +
-            '</div>' +
-          '</div>';
-        }).join('');
-        expCarousel.innerHTML = expHtml;
-      }
-      initCarouselDrag();
-      window.setTimeout(updateCarouselArrows, 60);
-    }
-
-    // 2. Render Stories List (#stories-scroll-container)
-    var storiesContainer = byId('stories-scroll-container') || document.querySelector('#tabpanel-stories .stories-scroll-container');
-    if (storiesContainer && Array.isArray(chapter.stories_list) && chapter.stories_list.length > 0) {
-      var storiesHtml = chapter.stories_list.map(function(story) {
-        var safeVideoUrl = (story.url || '').replace(/'/g, "\\'");
-        var thumb = resolveStoryThumbnail(story);
-        var fallbackThumb = 'https://img.youtube.com/vi/fy7eoMef3e8/hqdefault.jpg';
-        var title = story.title || 'Story Lesson';
-        var tag = story.tag || 'DOCUMENTARY';
-        var duration = story.duration || '5:00';
-        
-        var titleParts = title.trim().split(' ');
-        var formattedTitle = titleParts.length > 1 
-          ? titleParts.slice(0, -1).join(' ') + ' <em>' + titleParts[titleParts.length - 1] + '</em>'
-          : title;
-
-        return '<div class="story-card" onclick="openStoryVideo(\'' + safeVideoUrl + '\')">' +
-          '<div class="story-card-stage">' +
-            '<img src="' + thumb + '" alt="' + escapeHtml(title) + '" class="story-thumb-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=\'' + fallbackThumb + '\';">' +
-            '<div class="story-stage-overlay"></div>' +
-            '<span class="story-badge-pill">' + tag + '</span>' +
-            '<span class="story-duration-pill">⏱ ' + duration + '</span>' +
-            '<div class="story-play-glass">' +
-              '<svg width="20" height="20" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>' +
-            '</div>' +
-          '</div>' +
-          '<div class="story-card-body">' +
-            '<div>' +
-              '<h3 class="story-card-title">' + formattedTitle + '</h3>' +
-              '<div class="story-meta-row">' +
-                '<span class="story-author-name">by Platform Studio</span>' +
-                '<span class="story-views-tag">2.5M views</span>' +
-              '</div>' +
-              '<p class="story-card-desc">' + (story.description || 'Dive deep into visual scientific storytelling and interactive animated explanations.') + '</p>' +
-            '</div>' +
-            '<div class="story-card-footer">' +
-              '<button class="exp-v2-btn" type="button">Watch Story <span class="pill-arrow">→</span></button>' +
-              '<span class="exp-v2-rating">⭐ 4.9</span>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-      }).join('');
-      storiesContainer.innerHTML = storiesHtml;
-    }
-  }
-
   function openExperiment(path) {
-    if (!path) {
+    var chapter = getCurrentChapter();
+
+    if (!chapter.contentReady) {
+      showToast(chapter.title + ' interactive content is coming soon.');
+      return;
+    }
+
+    if (!AVAILABLE_APPS[path]) {
       showToast('This activity is not connected yet.');
       return;
     }
+
     openOverlay(encodeURI(path), 'fullscreen', { cacheBust: true });
   }
 
   function openStoryVideo(url) {
-    if (!url) return;
-    var finalUrl = url;
-    if (url.includes('youtube.com/watch')) {
-      var v = url.split('v=')[1];
-      if (v) {
-        var videoId = v.split('&')[0];
-        finalUrl = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1';
-      }
-    } else if (url.includes('youtu.be/')) {
-      var v2 = url.split('youtu.be/')[1];
-      if (v2) {
-        var videoId2 = v2.split('?')[0];
-        finalUrl = 'https://www.youtube.com/embed/' + videoId2 + '?autoplay=1';
-      }
-    }
-    openOverlay(finalUrl, 'story');
+    openOverlay(url, 'story');
   }
 
   function startChapterJourney() {
@@ -1507,25 +1070,16 @@
 
   function scrollCarousel(direction) {
     var carousel = byId('experiments-carousel');
-    if (!carousel) return;
 
-    var card = carousel.querySelector('.experiment-card');
-    var scrollAmount = card ? (card.offsetWidth + 28) : 260;
+    if (!carousel) {
+      return;
+    }
 
     carousel.scrollBy({
-      left: direction * scrollAmount,
+      left: direction * 320,
       behavior: 'smooth'
     });
-
-    window.setTimeout(updateCarouselArrows, 350);
   }
-
-  // Expose global methods for inline HTML onclick handlers
-  window.openExperiment = openExperiment;
-  window.openStoryVideo = openStoryVideo;
-  window.scrollCarousel = scrollCarousel;
-  window.updateCarouselArrows = updateCarouselArrows;
-  window.addEventListener('resize', updateCarouselArrows);
 
   function toggleTheme() {
     var useLightTheme = !document.body.classList.contains('light-theme');
@@ -1711,6 +1265,8 @@
   }
 
   // ─── SUPABASE REALTIME PROFILE & COURSE SYNC ───
+  var SUPABASE_URL = 'https://qmyrxvtbzlbnvzxypnus.supabase.co';
+  var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFteXJ4dnRiemxibnZ6eHlwbnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjA4OTcsImV4cCI6MjA5NTM5Njg5N30.ABvW_oBzXC2Ffxm5ToLh6t4WmdKPdtg9SyfeAE76iJo';
   var supabaseClient = null;
 
   function initSupabaseSync() {
@@ -1718,218 +1274,26 @@
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     }
     syncStudentProfile();
-    fetchCurriculumFromSupabase();
   }
 
-  async function fetchCurriculumFromSupabase() {
-    try {
-      var r = await fetch(SUPABASE_URL + '/rest/v1/course_chapters?select=*', {
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_KEY
-        }
-      });
-      var data = await r.json();
-      if (Array.isArray(data)) {
-        data.forEach(function(row) {
-          var slug = (row.title || '').toLowerCase().includes('light') ? 'light-shadows' : (row.chapter_slug || row.id);
-          if (!CHAPTERS[slug]) {
-            CHAPTERS[slug] = {
-              id: slug,
-              title: row.title,
-              description: row.description,
-              iconClass: 'ph ph-lightbulb',
-              sceneKey: 'lightShadows',
-              experienceUrl: row.experience_url || 'Chapter_experience_L_S.html',
-              quizReady: row.quiz_ready,
-              contentReady: true,
-              experiments_list: row.experiments_list || [],
-              stories_list: row.stories_list || []
-            };
-          } else {
-            if (row.experiments_list && row.experiments_list.length > 0) {
-              CHAPTERS[slug].experiments_list = row.experiments_list;
-            }
-            if (row.stories_list && row.stories_list.length > 0) {
-              CHAPTERS[slug].stories_list = row.stories_list;
-            }
-            if (row.experience_url) {
-              CHAPTERS[slug].experienceUrl = row.experience_url;
-            }
-          }
-        });
-        renderDynamicChapterModalities(getCurrentChapter());
-      }
-    } catch(e) {
-      console.warn('Using local chapter configuration:', e);
-    }
-  }
-
-  async function syncStudentProfile() {
+  function syncStudentProfile() {
     var urlParams = new URLSearchParams(window.location.search);
-    var isTeacher = urlParams.get('teacher') === 'true' || urlParams.get('mode') === 'smartboard' || !!localStorage.getItem('teacher_portal_user') || !!localStorage.getItem('edtech_user');
-    
-    var teacherEmail = urlParams.get('teacher_email') || urlParams.get('email') || '';
-    var teacherNameParam = urlParams.get('teacher_name') || '';
-    var teacherAvatarParam = urlParams.get('teacher_avatar') || '';
-    var teacherDeptParam = urlParams.get('teacher_dept') || '';
-
-    // Check localStorage edtech_user
-    var localUserObj = null;
-    try {
-      var rawU = localStorage.getItem('edtech_user') || localStorage.getItem('teacher_portal_user') || localStorage.getItem('teacher_user');
-      if (rawU) localUserObj = JSON.parse(rawU);
-    } catch(e) {}
-    
     var studentEmail = urlParams.get('email') || '';
     var studentId = urlParams.get('student_id') || urlParams.get('id') || '';
+    
+    var storedName = localStorage.getItem('student_portal_name') || 'Alex K.';
+    var storedAvatar = localStorage.getItem('student_portal_avatar') || 'assets/avatar.png';
+    var storedClass = localStorage.getItem('student_portal_designation') || 'Class 6th Science & Physics';
     
     var nameEl = byId('profile-student-name');
     var avatarEl = byId('profile-avatar-img');
     var classEl = byId('profile-student-class');
     var idEl = byId('profile-student-id');
-    var headerPill = byId('profile-header-pill');
-    var badgeAccess = byId('profile-badge-access');
-    var footerSubtext = byId('profile-footer-subtext');
 
-    var stat1Label = byId('stat-1-label');
-    var stat1Val = byId('profile-xp');
-    var stat1Icon = byId('stat-1-icon');
-
-    var stat2Label = byId('stat-2-label');
-    var stat2Val = byId('profile-labs');
-    var stat2Icon = byId('stat-2-icon');
-
-    var stat3Label = byId('stat-3-label');
-    var stat3Val = byId('profile-hours');
-    var stat3Icon = byId('stat-3-icon');
-
-    var stat4Label = byId('stat-4-label');
-    var stat4Val = byId('profile-streak');
-    var stat4Icon = byId('stat-4-icon');
-
-    if (isTeacher) {
-      if (headerPill) headerPill.textContent = 'CLASS 6TH TEACHER COMMAND CENTER';
-      
-      // Default fallbacks while Supabase query runs
-      var initialName = teacherNameParam || (localUserObj ? (localUserObj.name || localUserObj.full_name) : '') || localStorage.getItem('portal_name') || 'Gaurav Roy';
-      var initialAvatar = teacherAvatarParam || (localUserObj ? (localUserObj.avatar_url || localUserObj.avatar) : '') || localStorage.getItem('portal_avatar') || 'https://pub-670b98370fe642a2be08ee37cbfd385f.r2.dev/avatars/gauravroy476_gmail_com_1786785035807_profile_1000x1000.jpg';
-      var initialDept = teacherDeptParam || (localUserObj ? (localUserObj.department || localUserObj.degree || localUserObj.subject) : '') || localStorage.getItem('portal_designation') || 'Head of Science & Physics';
-      var initialId = (localUserObj ? (localUserObj.id || localUserObj.teacher_id) : '') || 'TCH-213948';
-
-      if (nameEl) nameEl.textContent = initialName;
-      if (avatarEl) {
-        avatarEl.src = initialAvatar;
-        avatarEl.style.borderColor = '#F59E0B';
-        avatarEl.style.boxShadow = '0 0 20px rgba(245,158,11,0.5)';
-      }
-      if (classEl) {
-        classEl.textContent = initialDept;
-        classEl.style.color = '#F59E0B';
-      }
-      if (idEl) {
-        idEl.textContent = 'ID: ' + (initialId.length > 10 ? 'TCH-' + initialId.slice(0, 6).toUpperCase() : initialId);
-        idEl.style.color = '#F59E0B';
-        idEl.style.borderColor = 'rgba(245,158,11,0.35)';
-      }
-      if (badgeAccess) {
-        badgeAccess.textContent = '🎓 Educator Access';
-        badgeAccess.style.color = '#F59E0B';
-        badgeAccess.style.borderColor = 'rgba(245,158,11,0.35)';
-      }
-      if (footerSubtext) footerSubtext.textContent = 'All Class 6th modules unlocked for smartboard presentation.';
-
-      if (stat1Label) stat1Label.textContent = 'Active Students';
-      if (stat1Val) stat1Val.textContent = '34 Students';
-      if (stat1Icon) stat1Icon.textContent = '👨‍🎓';
-
-      if (stat2Label) stat2Label.textContent = 'Curriculum Modules';
-      if (stat2Val) stat2Val.textContent = '8 Subjects';
-      if (stat2Icon) stat2Icon.textContent = '📚';
-
-      if (stat3Label) stat3Label.textContent = 'Smartboard Hours';
-      if (stat3Val) stat3Val.textContent = '42.5 Hrs';
-      if (stat3Icon) stat3Icon.textContent = '🖥️';
-
-      if (stat4Label) stat4Label.textContent = 'Classroom Attendance';
-      if (stat4Val) stat4Val.textContent = '98.5%';
-      if (stat4Icon) stat4Icon.textContent = '🏫';
-
-      // ── SUPABASE LIVE FETCH FOR TEACHER PROFILE ──
-      try {
-        var activeEmail = teacherEmail || (localUserObj ? localUserObj.email : '');
-        var endpoint = activeEmail
-          ? SUPABASE_URL + '/rest/v1/profiles?email=eq.' + encodeURIComponent(activeEmail) + '&select=*'
-          : SUPABASE_URL + '/rest/v1/profiles?role=eq.teacher&select=*&limit=1';
-
-        var resp = await fetch(endpoint, {
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_KEY
-          }
-        });
-        var profileRows = await resp.json();
-
-        if (!Array.isArray(profileRows) || profileRows.length === 0) {
-          // Fallback to teachers table
-          var tResp = await fetch(SUPABASE_URL + '/rest/v1/teachers?select=*&limit=1', {
-            headers: {
-              'apikey': SUPABASE_KEY,
-              'Authorization': 'Bearer ' + SUPABASE_KEY
-            }
-          });
-          profileRows = await tResp.json();
-        }
-
-        if (Array.isArray(profileRows) && profileRows.length > 0) {
-          var dbTeacher = profileRows[0];
-          if (nameEl && (dbTeacher.name || dbTeacher.full_name)) {
-            nameEl.textContent = dbTeacher.name || dbTeacher.full_name;
-          }
-          if (avatarEl && dbTeacher.avatar_url) {
-            avatarEl.src = dbTeacher.avatar_url;
-          }
-          if (classEl && (dbTeacher.department || dbTeacher.degree || dbTeacher.subject)) {
-            classEl.textContent = dbTeacher.department || dbTeacher.degree || (dbTeacher.subject + ' Faculty');
-          }
-          if (idEl && dbTeacher.id) {
-            idEl.textContent = 'ID: TCH-' + String(dbTeacher.id).slice(0, 6).toUpperCase();
-          }
-        }
-      } catch(err) {
-        console.warn('Supabase live teacher profile fetch failed:', err);
-      }
-
-    } else {
-      // Student Profile Mode
-      var storedName = localStorage.getItem('student_portal_name') || 'Alex K.';
-      var storedAvatar = localStorage.getItem('student_portal_avatar') || 'assets/avatar.png';
-      var storedClass = localStorage.getItem('student_portal_designation') || 'Class 6th Science & Physics';
-      
-      if (headerPill) headerPill.textContent = 'CLASS 6TH STUDENT COMMAND CENTER';
-      if (nameEl) nameEl.textContent = storedName;
-      if (avatarEl && storedAvatar) avatarEl.src = storedAvatar;
-      if (classEl) classEl.textContent = storedClass;
-      if (idEl) idEl.textContent = 'ID: ' + (studentId || 'STU-64029');
-
-      if (studentEmail) {
-        try {
-          var sResp = await fetch(SUPABASE_URL + '/rest/v1/profiles?role=eq.student&email=eq.' + encodeURIComponent(studentEmail) + '&select=*', {
-            headers: {
-              'apikey': SUPABASE_KEY,
-              'Authorization': 'Bearer ' + SUPABASE_KEY
-            }
-          });
-          var sData = await sResp.json();
-          if (Array.isArray(sData) && sData.length > 0) {
-            var dbStudent = sData[0];
-            if (nameEl && dbStudent.name) nameEl.textContent = dbStudent.name;
-            if (avatarEl && dbStudent.avatar_url) avatarEl.src = dbStudent.avatar_url;
-            if (idEl && dbStudent.id) idEl.textContent = 'ID: STU-' + String(dbStudent.id).slice(0, 6).toUpperCase();
-          }
-        } catch(err) {}
-      }
-    }
+    if (nameEl) nameEl.textContent = storedName;
+    if (avatarEl && storedAvatar) avatarEl.src = storedAvatar;
+    if (classEl) classEl.textContent = storedClass;
+    if (idEl) idEl.textContent = 'ID: ' + (studentId || 'STU-64029');
 
     var officialClass6thSubjects = [
       {
@@ -2078,80 +1442,6 @@
     }
   }
 
-  function initUrlRouting() {
-    var urlParams = new URLSearchParams(window.location.search);
-    var paramClass = urlParams.get('class');
-    var paramSubject = urlParams.get('subject');
-    var paramChapter = urlParams.get('chapter');
-    var paramScreen = urlParams.get('screen');
-    var paramMode = urlParams.get('mode');
-
-    // 1. Update Curriculum Badge if class is provided
-    if (paramClass) {
-      var badge = document.querySelector('.curriculum-badge');
-      if (badge) {
-        badge.textContent = (paramClass.toLowerCase().includes('cbse') || paramClass.toLowerCase().includes('icse')) 
-          ? paramClass 
-          : 'CBSE ' + paramClass;
-      }
-    }
-
-    // 2. If in smartboard mode, add smartboard indicator styling
-    if (paramMode === 'smartboard') {
-      document.body.classList.add('smartboard-mode');
-      var badge = document.querySelector('.curriculum-badge');
-      if (badge) {
-        badge.style.border = '1px solid #00F0FF';
-        badge.style.boxShadow = '0 0 15px rgba(0, 240, 255, 0.4)';
-        badge.title = 'Interactive Smartboard Mode';
-      }
-    }
-
-    // 3. Deep-link navigation
-    if (paramChapter) {
-      var targetChapterId = 'light-shadows';
-      var lowerCh = paramChapter.toLowerCase();
-      if (lowerCh.includes('space') || lowerCh.includes('solar') || lowerCh === 'ch-space-solar' || lowerCh === 'space-solar' || lowerCh.includes('orbit')) {
-        targetChapterId = 'space-solar';
-      } else if (lowerCh.includes('light') || lowerCh.includes('shadow') || lowerCh.includes('optic') || lowerCh === 'light-shadows' || lowerCh.includes('lens') || lowerCh.includes('reflection')) {
-        targetChapterId = 'light-shadows';
-      }
-      navigateTo('screen-chapter-detail', { chapterId: targetChapterId });
-    } else if (paramSubject) {
-      var lowerSubj = paramSubject.toLowerCase();
-      if (lowerSubj.includes('science') || lowerSubj.includes('physic') || lowerSubj.includes('bio') || lowerSubj.includes('chem')) {
-        navigateTo('screen-chapters');
-      } else {
-        navigateTo('screen-subjects');
-        // Highlight requested subject
-        var subjMap = {
-          'history': '#subj-history',
-          'geography': '#subj-geography',
-          'physical education': '#subj-pe',
-          'pe': '#subj-pe',
-          'arts': '#subj-arts',
-          'english': '#subj-english',
-          'mathematics': '#subj-math',
-          'math': '#subj-math',
-          'music': '#subj-music'
-        };
-        var targetId = subjMap[lowerSubj];
-        if (targetId) {
-          var card = document.querySelector(targetId);
-          if (card) {
-            card.style.borderColor = '#00F0FF';
-            card.style.boxShadow = '0 0 25px rgba(0, 240, 255, 0.5)';
-            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }
-      }
-    } else if (params.get('openWorld') === 'true' || paramScreen === 'screen-world') {
-      navigateTo('screen-world');
-    } else if (paramScreen) {
-      navigateTo(paramScreen);
-    }
-  }
-
   function init() {
     applySavedTheme();
     syncFullscreenButton();
@@ -2163,7 +1453,6 @@
     bindOverlayEvents();
     initSpringSlider();
     initSupabaseSync();
-    initUrlRouting();
 
     document.addEventListener('fullscreenchange', syncFullscreenButton);
     window.addEventListener('beforeunload', destroyChapterScene);
@@ -2198,30 +1487,11 @@
     }, 300);
   }
 
-  // Expose clean, structured public API under window.StudyIsland (Fix C2)
-  var StudyIslandAPI = {
-    navigateTo: navigateTo,
-    activateTab: activateTab,
-    scrollCarousel: scrollCarousel,
-    openExperiment: openExperiment,
-    openStoryVideo: openStoryVideo,
-    openAppOverlay: openAppOverlay,
-    toggleTheme: toggleTheme,
-    toggleAppFullscreen: toggleAppFullscreen,
-    closeOverlay: closeOverlay,
-    showExitModal: showExitModal,
-    closeExitModal: closeExitModal,
-    confirmExitSession: confirmExitSession
-  };
-  window.StudyIsland = StudyIslandAPI;
-
-  // Window delegation for string-built HTML onclick handlers
   window.navigateTo = navigateTo;
   window.activateTab = activateTab;
   window.scrollCarousel = scrollCarousel;
   window.openExperiment = openExperiment;
   window.openStoryVideo = openStoryVideo;
-  window.openAppOverlay = openAppOverlay;
   window.toggleTheme = toggleTheme;
   window.toggleAppFullscreen = toggleAppFullscreen;
   window.closeOverlay = closeOverlay;

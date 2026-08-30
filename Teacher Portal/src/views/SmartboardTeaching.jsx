@@ -180,7 +180,7 @@ export default function SmartboardTeaching() {
   function getStudyIslandUrl(options = {}) {
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const basePath = isLocal ? '' : '/Working-Platform';
-    let url = window.location.origin + basePath + '/study-island/index.html';
+    let url = (isLocal ? 'http://localhost:3000' : window.location.origin + basePath) + '/study-island/index.html?teacher=true&mode=smartboard&source=teacher_portal&role=teacher&theme=teacher';
     
     const params = new URLSearchParams();
     params.set('mode', 'smartboard');
@@ -190,7 +190,7 @@ export default function SmartboardTeaching() {
     if (options.chapter) params.set('chapter', options.chapter);
 
     try {
-      const userStr = localStorage.getItem('edtech_user');
+      const userStr = localStorage.getItem('edtech_teacher_user') || localStorage.getItem('edtech_user');
       if (userStr) {
         const u = JSON.parse(userStr);
         if (u.name || u.full_name) params.set('teacher_name', u.name || u.full_name);

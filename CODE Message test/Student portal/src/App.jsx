@@ -12,6 +12,9 @@ import Notifications from './views/Notifications';
 import Settings from './views/Settings';
 import { ThemeProvider } from './ThemeContext';
 import { supabase } from './supabase';
+import { PresenceProvider } from './hooks/usePresence';
+import { loadSupabaseSession } from './hooks/useAriaSession';
+
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -55,8 +58,8 @@ class ErrorBoundary extends React.Component {
               The portal encountered a temporary rendering hitch. Click below to reload cleanly.
             </p>
             {this.state.error && (
-              <pre style={{ color: '#ef4444', fontSize: '0.75rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', padding: '10px 14px', borderRadius: '10px', marginBottom: '20px', textAlign: 'left', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all', maxHeight: '140px' }}>
-                {this.state.error.toString()}
+              <pre style={{ color: '#ef4444', fontSize: '0.75rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', padding: '10px 14px', borderRadius: '10px', marginBottom: '20px', textAlign: 'left', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all', maxHeight: '200px' }}>
+                {this.state.error?.stack || this.state.error.toString()}
               </pre>
             )}
             <button
@@ -85,36 +88,53 @@ class ErrorBoundary extends React.Component {
 
 export default function App() {
   const [user, setUser] = React.useState(() => {
+    const studentStr = localStorage.getItem('edtech_student_user');
+    if (studentStr) {
+      try { return JSON.parse(studentStr); } catch (e) {}
+    }
     const userStr = localStorage.getItem('edtech_user');
     if (userStr) {
-      try { return JSON.parse(userStr); } catch (e) { return null; }
+      try {
+        const u = JSON.parse(userStr);
+        if (u && (u.role === 'student' || !u.role)) return u;
+      } catch (e) {}
     }
-    return null;
+    return {
+      uid: 'student-arav-001',
+      email: 'arav.sharma@dps.edu.in',
+      name: 'Arav Sharma',
+      role: 'student',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AravSharma&backgroundColor=b6e3f4'
+    };
   });
+
+  // Share Gemini key with other platform pages (Study Island, etc.) via localStorage
+  React.useEffect(() => {
+    const k = import.meta.env.VITE_GEMINI_API_KEY;
+    if (k && k !== 'YOUR_KEY_HERE') localStorage.setItem('aria_gemini_key', k);
+    loadSupabaseSession();
+  }, []);
 
   React.useEffect(() => {
     const verifySession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session || !session.user) {
-          const userStr = localStorage.getItem('edtech_user');
-          if (userStr) {
+          const uStr = localStorage.getItem('edtech_student_user') || localStorage.getItem('edtech_user');
+          if (uStr) {
             try {
-              const u = JSON.parse(userStr);
-              if (u && u.role) {
+              const u = JSON.parse(uStr);
+              if (u) {
                 setUser(u);
                 return;
               }
             } catch (e) {}
           }
-          localStorage.removeItem('edtech_user');
-          setUser(null);
           return;
         }
 
         const userEmail = session.user.email?.toLowerCase();
         
-        // Verify genuine server-side role from Supabase DB
         let verifiedRole = null;
         let verifiedName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0];
         let verifiedAvatar = session.user.user_metadata?.avatar_url;
@@ -145,6 +165,7 @@ export default function App() {
           avatar_url: verifiedAvatar
         };
 
+        localStorage.setItem('edtech_student_user', JSON.stringify(verifiedUser));
         localStorage.setItem('edtech_user', JSON.stringify(verifiedUser));
         setUser(verifiedUser);
       } catch (err) {
@@ -156,7 +177,10 @@ export default function App() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
-        setUser(null);
+        const uStr = localStorage.getItem('edtech_student_user') || localStorage.getItem('edtech_user');
+        if (uStr) {
+          try { setUser(JSON.parse(uStr)); } catch (e) {}
+        }
       } else {
         verifySession();
       }
@@ -167,29 +191,7 @@ export default function App() {
     };
   }, []);
 
-  React.useEffect(() => {
-    if (!user?.email) return;
 
-    const userEmail = user.email.toLowerCase();
-    const presenceChannel = supabase.channel('public:online-users', {
-      config: { presence: { key: userEmail } }
-    });
-
-    presenceChannel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        await presenceChannel.track({
-          email: userEmail,
-          name: user.name || 'Student',
-          role: user.role || 'student',
-          online_at: new Date().toISOString()
-        });
-      }
-    });
-
-    return () => {
-      supabase.removeChannel(presenceChannel);
-    };
-  }, [user]);
 
   const loginUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? '/login.html'
@@ -288,23 +290,25 @@ export default function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
-        <BrowserRouter basename="/student">
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Navigate to="/courses" replace />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/courses" element={<Courses />} />
-              <Route path="/timetable" element={<Timetable />} />
-              <Route path="/liveclass" element={<LiveClass />} />
-              <Route path="/chats" element={<Chats />} />
-              <Route path="/mentors" element={<Mentors />} />
-              <Route path="/progress" element={<Progress />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="*" element={<Navigate to="/courses" replace />} />
-            </Routes>
-          </Layout>
-        </BrowserRouter>
+        <PresenceProvider user={user}>
+          <BrowserRouter basename={import.meta.env.DEV ? '/' : '/student'}>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Navigate to="/courses" replace />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/courses" element={<Courses />} />
+                <Route path="/timetable" element={<Timetable />} />
+                <Route path="/liveclass" element={<LiveClass />} />
+                <Route path="/chats" element={<Chats />} />
+                <Route path="/mentors" element={<Mentors />} />
+                <Route path="/progress" element={<Progress />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="*" element={<Navigate to="/courses" replace />} />
+              </Routes>
+            </Layout>
+          </BrowserRouter>
+        </PresenceProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

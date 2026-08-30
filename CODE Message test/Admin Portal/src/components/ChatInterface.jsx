@@ -13,6 +13,7 @@ import {
   QuotedMessageBubble, PinnedMessageBanner, TypingIndicatorBanner, ForwardedMessageTag, 
   ForwardMessageModal, extractFirstUrl, formatMessageWithLinks, formatTimeAgo 
 } from './MediaChatComponents';
+import { usePresence } from '../hooks/usePresence';
 import './ChatInterface.css';
 
 export default function ChatInterface({ currentUser: propUser, activeTab, onUnreadCountChange }) {
@@ -46,7 +47,8 @@ export default function ChatInterface({ currentUser: propUser, activeTab, onUnre
   const [isUploading, setIsUploading] = useState(false);
 
   // Advanced chat feature states
-  const [onlineEmails, setOnlineEmails] = useState(new Set());
+  // Presence comes from PresenceProvider — no own channel needed
+  const { isOnline } = usePresence();
   const [typingUser, setTypingUser] = useState(null);
   const [stagedReply, setStagedReply] = useState(null); // { id, text, senderName }
   const [stagedImage, setStagedImage] = useState(null); // { blob, previewUrl, name, originalSize, compressedSize, isCompressing }
@@ -76,49 +78,6 @@ export default function ChatInterface({ currentUser: propUser, activeTab, onUnre
       setTimeout(() => el.classList.remove('chat-bubble-highlight'), 1800);
     }
   };
-
-  // 1. Online Presence Tracking via Supabase Realtime
-  useEffect(() => {
-    if (!currentUser?.email) return;
-
-    try {
-      const existing = supabase.getChannels().find(ch => ch.topic === 'realtime:public:online-users');
-      if (existing) {
-        supabase.removeChannel(existing);
-      }
-    } catch (e) {}
-
-    const presenceChannel = supabase.channel('public:online-users', {
-      config: { presence: { key: currentUser.email.toLowerCase() } }
-    });
-
-    presenceChannel
-      .on('presence', { event: 'sync' }, () => {
-        const state = presenceChannel.presenceState();
-        const emails = new Set();
-        Object.keys(state).forEach(key => {
-          emails.add(key.toLowerCase());
-          const presences = state[key] || [];
-          presences.forEach(p => {
-            if (p.email) emails.add(p.email.toLowerCase());
-          });
-        });
-        setOnlineEmails(emails);
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await presenceChannel.track({
-            email: currentUser.email.toLowerCase(),
-            name: currentUser.name || 'Admin',
-            online_at: new Date().toISOString()
-          });
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(presenceChannel);
-    };
-  }, [currentUser]);
 
   // 2. Fetch Profiles & Conversations History
   const fetchProfilesAndConversations = async () => {
@@ -802,7 +761,7 @@ export default function ChatInterface({ currentUser: propUser, activeTab, onUnre
             filteredProfiles.map(contact => {
               const unread = unreadCounts[contact.email] || 0;
               const isSelected = activeContact?.email === contact.email;
-              const isUserOnline = onlineEmails.has(contact.email.toLowerCase());
+              const isUserOnline = isOnline(contact.email);
               const conv = conversationsMap[contact.email.toLowerCase()];
 
               return (
@@ -863,7 +822,7 @@ export default function ChatInterface({ currentUser: propUser, activeTab, onUnre
                     src={activeContact.avatar_url || `https://api.dicebear.com/7.x/micah/svg?seed=${encodeURIComponent(activeContact.email || activeContact.name)}&backgroundColor=0a0f1d`} 
                     alt={activeContact.name} 
                   />
-                  {onlineEmails.has(activeContact.email.toLowerCase()) && <span className="presence-dot" />}
+                  {isOnline(activeContact.email) && <span className="presence-dot" />}
                 </div>
               </div>
               <div className="chat-header-info">
@@ -874,7 +833,7 @@ export default function ChatInterface({ currentUser: propUser, activeTab, onUnre
                   </span>
                 </div>
                 <span>
-                  {onlineEmails.has(activeContact.email.toLowerCase()) ? (
+                  {isOnline(activeContact.email) ? (
                     <span style={{ color: '#10B981', fontWeight: 600 }}>● Active Now</span>
                   ) : (
                     activeContact.email

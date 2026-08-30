@@ -169,7 +169,13 @@ export default function Courses() {
     // Open Study Island 3D Content Viewing Platform
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const basePath = isLocal ? '' : '/Working-Platform';
-    const contentPlatformUrl = window.location.origin + basePath + '/study-island/index.html' + (openWorld ? '?openWorld=true' : '');
+    const origin = window.location.origin;
+    const userStr = localStorage.getItem('edtech_student_user') || localStorage.getItem('edtech_user');
+    const userObj = userStr ? JSON.parse(userStr) : {};
+    const sId = userObj.id || 'student-101';
+    const cId = userObj.class_id || '6th';
+    const sName = encodeURIComponent(userObj.full_name || 'Student');
+    const contentPlatformUrl = origin + basePath + '/study-island/index.html?student_id=' + sId + '&class_id=' + cId + '&role=student&source=student_portal&theme=space&name=' + sName + (openWorld ? '&openWorld=true' : '');
     window.open(contentPlatformUrl, '_blank');
   }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Card from '../components/Card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { Trophy, AlertTriangle, TrendingUp, Users, BookOpen, Sparkles } from 'lucide-react';
 import { supabase } from '../supabase';
 
@@ -200,20 +200,34 @@ export default function Analytics() {
           <h3 style={{ margin: '0 0 20px 0', color: 'white', fontSize: '1.2rem', fontWeight: '700' }}>Subject Mastery Benchmark</h3>
           <div style={{ width: '100%', height: '280px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="subject" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                <YAxis stroke="#94a3b8" domain={[50, 100]} tick={{ fontSize: 12 }} tickFormatter={(v) => `${v}%`} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: 'rgba(10, 15, 29, 0.95)', borderColor: 'var(--brand-glow, rgba(0, 240, 255, 0.3))', borderRadius: '12px', color: '#fff' }}
-                />
-                <Bar dataKey="average" fill="url(#barGradient)" radius={[8, 8, 0, 0]} />
+              <BarChart data={chartData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopcolor="var(--brand-primary, #00F0FF)" stopOpacity={0.9} />
-                    <stop offset="100%" stopcolor="var(--brand-secondary, #3B82F6)" stopOpacity={0.5} />
+                  <linearGradient id="barGradMath" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#00F0FF" stopOpacity={0.95} />
+                    <stop offset="100%" stopColor="#0070F3" stopOpacity={0.5} />
+                  </linearGradient>
+                  <linearGradient id="barGradPhysics" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.95} />
+                    <stop offset="100%" stopColor="#1D4ED8" stopOpacity={0.5} />
+                  </linearGradient>
+                  <linearGradient id="barGradChem" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#A855F7" stopOpacity={0.95} />
+                    <stop offset="100%" stopColor="#7E22CE" stopOpacity={0.5} />
                   </linearGradient>
                 </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
+                <XAxis dataKey="subject" stroke="#94a3b8" tick={{ fill: '#cbd5e1', fontSize: 12, fontWeight: '600' }} />
+                <YAxis stroke="#94a3b8" domain={[50, 100]} tick={{ fill: '#94a3b8', fontSize: 12 }} tickFormatter={(v) => `${v}%`} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: 'rgba(10, 15, 29, 0.95)', borderColor: 'rgba(0, 240, 255, 0.4)', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
+                  formatter={(val) => [`${val}%`, 'Mastery Score']}
+                />
+                <Bar dataKey="average" radius={[10, 10, 0, 0]} barSize={58}>
+                  {chartData.map((entry, index) => {
+                    const grads = ['url(#barGradMath)', 'url(#barGradPhysics)', 'url(#barGradChem)'];
+                    return <Cell key={`cell-${index}`} fill={grads[index % grads.length]} stroke="rgba(255,255,255,0.2)" strokeWidth={1} />;
+                  })}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>

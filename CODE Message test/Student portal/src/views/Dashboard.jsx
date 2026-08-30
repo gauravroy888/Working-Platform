@@ -91,7 +91,13 @@ export default function Dashboard() {
           onClick={() => {
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             const basePath = isLocal ? '' : '/Working-Platform';
-            window.open(window.location.origin + basePath + '/study-island/index.html', '_blank');
+            const userStr = localStorage.getItem('edtech_student_user') || localStorage.getItem('edtech_user');
+            const userObj = userStr ? JSON.parse(userStr) : {};
+            const sId = userObj.id || 'student-101';
+            const cId = userObj.class_id || '6th';
+            const sName = encodeURIComponent(userObj.full_name || 'Student');
+            const targetUrl = window.location.origin + basePath + '/study-island/index.html?student_id=' + sId + '&class_id=' + cId + '&role=student&name=' + sName;
+            window.open(targetUrl, '_blank');
           }}
           style={{
             background: 'linear-gradient(135deg, var(--brand-primary, #00F0FF), var(--brand-secondary, #3B82F6))',

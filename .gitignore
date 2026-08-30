@@ -4,3 +4,6 @@ build/
 .env
 .env.*
 .DS_Store
+chrome-*
+*.bak
+

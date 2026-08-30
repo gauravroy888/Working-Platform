@@ -342,22 +342,6 @@
   function initLightAndShadows3D() {
     var container = byId('canvas-container');
     var loadingEl = byId('canvas-loading');
-    var scene;
-    var width;
-    var height;
-    var camera;
-    var renderer;
-    var lightPosition;
-    var pointLight;
-    var corona;
-    var objectGroup;
-    var objectGeometry;
-    var positionsAttr;
-    var uniquePoints = [];
-    var lines = [];
-    var onResize;
-    var removeDragRotate;
-    var time = 0;
 
     if (typeof THREE === 'undefined' || !container) {
       showToast('The 3D engine is not available right now.');
@@ -366,25 +350,27 @@
 
     destroyChapterScene();
 
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x070d18);
-    scene.fog = new THREE.FogExp2(0x070d18, 0.025);
-    scene.rotation.y = 1.8;
-    scene.rotation.x = 0.1;
+    var width = Math.max(container.clientWidth, 1);
+    var height = Math.max(container.clientHeight, 1);
 
-    width = Math.max(container.clientWidth, 1);
-    height = Math.max(container.clientHeight, 1);
-    camera = new THREE.PerspectiveCamera(52, width / height, 0.1, 200);
-    camera.position.set(0, 2.5, 13);
-    camera.lookAt(1, 0, 0);
+    var scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x040812);
+    scene.fog = new THREE.FogExp2(0x040812, 0.022);
 
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    var worldGroup = new THREE.Group();
+    scene.add(worldGroup);
+
+    var camera = new THREE.PerspectiveCamera(46, width / height, 0.1, 100);
+    camera.position.set(4.2, 2.2, 10.5);
+    camera.lookAt(-0.8, 0.4, -0.2);
+
+    var renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.IFP_PIXEL_RATIO || Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.4;
+    renderer.toneMappingExposure = 1.35;
     container.appendChild(renderer.domElement);
     sceneRenderer = renderer;
     sceneRoot = scene;
@@ -393,216 +379,238 @@
       loadingEl.style.display = 'none';
     }
 
-    scene.add(new THREE.AmbientLight(0x0d1b33, 0.4));
+    var groundY = -2.2;
+    var screenX = -5.5;
+    var lightPos = new THREE.Vector3(4.5, -1.0, 2.8);
+    var objPos = new THREE.Vector3(-1.2, 0.65, 0.0);
 
-    lightPosition = new THREE.Vector3(-4.8, -1.2, 3.0);
-    pointLight = new THREE.PointLight(0xffffff, 5.0, 40);
-    pointLight.position.copy(lightPosition);
-    pointLight.castShadow = true;
-    pointLight.shadow.mapSize.set(2048, 2048);
-    pointLight.shadow.bias = -0.001;
-    pointLight.shadow.camera.near = 0.5;
-    pointLight.shadow.camera.far = 25;
-    scene.add(pointLight);
+    worldGroup.add(new THREE.AmbientLight(0x0a1628, 0.65));
+    var fillLight = new THREE.DirectionalLight(0x1a3a60, 0.3);
+    fillLight.position.set(0, 8, 8);
+    worldGroup.add(fillLight);
 
-    (function addLightVisuals() {
-      var rimLight = new THREE.DirectionalLight(0x40d0e0, 0.1);
-      var bulb = new THREE.Mesh(
-        new THREE.SphereGeometry(0.22, 16, 16),
-        new THREE.MeshBasicMaterial({ color: 0xffffff })
-      );
-      var coronaMaterial = new THREE.SpriteMaterial({
-        map: makeGlowTexture(),
-        blending: THREE.AdditiveBlending,
-        transparent: true,
-        opacity: 0.92
-      });
-      var stand = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.04, 0.12, 1.2, 8),
-        new THREE.MeshStandardMaterial({ color: 0x334455, roughness: 0.8, metalness: 0.5 })
-      );
-      var pool = new THREE.Mesh(
-        new THREE.PlaneGeometry(8, 8),
-        new THREE.MeshBasicMaterial({
-          map: makeGlowTexture('rgba(160, 220, 255, 0.40)', 'rgba(0,0,0,0)'),
-          blending: THREE.AdditiveBlending,
-          transparent: true,
-          depthWrite: false
-        })
-      );
+    // Floor wireframe & solid receiver
+    var floorGeo = new THREE.PlaneGeometry(36, 36, 24, 24);
+    var floorWireMat = new THREE.MeshBasicMaterial({ color: 0x0088aa, wireframe: true, transparent: true, opacity: 0.18 });
+    var floorWire = new THREE.Mesh(floorGeo, floorWireMat);
+    floorWire.rotation.x = -Math.PI / 2;
+    floorWire.position.y = groundY;
+    worldGroup.add(floorWire);
 
-      rimLight.position.set(8, 4, -4);
-      scene.add(rimLight);
+    var floorSolid = new THREE.Mesh(
+      floorGeo,
+      new THREE.MeshStandardMaterial({ color: 0x050914, roughness: 0.95, metalness: 0.05 })
+    );
+    floorSolid.rotation.x = -Math.PI / 2;
+    floorSolid.position.y = groundY - 0.01;
+    floorSolid.receiveShadow = true;
+    worldGroup.add(floorSolid);
 
-      bulb.position.copy(lightPosition);
-      scene.add(bulb);
+    var gridSize = 36;
+    var step = 1.5;
+    var diagMat = new THREE.LineBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.12 });
+    for (var i = -gridSize / 2; i <= gridSize / 2; i += step) {
+      var pts1 = [new THREE.Vector3(i, groundY, -gridSize / 2), new THREE.Vector3(i + gridSize, groundY, gridSize / 2)];
+      var pts2 = [new THREE.Vector3(i, groundY, gridSize / 2), new THREE.Vector3(i + gridSize, groundY, -gridSize / 2)];
+      worldGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts1), diagMat));
+      worldGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts2), diagMat));
+    }
 
-      corona = new THREE.Sprite(coronaMaterial);
-      corona.position.copy(lightPosition);
-      corona.scale.set(2.2, 2.2, 1);
-      scene.add(corona);
+    // Vertical screen wall
+    var screenGeo = new THREE.PlaneGeometry(16, 12, 16, 12);
+    var screenWireMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true, transparent: true, opacity: 0.28 });
+    var screenWire = new THREE.Mesh(screenGeo, screenWireMat);
+    screenWire.position.set(screenX, 1.8, 0);
+    screenWire.rotation.y = Math.PI / 2;
+    worldGroup.add(screenWire);
 
-      stand.position.set(lightPosition.x, lightPosition.y - 0.85, lightPosition.z);
-      scene.add(stand);
+    var screenSolid = new THREE.Mesh(
+      screenGeo,
+      new THREE.MeshStandardMaterial({ color: 0x081324, roughness: 0.85, metalness: 0.1, side: THREE.DoubleSide })
+    );
+    screenSolid.position.set(screenX - 0.01, 1.8, 0);
+    screenSolid.rotation.y = Math.PI / 2;
+    screenSolid.receiveShadow = true;
+    worldGroup.add(screenSolid);
 
-      pool.rotation.x = -Math.PI / 2;
-      pool.position.set(lightPosition.x, -2.39, lightPosition.z);
-      scene.add(pool);
-    })();
+    // Lamp group
+    var lampGroup = new THREE.Group();
+    lampGroup.position.copy(lightPos);
 
-    objectGroup = new THREE.Group();
-    objectGroup.position.set(0.6, 0.2, 0);
-    objectGeometry = new THREE.IcosahedronGeometry(1.4, 0);
-    objectGroup.add(new THREE.Mesh(
-      objectGeometry,
-      new THREE.MeshStandardMaterial({
-        color: 0xbbeeff,
-        roughness: 0.8,
-        metalness: 0.1,
-        flatShading: true
-      })
-    ));
-    objectGroup.children[0].castShadow = true;
-    scene.add(objectGroup);
+    var lampStandMat = new THREE.MeshStandardMaterial({ color: 0x111622, roughness: 0.3, metalness: 0.8 });
+    var lampPole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.16, 1.4, 32), lampStandMat);
+    lampPole.position.y = -0.7;
+    lampGroup.add(lampPole);
 
-    (function addWireframeStand() {
-      var pyramid = new THREE.Mesh(
-        new THREE.ConeGeometry(0.9, 3.2, 4),
-        new THREE.MeshBasicMaterial({ color: 0x99ccdd, wireframe: true, transparent: true, opacity: 0.35 })
-      );
-      pyramid.position.set(0.6, -1.5, 0);
-      pyramid.rotation.y = Math.PI / 4;
-      scene.add(pyramid);
-    })();
+    var lampFoot = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.38, 0.08, 32), lampStandMat);
+    lampFoot.position.y = -1.36;
+    lampGroup.add(lampFoot);
 
-    (function addProjectionScreen() {
-      var screenPosition = new THREE.Vector3(-7.27, 1.0, 4.37);
-      var screenGeometry = new THREE.CylinderGeometry(15.0, 15.0, 14.0, 64, 16, true, -0.7, 1.4);
-      var screenMesh = new THREE.Mesh(
-        screenGeometry,
-        new THREE.MeshStandardMaterial({
-          color: 0xaaddf0,
-          roughness: 1,
-          metalness: 0,
-          side: THREE.DoubleSide
-        })
-      );
-      var gridMesh = new THREE.Mesh(
-        screenGeometry.clone(),
-        new THREE.MeshBasicMaterial({
-          color: 0x336677,
-          wireframe: true,
-          transparent: true,
-          opacity: 0.4,
-          side: THREE.DoubleSide,
-          polygonOffset: true,
-          polygonOffsetFactor: -1
-        })
-      );
+    var bulb = new THREE.Mesh(new THREE.SphereGeometry(0.24, 32, 32), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    lampGroup.add(bulb);
 
-      screenMesh.rotation.y = 2.07;
-      screenMesh.position.copy(screenPosition);
-      screenMesh.receiveShadow = true;
-      scene.add(screenMesh);
+    var glowTex = makeGlowTexture('rgba(255,255,255,1)', 'rgba(0,100,200,0)');
+    var corona = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: glowTex,
+      color: 0xe0f7ff,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    }));
+    corona.scale.set(3.0, 3.0, 3.0);
+    lampGroup.add(corona);
 
-      gridMesh.rotation.y = 2.07;
-      gridMesh.position.copy(screenPosition);
-      scene.add(gridMesh);
-    })();
+    var groundPool = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 4.5), new THREE.MeshBasicMaterial({
+      map: glowTex,
+      color: 0x00f0ff,
+      transparent: true,
+      opacity: 0.45,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    }));
+    groundPool.rotation.x = -Math.PI / 2;
+    groundPool.position.y = -1.38;
+    lampGroup.add(groundPool);
 
-    (function addFloorGrid() {
-      var floor = new THREE.Mesh(
-        new THREE.PlaneGeometry(22, 16, 22, 16),
-        new THREE.MeshBasicMaterial({
-          color: 0x40e0d0,
-          wireframe: true,
-          transparent: true,
-          opacity: 0.055
-        })
-      );
+    var spotLight = new THREE.SpotLight(0xe8f6ff, 7.5, 30, Math.PI / 4, 0.35, 0.9);
+    spotLight.position.copy(lightPos);
+    spotLight.target.position.set(screenX, objPos.y + 0.3, objPos.z);
+    spotLight.castShadow = true;
+    spotLight.shadow.mapSize.width = 2048;
+    spotLight.shadow.mapSize.height = 2048;
+    spotLight.shadow.bias = -0.0005;
+    spotLight.shadow.camera.near = 0.5;
+    spotLight.shadow.camera.far = 25;
+    worldGroup.add(spotLight);
+    worldGroup.add(spotLight.target);
 
-      floor.rotation.x = -Math.PI / 2;
-      floor.position.y = -2.4;
-      scene.add(floor);
-    })();
+    var pointLight = new THREE.PointLight(0xffffff, 3.5, 20);
+    pointLight.position.copy(lightPos);
+    worldGroup.add(pointLight);
+    worldGroup.add(lampGroup);
 
-    (function addRays() {
-      var linesGroup = new THREE.Group();
-      var rayMaterial = new THREE.LineBasicMaterial({
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.45
-      });
+    // Obstacle & Pedestal
+    var obstacleGroup = new THREE.Group();
+    obstacleGroup.position.copy(objPos);
 
-      scene.add(linesGroup);
-      positionsAttr = objectGeometry.attributes.position;
+    var towerMat = new THREE.LineBasicMaterial({ color: 0x88d4f8, transparent: true, opacity: 0.85 });
+    var baseW = 0.95;
+    var topW = 0.28;
+    var yBottom = groundY - objPos.y;
+    var yTop = -0.65;
+    var towerLines = [];
 
-      for (var i = 0; i < positionsAttr.count; i += 1) {
-        var vertex = new THREE.Vector3().fromBufferAttribute(positionsAttr, i);
-        if (!uniquePoints.some(function (point) { return point.distanceTo(vertex) < 0.1; })) {
-          uniquePoints.push(vertex);
-        }
+    var b0 = new THREE.Vector3(-baseW / 2, yBottom, -baseW / 2);
+    var b1 = new THREE.Vector3(baseW / 2, yBottom, -baseW / 2);
+    var b2 = new THREE.Vector3(baseW / 2, yBottom, baseW / 2);
+    var b3 = new THREE.Vector3(-baseW / 2, yBottom, baseW / 2);
+    var t0 = new THREE.Vector3(-topW / 2, yTop, -topW / 2);
+    var t1 = new THREE.Vector3(topW / 2, yTop, -topW / 2);
+    var t2 = new THREE.Vector3(topW / 2, yTop, topW / 2);
+    var t3 = new THREE.Vector3(-topW / 2, yTop, topW / 2);
+
+    towerLines.push(b0, t0, b1, t1, b2, t2, b3, t3);
+    towerLines.push(b0, b1, b1, b2, b2, b3, b3, b0);
+    towerLines.push(t0, t1, t1, t2, t2, t3, t3, t0);
+    towerLines.push(b0, b2, b1, b3);
+
+    for (var tier = 1; tier < 3; tier++) {
+      var f = tier / 3;
+      var yMid = yBottom + (yTop - yBottom) * f;
+      var wMid = baseW + (topW - baseW) * f;
+      var m0 = new THREE.Vector3(-wMid / 2, yMid, -wMid / 2);
+      var m1 = new THREE.Vector3(wMid / 2, yMid, -wMid / 2);
+      var m2 = new THREE.Vector3(wMid / 2, yMid, wMid / 2);
+      var m3 = new THREE.Vector3(-wMid / 2, yMid, wMid / 2);
+      towerLines.push(m0, m1, m1, m2, m2, m3, m3, m0);
+
+      var prevF = (tier - 1) / 3;
+      var prevY = yBottom + (yTop - yBottom) * prevF;
+      var prevW = baseW + (topW - baseW) * prevF;
+      var p0 = new THREE.Vector3(-prevW / 2, prevY, -prevW / 2);
+      var p1 = new THREE.Vector3(prevW / 2, prevY, -prevW / 2);
+      var p2 = new THREE.Vector3(prevW / 2, prevY, prevW / 2);
+      var p3 = new THREE.Vector3(-prevW / 2, prevY, prevW / 2);
+      towerLines.push(p0, m1, p1, m0, p1, m2, p2, m1, p2, m3, p3, m2, p3, m0, p0, m3);
+    }
+    obstacleGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(towerLines), towerMat));
+
+    var polyGeo = new THREE.DodecahedronGeometry(1.25, 0);
+    var polyMesh = new THREE.Mesh(polyGeo, new THREE.MeshStandardMaterial({
+      color: 0x5a708a,
+      roughness: 0.4,
+      metalness: 0.15,
+      flatShading: true
+    }));
+    polyMesh.castShadow = true;
+    polyMesh.receiveShadow = true;
+    obstacleGroup.add(polyMesh);
+    worldGroup.add(obstacleGroup);
+
+    // Clean straight rays
+    var rayMat = new THREE.LineBasicMaterial({ color: 0xdff4ff, transparent: true, opacity: 0.42, blending: THREE.AdditiveBlending });
+    var rayLinesMesh = new THREE.LineSegments(new THREE.BufferGeometry(), rayMat);
+    worldGroup.add(rayLinesMesh);
+
+    var removeDragRotate = addDragRotate(container, worldGroup, 0.005, 0.003);
+
+    var posAttr = polyGeo.attributes.position;
+    var localVertices = [];
+    for (var k = 0; k < posAttr.count; k++) {
+      var v = new THREE.Vector3().fromBufferAttribute(posAttr, k);
+      var duplicate = false;
+      for (var u = 0; u < localVertices.length; u++) {
+        if (localVertices[u].distanceToSquared(v) < 0.001) { duplicate = true; break; }
       }
+      if (!duplicate) localVertices.push(v);
+    }
 
-      uniquePoints.forEach(function () {
-        var line = new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
-          rayMaterial
-        );
-        linesGroup.add(line);
-        lines.push(line);
-      });
-    })();
-
-    removeDragRotate = addDragRotate(container, scene, 0.005, 0.003);
-
-    onResize = function () {
-      if (!container || !sceneRenderer) {
-        return;
-      }
+    var onResize = function () {
+      if (!container || !sceneRenderer) return;
       camera.aspect = Math.max(container.clientWidth, 1) / Math.max(container.clientHeight, 1);
       camera.updateProjectionMatrix();
       sceneRenderer.setSize(Math.max(container.clientWidth, 1), Math.max(container.clientHeight, 1));
     };
-
     window.addEventListener('resize', onResize);
+
     sceneCleanup = function () {
       window.removeEventListener('resize', onResize);
       removeDragRotate();
     };
 
+    var time = 0;
     function animate() {
       sceneAnimationId = window.requestAnimationFrame(animate);
+      if (window.IFP_VISIBLE === false || currentScreenId !== 'screen-chapter-detail') return;
 
-      if (window.IFP_VISIBLE === false || currentScreenId !== 'screen-chapter-detail') {
-        return;
+      time += 0.016;
+      polyMesh.rotation.y = time * 0.2;
+      polyMesh.rotation.x = Math.sin(time * 0.15) * 0.12;
+
+      var pulse = Math.sin(time * 3) * 0.12;
+      corona.scale.set(3.0 + pulse, 3.0 + pulse, 3.0 + pulse);
+
+      var rayPoints = [];
+      for (var idx = 0; idx < localVertices.length; idx++) {
+        var worldV = localVertices[idx].clone().applyMatrix4(polyMesh.matrix).add(objPos);
+        var dir = new THREE.Vector3().subVectors(worldV, lightPos);
+        if (dir.x < -0.01) {
+          var timeFactor = (screenX - lightPos.x) / dir.x;
+          if (timeFactor > 0) {
+            var hitScreen = new THREE.Vector3().copy(lightPos).addScaledVector(dir, timeFactor);
+            rayPoints.push(lightPos.clone(), hitScreen);
+          }
+        }
       }
 
-      time += 0.012;
-      objectGroup.rotation.y += 0.002;
-      objectGroup.rotation.x += 0.001;
-      objectGroup.updateMatrixWorld();
-
-      uniquePoints.forEach(function (localPosition, index) {
-        var worldPosition = localPosition.clone().applyMatrix4(objectGroup.matrixWorld);
-        var direction = worldPosition.clone().sub(lightPosition).normalize();
-        var endPosition = lightPosition.clone().add(direction.multiplyScalar(24));
-        var buffer = new Float32Array([
-          lightPosition.x, lightPosition.y, lightPosition.z,
-          endPosition.x, endPosition.y, endPosition.z
-        ]);
-        lines[index].geometry.setAttribute('position', new THREE.BufferAttribute(buffer, 3));
-      });
-
-      if (corona) {
-        var pulse = 1 + Math.sin(time * 1.8) * 0.14;
-        corona.scale.set(2.2 * pulse, 2.2 * pulse, 1);
+      if (rayPoints.length > 0) {
+        rayLinesMesh.geometry.dispose();
+        rayLinesMesh.geometry = new THREE.BufferGeometry().setFromPoints(rayPoints);
       }
 
-      pointLight.intensity = 5.0 + Math.sin(time * 3.5) * 0.5 + (Math.random() - 0.5) * 0.2;
       renderer.render(scene, camera);
     }
-
     animate();
   }
 

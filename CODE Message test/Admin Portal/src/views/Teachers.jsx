@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Search, Mail, BookOpen, Star, Plus, ShieldCheck, CheckCircle, MessageSquare, ExternalLink, X, Loader2, AlertCircle } from 'lucide-react';
 import Card from '../components/Card';
 import { supabase } from '../supabase';
+import { usePresence } from '../hooks/usePresence';
 
 export default function Teachers() {
   const [teachers, setTeachers] = useState([]);
@@ -18,38 +19,14 @@ export default function Teachers() {
     department: 'Science & Physics',
     role: 'Subject Faculty'
   });
-  const [onlineEmails, setOnlineEmails] = useState(new Set());
+
+  // Presence comes from PresenceProvider — no own channel needed
+  const { isOnline } = usePresence();
 
   useEffect(() => {
     loadTeachers();
-
-    try {
-      const existing = supabase.getChannels().find(ch => ch.topic === 'realtime:public:online-users');
-      if (existing) {
-        supabase.removeChannel(existing);
-      }
-    } catch (e) {}
-
-    const presenceChannel = supabase.channel('public:online-users');
-    presenceChannel
-      .on('presence', { event: 'sync' }, () => {
-        const state = presenceChannel.presenceState();
-        const emails = new Set();
-        Object.keys(state).forEach(key => {
-          emails.add(key.toLowerCase());
-          const presences = state[key] || [];
-          presences.forEach(p => {
-            if (p.email) emails.add(p.email.toLowerCase());
-          });
-        });
-        setOnlineEmails(emails);
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(presenceChannel);
-    };
   }, []);
+
 
   // Fetch only real database records from Supabase
   const loadTeachers = async () => {
@@ -342,11 +319,24 @@ export default function Teachers() {
               <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between', gap: '16px' }}>
                 <div>
                   <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginBottom: '14px' }}>
-                    <img
-                      src={teacher.avatar}
-                      alt={teacher.name}
-                      style={{ width: '56px', height: '56px', borderRadius: '50%', border: '2px solid var(--brand-border, rgba(0, 240, 255, 0.4))', objectFit: 'cover', background: '#0a0f1d' }}
-                    />
+                    <div style={{ position: 'relative', width: '56px', height: '56px', flexShrink: 0 }}>
+                      <img
+                        src={teacher.avatar}
+                        alt={teacher.name}
+                        style={{ width: '56px', height: '56px', borderRadius: '50%', border: '2px solid var(--brand-border, rgba(0, 240, 255, 0.4))', objectFit: 'cover', background: '#0a0f1d' }}
+                      />
+                      <span style={{
+                        position: 'absolute',
+                        bottom: '2px',
+                        right: '2px',
+                        width: '12px',
+                        height: '12px',
+                        borderRadius: '50%',
+                        background: isOnline(teacher.email) ? '#10B981' : '#64748B',
+                        border: '2px solid #0D1424',
+                        boxShadow: isOnline(teacher.email) ? '0 0 8px rgba(16, 185, 129, 0.8)' : 'none'
+                      }}></span>
+                    </div>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <h4 style={{ color: '#fff', fontSize: '1.15rem', fontWeight: '800', margin: 0 }}>{teacher.name}</h4>
@@ -369,9 +359,9 @@ export default function Teachers() {
                     </div>
 
                     {(() => {
-                      const isOnline = teacher.email && onlineEmails.has(teacher.email.toLowerCase());
-                      const statusText = isOnline ? 'Online' : 'Offline';
-                      const statusColor = isOnline ? '#10B981' : '#64748B';
+                      const online = isOnline(teacher.email);
+                      const statusText = online ? 'Online' : 'Offline';
+                      const statusColor = online ? '#10B981' : '#64748B';
                       return (
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                           <span style={{ color: '#94a3b8' }}>Verified Status:</span>

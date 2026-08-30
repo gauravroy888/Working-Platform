@@ -31,3 +31,9 @@ When asked to document a component or API:
 1. Extract component structure, inputs/outputs, and data flow.
 2. Link related sub-components using `[[WikiLink]]` syntax.
 3. Save note in `CODE Message Test/Admin Portal/` or `CODE Message Test/Student Portal/`.
+
+### 3. Architecture Decision Records (ADRs)
+When recording a persistent architecture decision (e.g. React shell + HTML standalone embed, Aria bot singleton):
+1. Format as an ADR note titled `ADR - [Decision Title]`.
+2. Include: Status (Approved), Context, Decision, Consequences, and Invariants.
+3. Sync to `EdTech Island/Architecture/` in Obsidian via MCP.

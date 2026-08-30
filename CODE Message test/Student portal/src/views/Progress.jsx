@@ -1,3 +1,4 @@
+import { supabase } from '../supabase';
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Card from '../components/Card';
@@ -11,13 +12,36 @@ export default function Progress() {
   const [testResults, setTestResults] = useState({});
 
   useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem('student_test_results') || '{}');
-      setTestResults(stored);
-    } catch {
-      setTestResults({});
-    }
+    fetchRealProgressData();
   }, []);
+
+  const fetchRealProgressData = async () => {
+    let localData = {};
+    try {
+      localData = JSON.parse(localStorage.getItem('student_test_results') || '{}');
+    } catch (e) {}
+
+    try {
+      const studentUser = JSON.parse(localStorage.getItem('edtech_student_user') || '{}');
+      if (studentUser.id) {
+        const { data, error } = await supabase
+          .from('test_submissions')
+          .select('*')
+          .eq('student_id', studentUser.id);
+        if (!error && data && data.length > 0) {
+          data.forEach(sub => {
+            localData[sub.test_id] = {
+              percentage: sub.score,
+              grade: sub.grade,
+              submittedAt: sub.submitted_at
+            };
+          });
+        }
+      }
+    } catch (e) {}
+
+    setTestResults(localData);
+  };
 
   const completedCount = Object.keys(testResults).length;
   const testScores = Object.values(testResults);

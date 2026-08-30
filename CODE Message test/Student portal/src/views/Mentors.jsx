@@ -3,6 +3,7 @@ import { Search, Star, MessageCircle, X, Mail, BookOpen, Clock, MapPin, Award, C
 import Card from '../components/Card';
 import { supabase } from '../supabase';
 import { useNavigate } from 'react-router-dom';
+import { usePresence } from '../hooks/usePresence';
 import './Mentors.css';
 
 export default function Mentors() {
@@ -11,34 +12,13 @@ export default function Mentors() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
-  const [onlineEmails, setOnlineEmails] = useState(new Set());
   const navigate = useNavigate();
+
+  // Presence comes from PresenceProvider — no own channel needed
+  const { isOnline } = usePresence();
 
   useEffect(() => {
     fetchTeachers();
-
-    try {
-      const existing = supabase.getChannels().find(ch => ch.topic === 'realtime:public:online-users');
-      if (existing) {
-        supabase.removeChannel(existing);
-      }
-    } catch (e) {}
-
-    const presenceChannel = supabase.channel('public:online-users');
-    presenceChannel
-      .on('presence', { event: 'sync' }, () => {
-        const state = presenceChannel.presenceState();
-        const emails = new Set();
-        Object.keys(state).forEach(key => {
-          emails.add(key.toLowerCase());
-          const presences = state[key] || [];
-          presences.forEach(p => {
-            if (p.email) emails.add(p.email.toLowerCase());
-          });
-        });
-        setOnlineEmails(emails);
-      })
-      .subscribe();
 
     const tChannel = supabase
       .channel('public:teachers_sync')
@@ -51,11 +31,11 @@ export default function Mentors() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(presenceChannel);
       supabase.removeChannel(tChannel);
       supabase.removeChannel(uChannel);
     };
   }, []);
+
 
   const fetchTeachers = async () => {
     setIsLoading(true);
@@ -187,7 +167,7 @@ export default function Mentors() {
             <p style={{ color: '#94a3b8', padding: '20px' }}>No teachers found in database.</p>
           ) : (
             filteredTeachers.map(mentor => {
-              const isUserOnline = mentor.email && onlineEmails.has(mentor.email.toLowerCase());
+              const isUserOnline = isOnline(mentor.email);
               const displayStatus = isUserOnline ? 'Online' : 'Offline';
               const statusColor = isUserOnline ? '#10B981' : '#64748B';
 
@@ -196,8 +176,12 @@ export default function Mentors() {
                   <div className="mentor-info-block">
                     <div style={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0 }}>
                       <img 
-                        src={mentor.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${mentor.name}`} 
+                        src={mentor.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(mentor.name)}&clothing=blazerAndShirt&backgroundColor=b6e3f4`} 
                         alt={mentor.name} 
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(mentor.name)}&clothing=blazerAndShirt&backgroundColor=b6e3f4`;
+                        }}
                         style={{
                           width: '100%',
                           height: '100%',
@@ -320,8 +304,12 @@ export default function Mentors() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
               <div style={{ position: 'relative', width: '72px', height: '72px', flexShrink: 0 }}>
                 <img
-                  src={selectedTeacher.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedTeacher.name}`}
+                  src={selectedTeacher.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(selectedTeacher.name)}&clothing=blazerAndShirt&backgroundColor=b6e3f4`}
                   alt={selectedTeacher.name}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(selectedTeacher.name)}&clothing=blazerAndShirt&backgroundColor=b6e3f4`;
+                  }}
                   style={{
                     width: '100%',
                     height: '100%',
@@ -338,7 +326,7 @@ export default function Mentors() {
                   width: '14px',
                   height: '14px',
                   borderRadius: '50%',
-                  background: (selectedTeacher.email && onlineEmails.has(selectedTeacher.email.toLowerCase())) ? '#10B981' : '#64748B',
+                  background: isOnline(selectedTeacher.email) ? '#10B981' : '#64748B',
                   border: '2px solid #0D1424'
                 }}></span>
               </div>

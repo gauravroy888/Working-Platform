@@ -13,6 +13,7 @@ import {
   QuotedMessageBubble, PinnedMessageBanner, TypingIndicatorBanner, ForwardedMessageTag,
   ForwardMessageModal, extractFirstUrl, formatMessageWithLinks, formatTimeAgo 
 } from './MediaChatComponents';
+import { usePresence } from '../hooks/usePresence';
 import './ChatInterface.css';
 
 export default function ChatInterface({ currentUser: propUser, activeTab, selectedClass, isManager, onUnreadCountChange }) {
@@ -45,7 +46,8 @@ export default function ChatInterface({ currentUser: propUser, activeTab, select
   const [isUploading, setIsUploading] = useState(false);
 
   // Advanced chat feature states
-  const [onlineEmails, setOnlineEmails] = useState(new Set());
+  // Presence comes from PresenceProvider — no own channel needed
+  const { isOnline } = usePresence();
   const [typingUser, setTypingUser] = useState(null);
   const [stagedReply, setStagedReply] = useState(null);
   const [stagedImage, setStagedImage] = useState(null);
@@ -78,49 +80,6 @@ export default function ChatInterface({ currentUser: propUser, activeTab, select
       setTimeout(() => el.classList.remove('chat-bubble-highlight'), 1800);
     }
   };
-
-  // 1. Online Presence Tracking
-  useEffect(() => {
-    if (!currentUser?.email) return;
-
-    try {
-      const existing = supabase.getChannels().find(ch => ch.topic === 'realtime:public:online-users');
-      if (existing) {
-        supabase.removeChannel(existing);
-      }
-    } catch (e) {}
-
-    const presenceChannel = supabase.channel('public:online-users', {
-      config: { presence: { key: currentUser.email.toLowerCase() } }
-    });
-
-    presenceChannel
-      .on('presence', { event: 'sync' }, () => {
-        const state = presenceChannel.presenceState();
-        const emails = new Set();
-        Object.keys(state).forEach(key => {
-          emails.add(key.toLowerCase());
-          const presences = state[key] || [];
-          presences.forEach(p => {
-            if (p.email) emails.add(p.email.toLowerCase());
-          });
-        });
-        setOnlineEmails(emails);
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await presenceChannel.track({
-            email: currentUser.email.toLowerCase(),
-            name: currentUser.name || 'Student',
-            online_at: new Date().toISOString()
-          });
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(presenceChannel);
-    };
-  }, [currentUser]);
 
   // 2. Fetch Profiles, Groups & Conversation Activity
   const fetchProfilesAndConversations = async () => {
@@ -832,7 +791,7 @@ export default function ChatInterface({ currentUser: propUser, activeTab, select
             const hasColor = contact.isGroup && contactNameStr.includes('|');
             const bgColor = hasColor ? contactNameStr.split('|')[0] : 'var(--accent-purple)';
             const displayName = hasColor ? contactNameStr.split('|')[1] : contactNameStr;
-            const isUserOnline = !contact.isGroup && onlineEmails.has(contact.email.toLowerCase());
+            const isUserOnline = !contact.isGroup && isOnline(contact.email);
             const conv = conversationsMap[key];
 
             return (
@@ -891,7 +850,7 @@ export default function ChatInterface({ currentUser: propUser, activeTab, select
                       src={activeContact.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(activeContact.name || 'User')}&backgroundColor=b6e3f4`} 
                       alt={activeContact.name} 
                     />
-                    {onlineEmails.has(activeContact.email.toLowerCase()) && <span className="presence-dot" />}
+                    {isOnline(activeContact.email) && <span className="presence-dot" />}
                   </div>
                 )}
               </div>
@@ -900,7 +859,7 @@ export default function ChatInterface({ currentUser: propUser, activeTab, select
                 <span>
                   {activeContact.isGroup 
                     ? `Group Chat (${activeContact.participants?.length || 0} members)` 
-                    : (onlineEmails.has(activeContact.email.toLowerCase()) ? <span style={{ color: '#10B981', fontWeight: 600 }}>● Active Now</span> : activeContact.email)}
+                    : (isOnline(activeContact.email) ? <span style={{ color: '#10B981', fontWeight: 600 }}>● Active Now</span> : activeContact.email)}
                 </span>
               </div>
               <div className="chat-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

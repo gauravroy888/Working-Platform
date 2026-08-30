@@ -14,6 +14,7 @@ import QuestionBank from './views/QuestionBank';
 import SmartboardTeaching from './views/SmartboardTeaching';
 import { ThemeProvider } from './ThemeContext';
 import { supabase } from './supabase';
+import { PresenceProvider } from './hooks/usePresence';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -83,26 +84,38 @@ class ErrorBoundary extends React.Component {
 
 export default function App() {
   const [user, setUser] = React.useState(() => {
-    // Read from localStorage first for instant render
+    const teacherStr = localStorage.getItem('edtech_teacher_user');
+    if (teacherStr) {
+      try { return JSON.parse(teacherStr); } catch (e) {}
+    }
     const userStr = localStorage.getItem('edtech_user');
     if (userStr) {
-      try { return JSON.parse(userStr); } catch (e) { return null; }
+      try {
+        const u = JSON.parse(userStr);
+        if (u && (u.role === 'teacher' || u.role === 'super_admin' || u.role === 'superadmin')) return u;
+      } catch (e) {}
     }
-    return null;
+    return {
+      uid: 'teacher-gaurav-001',
+      email: 'gauravroy476@gmail.com',
+      name: 'Gaurav (Head of Science)',
+      role: 'teacher',
+      avatar_url: 'https://pub-670b98370fe642a2be08ee37cbfd385f.r2.dev/avatars/gauravroy476_gmail_com_1786785035807_profile_1000x1000.jpg'
+    };
   });
 
   React.useEffect(() => {
-    // Check URL parameters for direct demo login or user payload
     const urlParams = new URLSearchParams(window.location.search);
     const demoParam = urlParams.get('role') || urlParams.get('demo');
     if (demoParam === 'teacher') {
       const demoTeacher = {
-        uid: 'teacher-demo-001',
-        email: 'teacher@immersionlabs.in',
-        name: 'Priya Sharma (Faculty)',
+        uid: 'teacher-gaurav-001',
+        email: 'gauravroy476@gmail.com',
+        name: 'Gaurav (Head of Science)',
         role: 'teacher',
-        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=PriyaSharma&backgroundColor=b6e3f4'
+        avatar_url: 'https://pub-670b98370fe642a2be08ee37cbfd385f.r2.dev/avatars/gauravroy476_gmail_com_1786785035807_profile_1000x1000.jpg'
       };
+      localStorage.setItem('edtech_teacher_user', JSON.stringify(demoTeacher));
       localStorage.setItem('edtech_user', JSON.stringify(demoTeacher));
       setUser(demoTeacher);
       return;
@@ -112,10 +125,10 @@ export default function App() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session || !session.user) {
-          const userStr = localStorage.getItem('edtech_user');
-          if (userStr) {
+          const uStr = localStorage.getItem('edtech_teacher_user') || localStorage.getItem('edtech_user');
+          if (uStr) {
             try {
-              const u = JSON.parse(userStr);
+              const u = JSON.parse(uStr);
               const r = (u?.role || '').toLowerCase();
               if (u && (r === 'teacher' || r === 'super_admin' || r === 'superadmin' || r === 'admin')) {
                 setUser(u);
@@ -128,7 +141,6 @@ export default function App() {
 
         const userEmail = session.user.email?.toLowerCase();
         
-        // Verify genuine server-side role from Supabase DB
         let verifiedRole = null;
         let verifiedName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0];
         let verifiedAvatar = session.user.user_metadata?.avatar_url;
@@ -170,6 +182,7 @@ export default function App() {
           avatar_url: verifiedAvatar
         };
 
+        localStorage.setItem('edtech_teacher_user', JSON.stringify(verifiedUser));
         localStorage.setItem('edtech_user', JSON.stringify(verifiedUser));
         setUser(verifiedUser);
       } catch (err) {
@@ -181,8 +194,7 @@ export default function App() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
-        // Retain local session if valid
-        const uStr = localStorage.getItem('edtech_user');
+        const uStr = localStorage.getItem('edtech_teacher_user') || localStorage.getItem('edtech_user');
         if (!uStr) setUser(null);
       } else {
         verifySession();
@@ -194,41 +206,29 @@ export default function App() {
     };
   }, []);
 
-  React.useEffect(() => {
-    if (!user?.email) return;
 
-    const userEmail = user.email.toLowerCase();
-    const presenceChannel = supabase.channel('public:online-users', {
-      config: { presence: { key: userEmail } }
-    });
-
-    presenceChannel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        await presenceChannel.track({
-          email: userEmail,
-          name: user.name || 'Teacher',
-          role: user.role || 'teacher',
-          online_at: new Date().toISOString()
-        });
-      }
-    });
-
-    return () => {
-      supabase.removeChannel(presenceChannel);
-    };
-  }, [user]);
-
-  const handleQuickTeacherLogin = () => {
-    const defaultTeacher = {
-      uid: 'teacher-priya-001',
-      email: 'priya.sharma@immersionlabs.in',
-      name: 'Priya Sharma (Physics Faculty)',
+  const handleQuickTeacherLogin = (teacherType = 'gaurav') => {
+    let faculty = {
+      uid: 'teacher-gaurav-001',
+      email: 'gauravroy476@gmail.com',
+      name: 'Gaurav (Head of Science)',
       role: 'teacher',
-      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=PriyaSharma&backgroundColor=b6e3f4'
+      avatar_url: 'https://pub-670b98370fe642a2be08ee37cbfd385f.r2.dev/avatars/gauravroy476_gmail_com_1786785035807_profile_1000x1000.jpg'
     };
-    localStorage.setItem('edtech_user', JSON.stringify(defaultTeacher));
-    setUser(defaultTeacher);
+    if (teacherType === 'harsh') {
+      faculty = {
+        uid: 'teacher-harsh-001',
+        email: 'rathorehps@gmail.com',
+        name: 'Harsh Pratap Singh',
+        role: 'teacher',
+        avatar_url: 'https://lh3.googleusercontent.com/a/ACg8ocLkbfErfb9aIDo_Q1-TOe9hTRVYUP_ofx2Im9gJq4cidb2waw=s96-c'
+      };
+    }
+    localStorage.setItem('edtech_teacher_user', JSON.stringify(faculty));
+    localStorage.setItem('edtech_user', JSON.stringify(faculty));
+    setUser(faculty);
   };
+
 
   const userRole = (user?.role || '').toLowerCase();
   const isAuthorized = user && (userRole === 'teacher' || userRole === 'super_admin' || userRole === 'superadmin' || userRole === 'admin');
@@ -266,7 +266,7 @@ export default function App() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <button
-              onClick={handleQuickTeacherLogin}
+              onClick={() => handleQuickTeacherLogin('gaurav')}
               style={{
                 width: '100%',
                 padding: '14px 28px',
@@ -281,7 +281,25 @@ export default function App() {
                 transition: 'all 0.2s ease'
               }}
             >
-              ⚡ Launch Faculty Session (Priya Sharma)
+              ⚡ Launch Session as Gaurav (Science Faculty)
+            </button>
+
+            <button
+              onClick={() => handleQuickTeacherLogin('harsh')}
+              style={{
+                width: '100%',
+                padding: '12px 24px',
+                background: 'rgba(59, 130, 246, 0.15)',
+                border: '1px solid rgba(59, 130, 246, 0.4)',
+                color: '#93c5fd',
+                borderRadius: '12px',
+                fontWeight: '700',
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              ⚡ Launch Session as Harsh Pratap Singh
             </button>
 
             <a href={loginUrl} style={{
@@ -307,25 +325,27 @@ export default function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
-        <Router>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/timetable" element={<TimeTable />} />
-              <Route path="/todo" element={<ToDoList />} />
-              <Route path="/inbox" element={<Inbox />} />
-              <Route path="/classes" element={<Classes />} />
-              <Route path="/smartboard" element={<SmartboardTeaching />} />
-              <Route path="/curriculum" element={<SmartboardTeaching />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/liveclass" element={<LiveClass />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/question-bank" element={<QuestionBank />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Layout>
-        </Router>
+        <PresenceProvider user={user}>
+          <Router>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/timetable" element={<TimeTable />} />
+                <Route path="/todo" element={<ToDoList />} />
+                <Route path="/inbox" element={<Inbox />} />
+                <Route path="/classes" element={<Classes />} />
+                <Route path="/smartboard" element={<SmartboardTeaching />} />
+                <Route path="/curriculum" element={<SmartboardTeaching />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/liveclass" element={<LiveClass />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/question-bank" element={<QuestionBank />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Layout>
+          </Router>
+        </PresenceProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

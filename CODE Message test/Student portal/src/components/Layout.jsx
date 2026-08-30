@@ -4,8 +4,8 @@ import './Layout.css';
 import Sidebar from './Sidebar';
 import GlobalBroadcastBanner from './GlobalBroadcastBanner';
 import { useTheme } from '../ThemeContext';
-
 import FullscreenButton from './FullscreenButton';
+import AITutorWidget from './AITutorWidget';
 
 export default function Layout({ children }) {
   const { backgroundImage, profileName, schoolName, primaryColor } = useTheme();
@@ -48,6 +48,9 @@ export default function Layout({ children }) {
           {children}
         </div>
       </main>
+
+      {/* AI Tutor Widget — floats on all pages */}
+      <AITutorWidget />
     </div>
   );
 }

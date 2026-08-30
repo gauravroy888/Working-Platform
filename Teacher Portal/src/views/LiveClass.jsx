@@ -26,7 +26,15 @@ export default function LiveClass() {
   const [startTime, setStartTime] = useState('10:00');
   const [duration, setDuration] = useState('60'); // minutes
 
-  const mockClasses = ['Class 1st', 'Class 2nd', 'Class 3rd', 'Class 4th', 'Class 5th', 'Class 6th'];
+  const [classesList, setClassesList] = useState(['Class 1st', 'Class 2nd', 'Class 3rd', 'Class 4th', 'Class 5th', 'Class 6th']);
+
+  useEffect(() => {
+    supabase.from('classes').select('name').then(({ data, error }) => {
+      if (!error && data && data.length > 0) {
+        setClassesList(data.map(c => c.name));
+      }
+    }).catch(() => {});
+  }, []);
 
   const [testsList, setTestsList] = useState([]);
   const [isLoadingTests, setIsLoadingTests] = useState(false);
@@ -269,7 +277,7 @@ export default function LiveClass() {
                     <div>
                       <label style={{ display: 'block', fontSize: '14px', marginBottom: '5px', color: 'var(--text-secondary)' }}>Target Audience</label>
                       <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)} style={inputStyle}>
-                        {mockClasses.map(c => <option key={c} value={c} style={{background: '#1a1f2b'}}>{c}</option>)}
+                        {classesList.map(c => <option key={c} value={c} style={{background: '#1a1f2b'}}>{c}</option>)}
                       </select>
                     </div>
                     <div>
