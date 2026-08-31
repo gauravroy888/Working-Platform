@@ -13,7 +13,7 @@
 
   // ── Standalone Bot Init ───────────────────────────────────────────
 
-  var MODEL   = "gemini-1.5-flash";
+  var MODEL   = "gemini-3.6-flash";
   var MAX_H   = 12;
   var HINTS   = [
     { label:"What is this?",          value:"What is this thing on my screen? Explain it simply." },
@@ -225,16 +225,45 @@
       var u = getStudentUser();
       var b = JSON.parse(localStorage.getItem("edtech_school_branding") || "{}");
       var parts = ["Student: " + (u.name || "Student") + " | Class: " + (u.class_name || "6") + " | School: " + (b.school_name || "EdTech Island")];
-      parts.push("Platform: EdTech Island (" + (window.location.pathname || "3D Space") + ")");
+      var path = window.location.pathname;
+      var hash = window.location.hash;
+      var title = document.title;
 
-      // 1. Current active screen in Study Island navigation
-      var activeScreen = document.querySelector(".screen.active, .screen:not(.hidden):not([style*='display: none'])");
-      if (activeScreen && activeScreen.id) {
-        var screenName = activeScreen.id.replace(/^screen-/, "").toUpperCase();
-        parts.push("Current Screen: " + screenName);
+      // 1. Identify Portal & Active Navigation Route
+      if (path.indexOf('/student') !== -1) {
+        parts.push("Platform: Student Portal");
+        if (path.indexOf('/dashboard') !== -1) parts.push("Current Screen/Option: Dashboard (Overview, Assigned Courses, XP, Active Modules)");
+        else if (path.indexOf('/courses') !== -1) parts.push("Current Screen/Option: Courses Catalog (Physics, Biology, Chemistry, Custom Modules)");
+        else if (path.indexOf('/timetable') !== -1) parts.push("Current Screen/Option: Timetable & Class Schedule");
+        else if (path.indexOf('/tests') !== -1) parts.push("Current Screen/Option: Online Classes & Assessment Tests");
+        else if (path.indexOf('/chats') !== -1) parts.push("Current Screen/Option: Messages & Teacher Q&A");
+        else if (path.indexOf('/teachers') !== -1) parts.push("Current Screen/Option: Faculty & Teachers Directory");
+        else if (path.indexOf('/analytics') !== -1) parts.push("Current Screen/Option: Academic Analytics & Mastery Reports");
+        else if (path.indexOf('/settings') !== -1) parts.push("Current Screen/Option: Profile & App Settings");
+        else parts.push("Current Screen: Student Deck (" + path + ")");
+      } else if (path.indexOf('/study-island') !== -1 || title.indexOf('Study Island') !== -1 || title.indexOf('EdTech Island') !== -1) {
+        parts.push("Platform: EdTech Island (3D Immersive Simulation World)");
+        if (hash.indexOf('/chapter/') !== -1) parts.push("Current Screen/Option: Chapter Deep Dive (" + hash.replace('#/chapter/', '') + ")");
+        else if (hash.indexOf('/experience') !== -1 || path.indexOf('/experience') !== -1) parts.push("Current Screen/Option: 3D Interactive Physics Simulation (Light, Shadows & Optics)");
+        else if (hash.indexOf('/lab') !== -1 || path.indexOf('Shadow_Lab') !== -1) parts.push("Current Screen/Option: Virtual 3D Optics Lab");
+        else if (hash.indexOf('/quiz') !== -1 || path.indexOf('quiz.html') !== -1) parts.push("Current Screen/Option: Chapter Quiz & Assessment");
+        else parts.push("Current Screen/Option: 3D Island Main World Exploration");
       }
 
-      // 2. Iframe simulation or lab overlay currently open
+      // 2. Active Tab from Sidebar/Navbar
+      var activeNav = document.querySelector('nav a.active, .nav-item.active, button.active, .tab-btn.active, [aria-current="page"]');
+      if (activeNav && activeNav.textContent && activeNav.textContent.trim()) {
+        parts.push('Selected Menu Item: "' + activeNav.textContent.trim().replace(/\s+/g, ' ') + '"');
+      }
+
+      // 3. Active Learning Module / Highlighted Card
+      var activeModule = document.querySelector('[class*="ActiveLearning"], [class*="activeModule"], [class*="active-module"]');
+      if (activeModule) {
+        var modText = activeModule.textContent.replace(/\s+/g, ' ').trim().slice(0, 140);
+        parts.push('Active Learning Module: "' + modText + '"');
+      }
+
+      // 4. Iframe simulation or lab overlay currently open
       var overlay = document.getElementById("app-overlay");
       var isOverlayOpen = overlay && !overlay.classList.contains("hidden") && overlay.style.display !== "none";
       if (isOverlayOpen) {
@@ -251,25 +280,15 @@
         } catch (e) {}
       }
 
-      // 3. Current active subject, chapter, or curriculum badge
-      var badge = document.querySelector(".curriculum-badge, .header-pill");
-      if (badge && badge.textContent) parts.push("Curriculum: " + badge.textContent.trim().slice(0, 40));
-
-      var activeSubj = document.querySelector(".subject-card.active, .subject-pill.active");
-      if (activeSubj && activeSubj.textContent) parts.push("Subject: " + activeSubj.textContent.trim().slice(0, 50));
-
-      var activeChap = document.querySelector(".chapter-card.active, .chapter-title, #chapter-title, .detail-title");
-      if (activeChap && activeChap.textContent) parts.push("Chapter: " + activeChap.textContent.trim().slice(0, 80));
-
-      // 4. Visible headings / active buttons
-      var container = activeScreen || document.body;
+      // 5. Visible headings / active buttons
+      var container = document.body;
       var nodes = container.querySelectorAll("h1, h2, h3, .tab-btn.active, button.active, .sub-heading");
       var texts = [];
       var len = 0;
       for (var i = 0; i < nodes.length; i++) {
         if (len > 300) break;
         var t = (nodes[i].textContent || "").replace(/\s+/g, " ").trim();
-        if (t.length > 2 && t.length < 80 && !texts.includes(t)) {
+        if (t.length > 2 && t.length < 80 && texts.indexOf(t) === -1) {
           texts.push(t);
           len += t.length;
         }
@@ -523,13 +542,17 @@
   }
 
   // ── Speech Recognition (STT) ───────────────────────────────────────────
-  function startListen(onResult) {
+  var silenceTimer = null;
+  var transcriptBuffer = "";
+
+  function startListen(onResult, onInterim) {
     if (!window.SpeechRecognition && !window.webkitSpeechRecognition) return;
-    // STT MUST NEVER run if drawer is closed, voice mode is off, or TTS is speaking
     if (!isOpen || !voiceMode || isSpeaking || (window.speechSynthesis && window.speechSynthesis.speaking)) return;
 
     if (onResult) activeCallback = onResult;
     if (retryTimer) clearTimeout(retryTimer);
+    if (silenceTimer) clearTimeout(silenceTimer);
+    transcriptBuffer = "";
 
     if (isListening && recognition) return;
 
@@ -540,10 +563,26 @@
 
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SR();
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.continuous = true;
+    recognition.interimResults = true;
     recognition.lang = "en-IN";
     recognition.maxAlternatives = 1;
+
+    var accumulatedFinal = "";
+
+    function dispatchFinal(text) {
+      var clean = (text || "").trim();
+      if (!clean) return;
+      if (isEchoOfLastSpeech(clean, lastSpokenText)) {
+        console.warn("STT: Discarded self-echoed speaker audio:", clean);
+        accumulatedFinal = "";
+        transcriptBuffer = "";
+        return;
+      }
+      var cb = activeCallback;
+      stopListen();
+      if (cb) cb(clean);
+    }
 
     recognition.onstart = function () {
       if (!isOpen || !voiceMode) { stopListen(); return; }
@@ -555,45 +594,50 @@
 
     recognition.onresult = function (e) {
       if (!isOpen || !voiceMode) { stopListen(); return; }
-      var transcript = (e.results && e.results[0] && e.results[0][0] && e.results[0][0].transcript) || "";
-      var text = transcript.trim();
-      if (text) {
-        if (isEchoOfLastSpeech(text, lastSpokenText)) {
-          console.warn("STT: Discarded self-echoed speaker audio:", text);
-          isListening = false;
-          setBotState("idle");
-          stopAudioAnalyser();
-          updateStatusLabel();
-          if (isOpen && voiceMode && activeCallback) {
-            retryTimer = setTimeout(function () {
-              if (isOpen && voiceMode && activeCallback && !isListening) {
-                startListen(activeCallback);
-              }
-            }, 600);
-          }
-          return;
+      var interim = "";
+      for (var i = e.resultIndex; i < e.results.length; ++i) {
+        var item = e.results[i];
+        if (item.isFinal) {
+          accumulatedFinal += item[0].transcript + " ";
+        } else {
+          interim += item[0].transcript;
         }
-        isListening = false;
-        setBotState("idle");
-        stopAudioAnalyser();
-        updateStatusLabel();
-        var cb = activeCallback;
-        if (cb) cb(text);
+      }
+
+      var currentLiveText = (accumulatedFinal + interim).trim();
+      transcriptBuffer = currentLiveText;
+
+      // Update textarea in real-time
+      if ($input && currentLiveText) {
+        $input.value = currentLiveText;
+      }
+      if (onInterim && currentLiveText) {
+        onInterim(currentLiveText);
+      }
+
+      // Fast Smart Silence Detection: auto-finalize 750ms after speech stops
+      if (silenceTimer) clearTimeout(silenceTimer);
+      if (currentLiveText.length > 1) {
+        silenceTimer = setTimeout(function () {
+          if (transcriptBuffer) {
+            dispatchFinal(transcriptBuffer);
+          }
+        }, 750);
       }
     };
 
     recognition.onerror = function (e) {
-      console.warn("STT error:", e.error);
-      isListening = false;
-      setBotState("idle");
-      stopAudioAnalyser();
-      updateStatusLabel();
-      if (isOpen && voiceMode && activeCallback && (e.error === "no-speech" || e.error === "aborted" || e.error === "network")) {
-        retryTimer = setTimeout(function () {
-          if (isOpen && voiceMode && activeCallback && !isListening) {
-            startListen(activeCallback);
-          }
-        }, 500);
+      if (silenceTimer) clearTimeout(silenceTimer);
+      if (e.error === "no-speech" || e.error === "aborted" || e.error === "network") {
+        if (isOpen && voiceMode && activeCallback && !isSpeaking) {
+          retryTimer = setTimeout(function () {
+            if (isOpen && voiceMode && activeCallback && !isListening) {
+              startListen(activeCallback, onInterim);
+            }
+          }, 350);
+        }
+      } else {
+        console.warn("STT error:", e.error);
       }
     };
 
@@ -602,12 +646,16 @@
       setBotState("idle");
       stopAudioAnalyser();
       updateStatusLabel();
+      if (transcriptBuffer && transcriptBuffer.trim().length > 1) {
+        dispatchFinal(transcriptBuffer);
+        return;
+      }
       if (isOpen && voiceMode && activeCallback && !isLoading && !isSpeaking) {
         retryTimer = setTimeout(function () {
           if (isOpen && voiceMode && activeCallback && !isListening) {
-            startListen(activeCallback);
+            startListen(activeCallback, onInterim);
           }
-        }, 400);
+        }, 300);
       }
     };
 
@@ -615,14 +663,10 @@
       recognition.start();
     } catch (e) {
       console.warn("STT start error, scheduling retry:", e.message);
-      isListening = false;
-      setBotState("idle");
-      stopAudioAnalyser();
-      updateStatusLabel();
       if (isOpen && voiceMode && activeCallback) {
         retryTimer = setTimeout(function () {
           if (isOpen && voiceMode && activeCallback && !isListening) {
-            startListen(activeCallback);
+            startListen(activeCallback, onInterim);
           }
         }, 500);
       }
@@ -990,6 +1034,82 @@
     // Destroy any stale bot DOM from a previous load
     var stale = document.querySelectorAll(".ai-tutor-widget, .ai-drawer");
     stale.forEach(function (el) { el.remove(); });
+
+    // ── Inject self-contained CSS (matches Student Portal React AITutorWidget.css exactly) ──
+    if (!document.getElementById("aria-widget-css")) {
+      var styleEl = document.createElement("style");
+      styleEl.id = "aria-widget-css";
+      styleEl.textContent = [
+        ".ai-tutor-widget{position:fixed;bottom:24px;right:24px;width:120px;height:140px;cursor:pointer;z-index:9999;user-select:none;transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1);-webkit-tap-highlight-color:transparent;}",
+        ".ai-tutor-widget:hover{transform:scale(1.07) translateY(-2px);}.ai-tutor-widget.open{transform:scale(0.94);}",
+        ".bot-svg{width:100%;height:100%;display:block;pointer-events:none;filter:drop-shadow(0 6px 20px rgba(148,121,255,0.55));transition:filter 0.3s ease;}",
+        ".ai-tutor-widget:hover .bot-svg{filter:drop-shadow(0 10px 32px rgba(148,121,255,0.85));}",
+        ".state-dot{position:absolute;bottom:30px;right:14px;width:11px;height:11px;border-radius:50%;border:2px solid rgba(6,10,20,0.95);transition:background-color 0.3s;}",
+        ".state-dot--idle{background:#10B981;}.state-dot--listening{background:#3B82F6;animation:sdot 1s infinite;}.state-dot--thinking{background:#F59E0B;animation:sdot 0.8s infinite;}.state-dot--speaking{background:#A855F7;animation:sdot 0.6s infinite;}.state-dot--error{background:#EF4444;}",
+        "@keyframes sdot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.75);}}",
+        ".widget-tooltip{position:absolute;bottom:calc(100% + 10px);right:0;background:rgba(8,14,28,0.97);border:1px solid rgba(148,121,255,0.4);color:#e2e8f0;font-size:0.76rem;font-weight:700;padding:6px 12px;border-radius:10px;white-space:nowrap;opacity:0;transform:translateY(6px);transition:opacity 0.2s,transform 0.2s;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.35);}",
+        ".ai-tutor-widget:hover .widget-tooltip{opacity:1;transform:translateY(0);}",
+        ".ai-drawer{position:fixed;bottom:178px;right:24px;width:365px;max-height:68vh;background:rgba(7,12,26,0.98);backdrop-filter:blur(24px);border:1px solid rgba(148,121,255,0.28);border-radius:22px;z-index:9998;display:none;flex-direction:column;overflow:hidden;box-shadow:0 28px 72px rgba(0,0,0,0.55),0 0 0 1px rgba(148,121,255,0.08) inset;animation:drawerIn 0.3s cubic-bezier(0.34,1.56,0.64,1);}",
+        ".ai-drawer.ai-drawer--open{display:flex;}",
+        "@keyframes drawerIn{from{opacity:0;transform:translateY(20px) scale(0.95);}to{opacity:1;transform:translateY(0) scale(1);}}",
+        ".ai-drawer__header{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:rgba(148,121,255,0.07);border-bottom:1px solid rgba(148,121,255,0.14);flex-shrink:0;}",
+        ".ai-drawer__title{display:flex;align-items:center;gap:10px;}",
+        ".ai-drawer__sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:#10B981;}",
+        ".ai-drawer__sdot.active{background:#9479ff;animation:sdot 1s infinite;}",
+        ".ai-drawer__name{font-size:0.88rem;font-weight:800;color:#c4b5fd;letter-spacing:0.3px;}",
+        ".ai-drawer__sub{font-size:0.72rem;color:#64748b;margin-top:1px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
+        ".ai-drawer__hdr-actions{display:flex;gap:4px;}",
+        ".ai-drawer__icon-btn{background:none;border:none;color:#475569;cursor:pointer;padding:7px;border-radius:8px;display:flex;align-items:center;transition:color 0.2s,background 0.2s;}",
+        ".ai-drawer__icon-btn:hover{color:#e2e8f0;background:rgba(255,255,255,0.06);}",
+        ".ai-drawer__icon-btn.muted{color:#f59e0b;background:rgba(245,158,11,0.12);}",
+        ".ai-drawer__msgs{flex:1;overflow-y:auto;padding:14px 15px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:rgba(148,121,255,0.25) transparent;}",
+        ".ai-drawer__msgs::-webkit-scrollbar{width:4px;}.ai-drawer__msgs::-webkit-scrollbar-track{background:transparent;}.ai-drawer__msgs::-webkit-scrollbar-thumb{background:rgba(148,121,255,0.25);border-radius:4px;}",
+        ".ai-drawer__empty{text-align:center;color:#475569;padding:18px 10px;font-size:0.86rem;line-height:1.65;display:flex;flex-direction:column;align-items:center;gap:10px;}",
+        ".ai-drawer__empty-icon{font-size:2.6rem;}.ai-drawer__empty p{margin:0;}",
+        ".ai-drawer__msg{display:flex;align-items:flex-end;gap:7px;animation:msgIn 0.22s ease;}",
+        "@keyframes msgIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}",
+        ".ai-drawer__msg--user{flex-direction:row-reverse;}",
+        ".ai-drawer__avatar{font-size:1.15rem;flex-shrink:0;margin-bottom:2px;}",
+        ".ai-drawer__bubble{max-width:79%;padding:9px 13px;border-radius:16px;font-size:0.865rem;line-height:1.6;position:relative;word-wrap:break-word;white-space:pre-wrap;}",
+        ".ai-drawer__msg--user .ai-drawer__bubble{background:linear-gradient(135deg,#6d28d9,#4c5eff);color:#fff;border-bottom-right-radius:4px;}",
+        ".ai-drawer__msg--model .ai-drawer__bubble{background:rgba(148,121,255,0.08);border:1px solid rgba(148,121,255,0.18);color:#e2e8f0;border-bottom-left-radius:4px;}",
+        ".ai-drawer__bubble.streaming::after{content:'▋';display:inline-block;color:#9479ff;animation:blink-cur 0.65s step-end infinite;margin-left:2px;}",
+        "@keyframes blink-cur{0%,100%{opacity:1;}50%{opacity:0;}}",
+        ".ai-drawer__replay{position:absolute;bottom:-20px;right:4px;background:none;border:none;color:#475569;cursor:pointer;padding:2px 5px;border-radius:5px;display:flex;align-items:center;gap:3px;font-size:0.68rem;opacity:0;transition:opacity 0.2s;}",
+        ".ai-drawer__msg--model:hover .ai-drawer__replay{opacity:1;}",
+        ".ai-drawer__bubble--thinking{display:flex;align-items:center;gap:5px;padding:12px 16px;}",
+        ".thinking-dot{width:7px;height:7px;border-radius:50%;background:#9479ff;animation:tdot 1.2s ease-in-out infinite;}",
+        ".thinking-dot:nth-child(2){animation-delay:0.2s;}.thinking-dot:nth-child(3){animation-delay:0.4s;}",
+        "@keyframes tdot{0%,100%{opacity:0.25;transform:translateY(0);}50%{opacity:1;transform:translateY(-5px);}}",
+        ".ai-drawer__hints{display:flex;gap:6px;padding:8px 15px;overflow-x:auto;flex-shrink:0;scrollbar-width:none;border-top:1px solid rgba(255,255,255,0.045);}",
+        ".ai-drawer__hints::-webkit-scrollbar{display:none;}",
+        ".ai-drawer__chip{flex-shrink:0;background:rgba(148,121,255,0.07);border:1px solid rgba(148,121,255,0.18);color:#a78bfa;font-size:0.71rem;font-weight:700;padding:5px 11px;border-radius:20px;cursor:pointer;white-space:nowrap;transition:all 0.2s;font-family:inherit;}",
+        ".ai-drawer__chip:hover:not(:disabled){background:rgba(148,121,255,0.18);border-color:rgba(148,121,255,0.45);color:#fff;}",
+        ".ai-drawer__chip:disabled{opacity:0.38;cursor:not-allowed;}",
+        ".ai-drawer__input-area{display:flex;align-items:flex-end;gap:8px;padding:11px 14px;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0;}",
+        ".ai-drawer__input{flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(148,121,255,0.18);border-radius:13px;color:#e2e8f0;font-size:0.865rem;padding:9px 13px;resize:none;outline:none;font-family:inherit;line-height:1.5;max-height:90px;transition:border-color 0.2s;scrollbar-width:none;}",
+        ".ai-drawer__input::-webkit-scrollbar{display:none;}.ai-drawer__input:focus{border-color:rgba(148,121,255,0.48);}.ai-drawer__input::placeholder{color:#334155;}",
+        // ── Eye/Watch button & Mic button — EXACT match to Student Portal ──
+        ".ai-drawer__mic-btn{background:rgba(148,121,255,0.09);border:1px solid rgba(148,121,255,0.22);color:#9479ff;border-radius:11px;padding:9px;cursor:pointer;display:flex;align-items:center;transition:all 0.2s;flex-shrink:0;}",
+        ".ai-drawer__mic-btn:hover{background:rgba(148,121,255,0.2);}",
+        ".ai-drawer__mic-btn.active-voice,.ai-drawer__mic-btn.listening{background:rgba(239,68,68,0.22);border-color:rgba(239,68,68,0.6);color:#ef4444;animation:redMicPulse 1.5s ease-in-out infinite;}",
+        "@keyframes redMicPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.45);}50%{box-shadow:0 0 0 8px rgba(239,68,68,0);}}",
+        ".ai-drawer__send-btn{background:linear-gradient(135deg,#6d28d9,#4c5eff);border:none;color:#fff;border-radius:11px;padding:9px 14px;cursor:pointer;display:flex;align-items:center;transition:all 0.2s;flex-shrink:0;box-shadow:0 4px 14px rgba(109,40,217,0.45);font-family:inherit;}",
+        ".ai-drawer__send-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 18px rgba(109,40,217,0.65);}",
+        ".ai-drawer__send-btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;box-shadow:none;}",
+        ".ai-drawer__voice-footer{display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 14px 10px;font-size:0.74rem;color:#64748b;border-top:1px solid rgba(148,121,255,0.1);background:rgba(6,10,20,0.9);}",
+        ".ai-drawer__waveform{display:inline-flex;align-items:center;gap:3px;height:18px;}",
+        ".ai-drawer__wave-bar{width:3px;height:4px;min-height:4px;max-height:18px;background:#ef4444;border-radius:2px;transition:height 0.05s ease-out,background-color 0.2s;animation:waveFallback 1.1s ease-in-out infinite;}",
+        ".ai-drawer__wave-bar:nth-child(1){animation-delay:0.0s;}.ai-drawer__wave-bar:nth-child(2){animation-delay:0.2s;}.ai-drawer__wave-bar:nth-child(3){animation-delay:0.1s;}.ai-drawer__wave-bar:nth-child(4){animation-delay:0.3s;}.ai-drawer__wave-bar:nth-child(5){animation-delay:0.15s;}",
+        "@keyframes waveFallback{0%,100%{height:4px;}25%{height:14px;}50%{height:8px;}75%{height:16px;}}",
+        ".ai-drawer__wave-bar.speaking{background:#9479ff;animation-duration:0.7s;}",
+        ".ai-drawer__voice-label{font-size:0.74rem;color:#64748b;}",
+        "@media(max-width:500px){.ai-drawer{right:8px;left:8px;width:auto;bottom:168px;max-height:74vh;}.ai-tutor-widget{bottom:16px;right:16px;width:100px;height:118px;}}"
+
+      ].join("");
+      document.head.appendChild(styleEl);
+    }
+
 
     // 1. Floating Widget Button
     $w = document.createElement("div");

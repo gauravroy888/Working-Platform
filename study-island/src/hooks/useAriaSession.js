@@ -1,4 +1,4 @@
-﻿/**
+/**
  * useAriaSession.js
  * Persists Aria context across portals (Student Portal <-> Study Island)
  * and across days (daily rollover with yesterday summary).
@@ -10,8 +10,11 @@
 
 const SESSION_KEY   = "aria_session";
 const YESTERDAY_KEY = "aria_yesterday";
-const API_KEY       = import.meta.env.VITE_GEMINI_API_KEY;
-const MODEL         = "gemini-3.5-flash-lite";
+const MODEL         = "gemini-3.6-flash";
+
+function getApiKey() {
+  return localStorage.getItem("aria_gemini_key") || (typeof window !== "undefined" ? window.ARIA_GEMINI_KEY : "") || "";
+}
 
 function todayStr() { return new Date().toLocaleDateString("en-CA"); }
 
@@ -73,7 +76,8 @@ export function buildSessionContext() {
 }
 
 export async function refreshSessionSummary(messages) {
-  if (!API_KEY || !messages || messages.length < 4) return;
+  const apiKey = getApiKey();
+  if (!apiKey || apiKey === "YOUR_KEY_HERE" || !messages || messages.length < 4) return;
   const convo = messages
     .filter(m => m.text && !m.text.startsWith("⚠️") && m.text.length > 3)
     .slice(-12)
@@ -82,7 +86,7 @@ export async function refreshSessionSummary(messages) {
   if (!convo) return;
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`,
       {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

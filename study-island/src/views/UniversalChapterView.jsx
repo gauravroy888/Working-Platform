@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { BookOpen, FlaskConical, Glasses, Lightbulb, ListChecks } from "lucide-react";
 import useThreeScene from "../hooks/useThreeScene";
 import AITutorWidget from "../components/AITutorWidget";
-import { SmartboardOverlay, TopControls } from "./StudyIslandView";
+import { SmartboardOverlay, TopControls, recordRecentChapter } from "./StudyIslandView";
 import chapterBackground from "../../assets/chapter background lowres.jpg";
 import { supabase } from "../supabase";
 
@@ -567,6 +567,12 @@ export default function UniversalChapterView({ studentContext }) {
             experiments: isLight ? DEFAULT_LIGHT_SHADOWS_DATA.experiments : []
           });
         }
+        if (chapterId) {
+          recordRecentChapter(chapterId, {
+            title: data?.title || (isSpace ? "SPACE & SOLAR SYSTEM" : (isLight ? "LIGHT & SHADOWS" : chapterId)),
+            subject: data?.subject_name || "Science"
+          });
+        }
       } catch (err) {
         console.warn("[UniversalChapterView] Fetch error:", err);
       } finally {
@@ -622,11 +628,21 @@ export default function UniversalChapterView({ studentContext }) {
             </div>
           </div>
           <div className="sol-bottom-nav-row">
-            <button className="sol-nav-btn" type="button" onClick={() => navigate("/")}>
-              Back
+            <button
+              className="sol-nav-btn"
+              type="button"
+              onClick={() => {
+                if (window.history.state && window.history.state.idx > 0) {
+                  navigate(-1);
+                } else {
+                  navigate("/?screen=chapters");
+                }
+              }}
+            >
+              ← Back
             </button>
             <button className="sol-nav-btn" type="button" onClick={() => navigate("/")}>
-              Home
+              ⌂ Home
             </button>
           </div>
         </div>

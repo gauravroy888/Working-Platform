@@ -1,4 +1,4 @@
-﻿# EdTech Island — Project Context & Architecture Overview
+# EdTech Island — Project Context & Architecture Overview
 
 > **GOVERNANCE NOTICE:** Before editing any code, always consult [`EDTECH_ISLAND_AI_ENGINEERING_CONSTITUTION.md`](./EDTECH_ISLAND_AI_ENGINEERING_CONSTITUTION.md) and [`AGENTS.md`](./AGENTS.md).
 
@@ -37,7 +37,7 @@ Gemini AI Remediation
   - **SuperAdmin Hub:** React 18 / Vite app at `/superadmin/`.
 - **Database & Auth:** Supabase / PostgreSQL 15 with pgvector / HNSW embeddings and Row Level Security (RLS).
 - **Object Storage:** Cloudflare R2 (for 3D models, assets, labs, and media).
-- **AI Model:** Google Gemini API (`gemini-2.5-flash-lite` / `gemini-1.5-flash`) with multimodal screen-vision & audio capabilities.
+- **AI Model:** Google Gemini API (`gemini-3.5-flash` multimodal primary / `gemini-3.5-flash-lite` background memory) with native vision (screen-capture analysis), audio, and sub-second token streaming capabilities.
 
 ---
 
